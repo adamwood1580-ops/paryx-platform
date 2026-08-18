@@ -1,0 +1,156 @@
+:root {
+    /* =========================================================
+       PARYX BRAND
+       ========================================================= */
+
+    --color-primary: #064831;
+    --color-primary-dark: #022d1d;
+    --color-primary-light: #e8f1ec;
+
+    --color-accent: #e5c45f;
+    --color-accent-dark: #b99538;
+    --color-accent-light: #f8f0d9;
+
+    /* =========================================================
+       SURFACES
+       ========================================================= */
+
+    --color-background: #f4f6f3;
+    --color-surface: #ffffff;
+    --color-surface-muted: #eef2ed;
+    --color-surface-sage: #e7efe9;
+    --color-surface-warm: #f7f6f1;
+
+    /* =========================================================
+       TEXT
+       ========================================================= */
+
+    --color-text: #14251f;
+    --color-text-muted: #69736e;
+    --color-text-soft: #7c8580;
+    --color-text-inverse: #ffffff;
+
+    /* =========================================================
+       STATUS
+       ========================================================= */
+
+    --color-success: #2f8651;
+    --color-warning: #b47b19;
+    --color-danger: #b64a4a;
+    --color-info: #386f8f;
+
+    /* =========================================================
+       BORDERS
+       ========================================================= */
+
+    --color-border: #dce3dd;
+    --color-border-strong: #c6d0c8;
+    --color-border-brand:
+        rgba(6, 72, 49, 0.14);
+
+    /* =========================================================
+       TYPOGRAPHY
+       ========================================================= */
+
+    --font-family-base:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        Helvetica,
+        Arial,
+        sans-serif;
+
+    --font-size-xs: 0.75rem;
+    --font-size-sm: 0.875rem;
+    --font-size-md: 1rem;
+    --font-size-lg: 1.125rem;
+    --font-size-xl: 1.375rem;
+    --font-size-2xl: 1.75rem;
+    --font-size-3xl: 2.25rem;
+
+    --font-weight-regular: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+
+    /* =========================================================
+       SPACING
+       ========================================================= */
+
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-5: 1.25rem;
+    --space-6: 1.5rem;
+    --space-8: 2rem;
+    --space-10: 2.5rem;
+    --space-12: 3rem;
+
+    /* =========================================================
+       SHAPE
+       ========================================================= */
+
+    --radius-sm: 0.6rem;
+    --radius-md: 0.9rem;
+    --radius-lg: 1.2rem;
+    --radius-xl: 1.65rem;
+    --radius-round: 999px;
+
+    /* =========================================================
+       SHADOWS
+       ========================================================= */
+
+    --shadow-sm:
+        0 3px 10px
+        rgba(20, 50, 38, 0.06);
+
+    --shadow-md:
+        0 10px 28px
+        rgba(20, 50, 38, 0.10);
+
+    --shadow-lg:
+        0 18px 44px
+        rgba(20, 50, 38, 0.14);
+
+    --shadow-card:
+        0 7px 22px
+        rgba(20, 50, 38, 0.08);
+
+    --shadow-brand:
+        0 9px 24px
+        rgba(6, 72, 49, 0.18);
+
+    /* =========================================================
+       LAYOUT
+       ========================================================= */
+
+    --content-width: 72rem;
+    --content-width-narrow: 42rem;
+    --header-height: 4rem;
+    --bottom-nav-height: 4.5rem;
+
+    /* =========================================================
+       ANIMATION
+       ========================================================= */
+
+    --transition-fast: 150ms ease;
+    --transition-standard: 250ms ease;
+
+    /* =========================================================
+       SAFE AREAS
+       ========================================================= */
+
+    --safe-area-top:
+        env(safe-area-inset-top, 0px);
+
+    --safe-area-right:
+        env(safe-area-inset-right, 0px);
+
+    --safe-area-bottom:
+        env(safe-area-inset-bottom, 0px);
+
+    --safe-area-left:
+        env(safe-area-inset-left, 0px);
+}

@@ -1,0 +1,558 @@
+/* =========================================================
+   PARYX APP SHELL
+   Global page structure, header and navigation
+   ========================================================= */
+
+html {
+    box-sizing: border-box;
+
+    background:
+        linear-gradient(
+            180deg,
+            #f8faf7 0%,
+            var(--color-background) 100%
+        );
+}
+
+/* =========================================================
+   AUTHENTICATION REVEAL
+   ========================================================= */
+
+/*
+ * Keep the application hidden while authentication and
+ * account data are being resolved.
+ *
+ * The protected-page HTML provides the dark green startup
+ * background before this stylesheet loads.
+ */
+
+html.auth-protected .app-shell {
+    visibility: hidden;
+}
+
+html.auth-protected.auth-ready .app-shell {
+    visibility: visible;
+}
+
+/* =========================================================
+   GLOBAL BOX MODEL
+   ========================================================= */
+
+*,
+*::before,
+*::after {
+    box-sizing: inherit;
+}
+
+body {
+    min-height: 100vh;
+
+    margin: 0;
+
+    padding:
+        var(--safe-area-top)
+        var(--safe-area-right)
+        calc(
+            var(--bottom-nav-height) +
+            var(--safe-area-bottom)
+        )
+        var(--safe-area-left);
+
+    color:
+        var(--color-text);
+
+    background:
+        linear-gradient(
+            180deg,
+            #f8faf7 0%,
+            var(--color-background) 55%,
+            #f1f4f0 100%
+        );
+
+    font-family:
+        var(--font-family-base);
+
+    font-size:
+        var(--font-size-md);
+
+    line-height: 1.5;
+
+    -webkit-font-smoothing:
+        antialiased;
+}
+
+/* =========================================================
+   FORM RESET
+   ========================================================= */
+
+button,
+input,
+select,
+textarea {
+    font: inherit;
+}
+
+button,
+a {
+    -webkit-tap-highlight-color:
+        transparent;
+}
+
+/* =========================================================
+   APP SHELL
+   ========================================================= */
+
+.app-shell {
+    min-height: 100vh;
+}
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.app-header {
+    position: sticky;
+    top: var(--safe-area-top);
+    z-index: 50;
+
+    display: grid;
+
+    grid-template-columns:
+        2.75rem
+        minmax(0, 1fr)
+        2.75rem;
+
+    align-items: center;
+
+    min-height:
+        var(--header-height);
+
+    padding:
+        var(--space-2)
+        var(--space-4);
+
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            0.94
+        );
+
+    border-bottom:
+        1px solid
+        rgba(6, 56, 42, 0.08);
+
+    box-shadow:
+        0 4px 18px
+        rgba(20, 50, 38, 0.045);
+
+    backdrop-filter:
+        blur(18px);
+
+    -webkit-backdrop-filter:
+        blur(18px);
+}
+
+.app-header__title {
+    min-width: 0;
+
+    margin: 0;
+
+    overflow: hidden;
+
+    color:
+        var(--color-text);
+
+    font-size:
+        var(--font-size-sm);
+
+    font-weight:
+        var(--font-weight-semibold);
+
+    text-align: center;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+}
+
+.app-header__action {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    width: 2.75rem;
+    height: 2.75rem;
+
+    padding: 0;
+
+    color:
+        var(--color-primary);
+
+    background:
+        transparent;
+
+    border: 0;
+
+    border-radius:
+        var(--radius-round);
+
+    cursor: pointer;
+
+    transition:
+        background var(--transition-fast),
+        transform var(--transition-fast);
+}
+
+.app-header__action:active {
+    background:
+        var(--color-primary-light);
+
+    transform:
+        scale(0.96);
+}
+
+/* =========================================================
+   MAIN CONTENT
+   ========================================================= */
+
+.app-main {
+    width:
+        min(
+            100%,
+            var(--content-width)
+        );
+
+    margin:
+        0 auto;
+
+    padding:
+        var(--space-5)
+        var(--space-4)
+        var(--space-8);
+}
+
+.app-main--narrow {
+    max-width:
+        var(--content-width-narrow);
+}
+
+/* =========================================================
+   PAGE HEADINGS
+   ========================================================= */
+
+.page-heading {
+    margin-bottom:
+        var(--space-5);
+}
+
+.page-heading__eyebrow {
+    margin:
+        0 0
+        var(--space-1);
+
+    color:
+        var(--color-accent-dark);
+
+    font-size:
+        var(--font-size-xs);
+
+    font-weight:
+        var(--font-weight-bold);
+
+    letter-spacing:
+        0.07em;
+
+    text-transform:
+        uppercase;
+}
+
+.page-heading__title {
+    margin: 0;
+
+    color:
+        var(--color-primary);
+
+    font-size:
+        var(--font-size-2xl);
+
+    font-weight:
+        var(--font-weight-bold);
+
+    line-height:
+        1.15;
+}
+
+.page-heading__subtitle {
+    margin:
+        var(--space-2)
+        0 0;
+
+    color:
+        var(--color-text-muted);
+
+    font-size:
+        var(--font-size-md);
+}
+
+/* =========================================================
+   CONTENT LAYOUT
+   ========================================================= */
+
+.content-stack {
+    display: grid;
+
+    gap:
+        var(--space-4);
+}
+
+.content-grid {
+    display: grid;
+
+    gap:
+        var(--space-4);
+}
+
+/* =========================================================
+   BOTTOM NAVIGATION
+   ========================================================= */
+
+.bottom-nav {
+    position: fixed;
+
+    right: 0;
+    bottom: 0;
+    left: 0;
+
+    z-index: 100;
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            4,
+            minmax(0, 1fr)
+        );
+
+    min-height:
+        calc(
+            var(--bottom-nav-height) +
+            var(--safe-area-bottom)
+        );
+
+    padding:
+        var(--space-2)
+        max(
+            var(--space-2),
+            var(--safe-area-right)
+        )
+        calc(
+            var(--space-2) +
+            var(--safe-area-bottom)
+        )
+        max(
+            var(--space-2),
+            var(--safe-area-left)
+        );
+
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            0.96
+        );
+
+    border-top:
+        1px solid
+        rgba(6, 56, 42, 0.08);
+
+    box-shadow:
+        0 -8px 28px
+        rgba(20, 50, 38, 0.07);
+
+    backdrop-filter:
+        blur(20px);
+
+    -webkit-backdrop-filter:
+        blur(20px);
+}
+
+.bottom-nav--paryx {
+    grid-template-columns:
+        repeat(
+            5,
+            minmax(0, 1fr)
+        );
+}
+
+.bottom-nav__item {
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+    justify-content: center;
+
+    gap:
+        var(--space-1);
+
+    min-width: 0;
+    min-height: 3.25rem;
+
+    padding:
+        var(--space-1);
+
+    color:
+        var(--color-text-muted);
+
+    text-decoration: none;
+
+    border-radius:
+        var(--radius-md);
+
+    transition:
+        color var(--transition-fast),
+        background var(--transition-fast),
+        transform var(--transition-fast);
+}
+
+.bottom-nav__item:active {
+    transform:
+        scale(0.96);
+}
+
+.bottom-nav__item[
+    aria-current="page"
+] {
+    color:
+        var(--color-primary);
+
+    background:
+        linear-gradient(
+            145deg,
+            #edf4ef,
+            var(--color-primary-light)
+        );
+}
+
+.bottom-nav__icon {
+    width: 1.4rem;
+    height: 1.4rem;
+}
+
+.bottom-nav__label {
+    overflow: hidden;
+
+    color: inherit;
+
+    font-size:
+        0.68rem;
+
+    font-weight:
+        var(--font-weight-semibold);
+
+    text-overflow:
+        ellipsis;
+
+    white-space:
+        nowrap;
+}
+
+/* =========================================================
+   SHARED NAVIGATION ICON
+   ========================================================= */
+
+.nav-icon {
+    width: 1.4rem;
+    height: 1.4rem;
+
+    fill: none;
+
+    stroke:
+        currentColor;
+
+    stroke-linecap:
+        round;
+
+    stroke-linejoin:
+        round;
+
+    stroke-width:
+        1.8;
+}
+
+/* =========================================================
+   DESKTOP / TABLET
+   ========================================================= */
+
+@media (min-width: 48rem) {
+    body {
+        padding-bottom:
+            var(--space-8);
+    }
+
+    .app-main {
+        padding:
+            var(--space-8)
+            var(--space-6)
+            var(--space-12);
+    }
+
+    .content-grid {
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
+    }
+
+    .bottom-nav {
+        right: auto;
+        top: 0;
+        bottom: 0;
+
+        display: flex;
+
+        flex-direction:
+            column;
+
+        width: 6rem;
+
+        min-height:
+            100vh;
+
+        padding:
+            calc(
+                var(--space-6) +
+                var(--safe-area-top)
+            )
+            var(--space-2)
+            var(--space-6);
+
+        border-top: 0;
+
+        border-right:
+            1px solid
+            rgba(6, 56, 42, 0.08);
+
+        box-shadow:
+            6px 0 24px
+            rgba(20, 50, 38, 0.045);
+    }
+
+    .app-shell {
+        padding-left:
+            6rem;
+    }
+
+    .app-header {
+        left: 6rem;
+    }
+
+    .bottom-nav__item {
+        width: 100%;
+    }
+}

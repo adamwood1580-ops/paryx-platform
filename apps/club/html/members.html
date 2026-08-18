@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en" class="auth-protected">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#064831" />
+    <link rel="stylesheet" href="../styles/tokens.css" />
+    <link rel="stylesheet" href="../styles/app-shell.css" />
+    <link rel="stylesheet" href="../styles/components.css" />
+    <link rel="stylesheet" href="../styles/staff-shell.css" />
+    <link rel="manifest" href="../json/manifest.json" />
+    <link rel="apple-touch-icon" href="../assets/paryx-apple-touch-icon.png" />
+    <link rel="icon" type="image/png" href="../assets/paryx-favicon.png" />
+    <meta name="application-name" content="Paryx" />
+    <title>Members | Paryx</title>
+    <link rel="stylesheet" href="../styles/dashboard.css" /><link rel="stylesheet" href="../styles/members.css" />
+    <script src="../js/core/protected-loader.js?loader=1" defer></script>
+</head>
+<body data-page="members">
+    <div class="staff-shell">
+        <aside class="staff-sidebar" data-staff-sidebar></aside>
+        <div class="staff-workspace">
+            <header class="staff-topbar" data-staff-header></header>
+            <main class="app-main admin-page admin-members-page">
+
+            <section class="admin-members-intro">
+                <div>
+                    <p class="page-heading__eyebrow">
+                        Member management
+                    </p>
+
+                    <h1 class="admin-members-intro__title">
+                        Members
+                    </h1>
+
+                    <p
+                        id="memberClubName"
+                        class="admin-members-intro__subtitle"
+                    >
+                        Loading club information...
+                    </p>
+                </div>
+
+                <a
+                    href="import-members.html"
+                    class="admin-primary-action"
+                >
+                    Import CSV
+                </a>
+            </section>
+
+            <section
+                id="membersError"
+                class="admin-error"
+                role="alert"
+                hidden
+            ></section>
+
+            <section class="card admin-member-toolbar">
+                <label class="admin-member-search">
+                    <span class="admin-member-field-label">
+                        Search members
+                    </span>
+
+                    <input
+                        id="memberSearch"
+                        type="search"
+                        placeholder="Name, email or member number"
+                        autocomplete="off"
+                    />
+                </label>
+
+                <label class="admin-member-filter">
+                    <span class="admin-member-field-label">
+                        Status
+                    </span>
+
+                    <select id="memberStatusFilter">
+                        <option value="all">All statuses</option>
+                        <option value="active">Active</option>
+                        <option value="invited">Invited</option>
+                        <option value="pending">Pending</option>
+                        <option value="suspended">Suspended</option>
+                        <option value="expired">Expired</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </label>
+            </section>
+
+            <section class="admin-member-summary">
+                <div>
+                    <span class="admin-member-summary__label">
+                        Results
+                    </span>
+
+                    <strong
+                        id="memberResultCount"
+                        class="admin-member-summary__value"
+                    >
+                        --
+                    </strong>
+                </div>
+
+                <button
+                    id="memberRefreshBtn"
+                    class="admin-secondary-button"
+                    type="button"
+                >
+                    Refresh
+                </button>
+            </section>
+
+            <section
+                id="memberList"
+                class="admin-member-list"
+                aria-live="polite"
+            >
+                <div class="admin-member-loading">
+                    Loading members...
+                </div>
+            </section>
+
+            <button
+                id="loadMoreMembersBtn"
+                class="admin-load-more"
+                type="button"
+                hidden
+            >
+                Load more members
+            </button>
+        </main>
+        </div>
+    </div>
+</body>
+</html>

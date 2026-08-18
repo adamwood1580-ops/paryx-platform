@@ -1,0 +1,37 @@
+{
+  "id": "../html/",
+  "name": "Paryx Club Management",
+  "short_name": "Paryx",
+  "description": "Paryx golf club management software.",
+  "lang": "en-GB",
+  "dir": "ltr",
+  "start_url": "../html/dashboard.html",
+  "scope": "../",
+  "display": "standalone",
+  "display_override": [
+    "standalone",
+    "window-controls-overlay"
+  ],
+  "orientation": "any",
+  "background_color": "#064831",
+  "theme_color": "#064831",
+  "categories": [
+    "business",
+    "productivity",
+    "sports"
+  ],
+  "icons": [
+    {
+      "src": "../assets/paryx-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "../assets/paryx-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

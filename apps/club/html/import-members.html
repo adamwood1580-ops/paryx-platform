@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en" class="auth-protected">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#064831" />
+    <link rel="stylesheet" href="../styles/tokens.css" />
+    <link rel="stylesheet" href="../styles/app-shell.css" />
+    <link rel="stylesheet" href="../styles/components.css" />
+    <link rel="stylesheet" href="../styles/staff-shell.css" />
+    <link rel="manifest" href="../json/manifest.json" />
+    <link rel="apple-touch-icon" href="../assets/paryx-apple-touch-icon.png" />
+    <link rel="icon" type="image/png" href="../assets/paryx-favicon.png" />
+    <meta name="application-name" content="Paryx" />
+    <title>Import members | Paryx</title>
+    <link rel="stylesheet" href="../styles/dashboard.css" /><link rel="stylesheet" href="../styles/import-members.css" />
+    <script src="../js/core/protected-loader.js?loader=1" defer></script>
+</head>
+<body data-page="importmembers">
+    <div class="staff-shell">
+        <aside class="staff-sidebar" data-staff-sidebar></aside>
+        <div class="staff-workspace">
+            <header class="staff-topbar" data-staff-header></header>
+            <main class="app-main admin-page admin-import-page">
+
+            <section class="admin-import-intro">
+                <p class="page-heading__eyebrow">
+                    Member onboarding
+                </p>
+
+                <h1 class="admin-import-intro__title">
+                    Import members
+                </h1>
+
+                <p
+                    id="importClubName"
+                    class="admin-import-intro__subtitle"
+                >
+                    Loading club information...
+                </p>
+            </section>
+
+            <section
+                id="importError"
+                class="admin-error"
+                role="alert"
+                hidden
+            ></section>
+
+            <section class="card admin-import-card">
+                <div class="admin-import-card__heading">
+                    <div>
+                        <span class="admin-step-number">1</span>
+
+                        <div>
+                            <h2>Choose member CSV</h2>
+                            <p>
+                                Required: first name, last name and email.
+                            </p>
+                        </div>
+                    </div>
+
+                    <button
+                        id="downloadTemplateBtn"
+                        class="admin-text-button"
+                        type="button"
+                    >
+                        Download template
+                    </button>
+                </div>
+
+                <label class="admin-file-picker">
+                    <input
+                        id="memberCsvInput"
+                        type="file"
+                        accept=".csv,text/csv"
+                    />
+
+                    <span class="admin-file-picker__title">
+                        Select CSV file
+                    </span>
+
+                    <span
+                        id="selectedCsvName"
+                        class="admin-file-picker__meta"
+                    >
+                        No file selected
+                    </span>
+                </label>
+
+                <div class="admin-import-help">
+                    <strong>Supported columns</strong>
+                    <span>first_name</span>
+                    <span>last_name</span>
+                    <span>email</span>
+                    <span>membership_number</span>
+                    <span>membership_type</span>
+                    <span>handicap_index</span>
+                </div>
+            </section>
+
+            <section
+                id="validationSection"
+                class="card admin-import-card"
+                hidden
+            >
+                <div class="admin-import-card__heading">
+                    <div>
+                        <span class="admin-step-number">2</span>
+
+                        <div>
+                            <h2>Review & validate</h2>
+                            <p>
+                                Nothing is imported until you confirm below.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-validation-grid">
+                    <div>
+                        <span>Total rows</span>
+                        <strong id="validationTotal">0</strong>
+                    </div>
+
+                    <div>
+                        <span>Ready</span>
+                        <strong id="validationReady">0</strong>
+                    </div>
+
+                    <div>
+                        <span>Errors</span>
+                        <strong id="validationErrors">0</strong>
+                    </div>
+                </div>
+
+                <div
+                    id="validationNotice"
+                    class="admin-validation-notice"
+                ></div>
+
+                <div class="admin-preview-wrap">
+                    <table class="admin-preview-table">
+                        <thead>
+                            <tr>
+                                <th>Row</th>
+                                <th>Member</th>
+                                <th>Email</th>
+                                <th>No.</th>
+                                <th>Type</th>
+                                <th>HI</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="memberPreviewBody"></tbody>
+                    </table>
+                </div>
+
+                <p
+                    id="previewLimitNotice"
+                    class="admin-preview-limit"
+                    hidden
+                ></p>
+            </section>
+
+            <section
+                id="importActionSection"
+                class="card admin-import-card admin-import-action"
+                hidden
+            >
+                <div class="admin-import-card__heading">
+                    <div>
+                        <span class="admin-step-number">3</span>
+
+                        <div>
+                            <h2>Import & invite</h2>
+                            <p>
+                                New accounts receive a Paryx invitation by email.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-import-warning">
+                    Existing Paryx accounts are linked to the club rather than invited again.
+                    Imported Handicap Index values are marked as awaiting verification.
+                </div>
+
+                <button
+                    id="startImportBtn"
+                    class="admin-import-submit"
+                    type="button"
+                    disabled
+                >
+                    Import members & send invites
+                </button>
+
+                <div
+                    id="importProgress"
+                    class="admin-import-progress"
+                    hidden
+                >
+                    <div class="admin-import-progress__track">
+                        <div
+                            id="importProgressBar"
+                            class="admin-import-progress__bar"
+                        ></div>
+                    </div>
+
+                    <span id="importProgressText">
+                        Preparing import...
+                    </span>
+                </div>
+            </section>
+
+            <section
+                id="importResultsSection"
+                class="card admin-import-card"
+                hidden
+            >
+                <div class="admin-import-card__heading">
+                    <div>
+                        <span class="admin-step-number admin-step-number--done">✓</span>
+
+                        <div>
+                            <h2>Import result</h2>
+                            <p id="importResultSummary">
+                                Import complete.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-validation-grid admin-result-grid">
+                    <div>
+                        <span>Invited</span>
+                        <strong id="resultImported">0</strong>
+                    </div>
+
+                    <div>
+                        <span>Existing</span>
+                        <strong id="resultExisting">0</strong>
+                    </div>
+
+                    <div>
+                        <span>Failed</span>
+                        <strong id="resultFailed">0</strong>
+                    </div>
+                </div>
+
+                <div
+                    id="importResultList"
+                    class="admin-import-result-list"
+                ></div>
+
+                <div class="admin-import-result-actions">
+                    <a
+                        href="members.html"
+                        class="admin-import-submit admin-import-submit--link"
+                    >
+                        View members
+                    </a>
+
+                    <button
+                        id="newImportBtn"
+                        class="admin-secondary-button"
+                        type="button"
+                    >
+                        New import
+                    </button>
+                </div>
+            </section>
+        </main>
+        </div>
+    </div>
+</body>
+</html>
