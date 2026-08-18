@@ -1,3 +1,5 @@
+https://adamwood1580-ops.github.io/paryx-platform/
+
 # Paryx Platform
 
 **Paryx** is a golf club management platform. This repository contains the clean platform foundation for the **club/staff workspace**. The golfer-facing experience will be developed separately as **Paryx Member**, while sharing platform services and the same tenant-aware data model.
