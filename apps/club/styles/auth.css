@@ -6,8 +6,8 @@
     --auth-page-green: #064831;
     --auth-page-green-dark: #022d1d;
 
-    --auth-panel-green: #05432f;
-    --auth-panel-green-deep: #022d1d;
+    --auth-panel-green: #fffdf8;
+    --auth-panel-green-deep: #f5f0e4;
 
     --auth-gold: #e5c45f;
     --auth-gold-light: #f4d667;
@@ -153,8 +153,8 @@ a {
         );
 
     box-shadow:
-        0 0.9rem 2rem
-        rgba(0, 0, 0, 0.16);
+        0 1.15rem 2.6rem
+        rgba(0, 0, 0, 0.22);
 
     animation:
         auth-panel-enter
@@ -205,7 +205,7 @@ a {
 }
 
 .auth-tagline span {
-    color: var(--auth-gold-light);
+    color: var(--auth-page-green);
 }
 
 /* =========================================================
@@ -351,7 +351,7 @@ a {
 
     outline:
         2px solid
-        var(--auth-gold);
+        var(--auth-page-green);
 
     outline-offset: -0.2rem;
 }
@@ -468,9 +468,9 @@ a {
     border-radius: 0.68rem;
 
     background:
-        rgba(255, 255, 255, 0.09);
+        rgba(6, 72, 49, 0.07);
 
-    color: var(--auth-white);
+    color: var(--auth-text-dark);
 
     font-size: 0.85rem;
     font-weight: 560;
@@ -486,17 +486,17 @@ a {
 .auth-message.is-error,
 .auth-message[data-type="error"] {
     background:
-        rgba(175, 38, 38, 0.2);
+        rgba(175, 38, 38, 0.09);
 
-    color: var(--auth-error);
+    color: #9b2f2f;
 }
 
 .auth-message.is-success,
 .auth-message[data-type="success"] {
     background:
-        rgba(39, 174, 96, 0.17);
+        rgba(39, 174, 96, 0.10);
 
-    color: var(--auth-success);
+    color: #23683e;
 }
 
 /* =========================================================
@@ -517,7 +517,7 @@ a {
 }
 
 .auth-link {
-    color: var(--auth-white);
+    color: var(--auth-page-green);
 
     font-size: 0.98rem;
     font-weight: 520;
@@ -527,13 +527,13 @@ a {
 
 .auth-link:hover,
 .auth-link:focus-visible {
-    color: var(--auth-gold-light);
+    color: var(--auth-gold-dark);
 }
 
 .auth-club-contact {
     margin: 1.15rem 0 0;
 
-    color: var(--auth-white);
+    color: #52635b;
 
     font-size: 0.94rem;
     font-weight: 500;
@@ -541,7 +541,7 @@ a {
 }
 
 .auth-club-contact a {
-    color: var(--auth-gold-light);
+    color: var(--auth-page-green);
 
     font-weight: 650;
 
