@@ -1663,8 +1663,35 @@
                 );
 
             if (error) {
-                throw error;
-            }
+    let errorMessage =
+        error?.message ||
+        "Scorecard scanning failed.";
+
+    try {
+        if (
+            error?.context &&
+            typeof error.context.json ===
+                "function"
+        ) {
+            const errorBody =
+                await error.context.json();
+
+            errorMessage =
+                errorBody?.error ||
+                errorBody?.message ||
+                errorMessage;
+        }
+    } catch (parseError) {
+        console.warn(
+            "Could not read Edge Function error response:",
+            parseError
+        );
+    }
+
+    throw new Error(
+        errorMessage
+    );
+}
 
             if (!data?.extraction) {
                 throw new Error(
