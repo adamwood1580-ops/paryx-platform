@@ -18,7 +18,8 @@
         members: ["../js/pages/members-page.js"],
         importmembers: ["../js/pages/import-members-page.js"],
         settings: ["../js/pages/settings-page.js"],
-        courses: ["../js/pages/courses-page.js"]
+        courses: ["../js/pages/courses-page.js"],
+        calendar: ["../js/pages/calendar-page.js"]
     };
 
     function pageName() {

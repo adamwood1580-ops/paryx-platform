@@ -7,7 +7,7 @@
         { key: "dashboard", label: "Dashboard", href: "dashboard.html" },
         { key: "teesheet", label: "Tee Sheet", href: null },
         { key: "members", label: "Members", href: "members.html" },
-        { key: "competitions", label: "Competitions", href: null },
+        { key: "calendar", label: "Calendar", href: "calendar.html" },
         { key: "courses", label: "Courses", href: "courses.html" },
         { key: "communications", label: "Communications", href: null },
         { key: "reports", label: "Reports", href: null },
