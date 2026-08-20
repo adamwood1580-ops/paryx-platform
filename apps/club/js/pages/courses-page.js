@@ -20,7 +20,9 @@
         selectedCourseId: null,
         config: null,
         editingTeeId: null,
-        creatingCourse: false
+        creatingCourse: false,
+        scorecardImageDataUrl: null,
+        scorecardExtraction: null
     };
 
     const elements = {
@@ -64,7 +66,24 @@
         yardageSection: document.getElementById("yardageSection"),
         teeYardageSummary: document.getElementById("teeYardageSummary"),
         teeYardageGrid: document.getElementById("teeYardageGrid"),
-        saveYardagesButton: document.getElementById("saveYardagesButton")
+        saveYardagesButton: document.getElementById("saveYardagesButton"),
+        scorecardImportButton: document.getElementById("scorecardImportButton"),
+        scorecardImportDialog: document.getElementById("scorecardImportDialog"),
+        scorecardImportClose: document.getElementById("scorecardImportClose"),
+        scorecardImportError: document.getElementById("scorecardImportError"),
+        scorecardUploadStep: document.getElementById("scorecardUploadStep"),
+        scorecardReviewStep: document.getElementById("scorecardReviewStep"),
+        scorecardImageInput: document.getElementById("scorecardImageInput"),
+        scorecardPreviewWrap: document.getElementById("scorecardPreviewWrap"),
+        scorecardPreview: document.getElementById("scorecardPreview"),
+        scanScorecardButton: document.getElementById("scanScorecardButton"),
+        rescanScorecardButton: document.getElementById("rescanScorecardButton"),
+        scorecardReviewTitle: document.getElementById("scorecardReviewTitle"),
+        scorecardReviewMeta: document.getElementById("scorecardReviewMeta"),
+        scorecardWarnings: document.getElementById("scorecardWarnings"),
+        scorecardHoleReview: document.getElementById("scorecardHoleReview"),
+        scorecardTeeReview: document.getElementById("scorecardTeeReview"),
+        applyScorecardButton: document.getElementById("applyScorecardButton")
     };
 
     function getClient() {
@@ -1166,6 +1185,1008 @@
         updateHoleParSummary();
     }
 
+
+    function scorecardNumber(value) {
+        const number =
+            Number(value);
+
+        return Number.isFinite(number)
+            ? number
+            : null;
+    }
+
+    function normaliseTeeKey(value) {
+        return String(value || "")
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "");
+    }
+
+    function resetScorecardImporter() {
+        state.scorecardImageDataUrl = null;
+        state.scorecardExtraction = null;
+
+        elements.scorecardImportError.hidden = true;
+        elements.scorecardImportError.textContent = "";
+
+        elements.scorecardImageInput.value = "";
+        elements.scorecardPreview.removeAttribute("src");
+        elements.scorecardPreviewWrap.hidden = true;
+
+        elements.scanScorecardButton.disabled = true;
+        elements.scanScorecardButton.textContent =
+            "Scan scorecard";
+
+        elements.scorecardUploadStep.hidden = false;
+        elements.scorecardReviewStep.hidden = true;
+
+        elements.scorecardHoleReview.innerHTML = "";
+        elements.scorecardTeeReview.innerHTML = "";
+        elements.scorecardWarnings.innerHTML = "";
+        elements.scorecardWarnings.hidden = true;
+    }
+
+    function openScorecardImporter() {
+        clearMessages();
+
+        if (!state.selectedCourseId) {
+            showError(
+                new Error(
+                    "Save the course before importing a scorecard."
+                )
+            );
+            return;
+        }
+
+        resetScorecardImporter();
+
+        if (
+            typeof elements.scorecardImportDialog
+                .showModal === "function"
+        ) {
+            elements.scorecardImportDialog.showModal();
+        } else {
+            elements.scorecardImportDialog.setAttribute(
+                "open",
+                ""
+            );
+        }
+    }
+
+    function closeScorecardImporter() {
+        if (
+            typeof elements.scorecardImportDialog
+                .close === "function"
+        ) {
+            elements.scorecardImportDialog.close();
+        } else {
+            elements.scorecardImportDialog.removeAttribute(
+                "open"
+            );
+        }
+
+        resetScorecardImporter();
+    }
+
+    function readImageElement(url) {
+        return new Promise(function (resolve, reject) {
+            const image = new Image();
+
+            image.onload = function () {
+                resolve(image);
+            };
+
+            image.onerror = function () {
+                reject(
+                    new Error(
+                        "Paryx could not read this image. Use a JPEG, PNG or WebP scorecard image."
+                    )
+                );
+            };
+
+            image.src = url;
+        });
+    }
+
+    async function prepareScorecardImage(file) {
+        if (!file) {
+            throw new Error(
+                "Choose a scorecard image first."
+            );
+        }
+
+        const allowedTypes =
+            new Set([
+                "image/jpeg",
+                "image/png",
+                "image/webp"
+            ]);
+
+        if (
+            file.type &&
+            !allowedTypes.has(file.type)
+        ) {
+            throw new Error(
+                "Use a JPEG, PNG or WebP scorecard image."
+            );
+        }
+
+        const objectUrl =
+            URL.createObjectURL(file);
+
+        try {
+            const image =
+                await readImageElement(
+                    objectUrl
+                );
+
+            const maxDimension = 1800;
+
+            const scale =
+                Math.min(
+                    1,
+                    maxDimension /
+                        Math.max(
+                            image.naturalWidth,
+                            image.naturalHeight
+                        )
+                );
+
+            const width =
+                Math.max(
+                    1,
+                    Math.round(
+                        image.naturalWidth *
+                        scale
+                    )
+                );
+
+            const height =
+                Math.max(
+                    1,
+                    Math.round(
+                        image.naturalHeight *
+                        scale
+                    )
+                );
+
+            const canvas =
+                document.createElement(
+                    "canvas"
+                );
+
+            canvas.width = width;
+            canvas.height = height;
+
+            const context =
+                canvas.getContext("2d", {
+                    alpha: false
+                });
+
+            if (!context) {
+                throw new Error(
+                    "Image preparation is not supported by this browser."
+                );
+            }
+
+            context.fillStyle = "#ffffff";
+            context.fillRect(
+                0,
+                0,
+                width,
+                height
+            );
+
+            context.drawImage(
+                image,
+                0,
+                0,
+                width,
+                height
+            );
+
+            return canvas.toDataURL(
+                "image/jpeg",
+                0.86
+            );
+        } finally {
+            URL.revokeObjectURL(
+                objectUrl
+            );
+        }
+    }
+
+    async function handleScorecardImageChange() {
+        elements.scorecardImportError.hidden = true;
+
+        const file =
+            elements.scorecardImageInput
+                .files?.[0] ||
+            null;
+
+        if (!file) {
+            state.scorecardImageDataUrl = null;
+            elements.scorecardPreviewWrap.hidden = true;
+            elements.scanScorecardButton.disabled = true;
+            return;
+        }
+
+        elements.scanScorecardButton.disabled = true;
+        elements.scanScorecardButton.textContent =
+            "Preparing image…";
+
+        try {
+            state.scorecardImageDataUrl =
+                await prepareScorecardImage(
+                    file
+                );
+
+            elements.scorecardPreview.src =
+                state.scorecardImageDataUrl;
+
+            elements.scorecardPreviewWrap.hidden =
+                false;
+
+            elements.scanScorecardButton.disabled =
+                false;
+        } catch (error) {
+            state.scorecardImageDataUrl = null;
+
+            elements.scorecardImportError.hidden =
+                false;
+
+            elements.scorecardImportError.textContent =
+                error?.message ||
+                "The image could not be prepared.";
+        } finally {
+            elements.scanScorecardButton.textContent =
+                "Scan scorecard";
+        }
+    }
+
+    function renderScorecardExtraction(extraction) {
+        const holeCount =
+            Number(
+                state.config?.course?.holes ||
+                extraction?.holes_count ||
+                18
+            );
+
+        const holeMap =
+            new Map(
+                (extraction?.holes || [])
+                    .map(function (hole) {
+                        return [
+                            Number(hole.hole_number),
+                            hole
+                        ];
+                    })
+            );
+
+        elements.scorecardHoleReview.innerHTML =
+            Array.from(
+                { length: holeCount },
+                function (_, index) {
+                    const number =
+                        index + 1;
+
+                    const hole =
+                        holeMap.get(number) ||
+                        {};
+
+                    function display(value) {
+                        return value === null ||
+                            value === undefined
+                            ? "—"
+                            : escapeHtml(value);
+                    }
+
+                    return `
+                        <tr>
+                            <td>${number}</td>
+                            <td>${display(hole.men_par)}</td>
+                            <td>${display(hole.men_stroke_index)}</td>
+                            <td>${display(hole.women_par)}</td>
+                            <td>${display(hole.women_stroke_index)}</td>
+                        </tr>
+                    `;
+                }
+            ).join("");
+
+        const tees =
+            Array.isArray(extraction?.tees)
+                ? extraction.tees
+                : [];
+
+        if (!tees.length) {
+            elements.scorecardTeeReview.innerHTML = `
+                <div class="courses-empty">
+                    No tee rows were confidently recognised.
+                </div>
+            `;
+        } else {
+            elements.scorecardTeeReview.innerHTML =
+                tees.map(function (tee, index) {
+                    const yards =
+                        (tee.yardages || [])
+                            .map(function (item) {
+                                return scorecardNumber(
+                                    item.yards
+                                );
+                            })
+                            .filter(function (value) {
+                                return value !== null;
+                            });
+
+                    const total =
+                        yards.reduce(
+                            function (sum, value) {
+                                return sum + value;
+                            },
+                            0
+                        );
+
+                    const ratingParts = [];
+
+                    if (
+                        tee.men_course_rating !== null &&
+                        tee.men_course_rating !== undefined &&
+                        tee.men_slope !== null &&
+                        tee.men_slope !== undefined
+                    ) {
+                        ratingParts.push(
+                            `Men ${tee.men_course_rating}/${tee.men_slope}`
+                        );
+                    }
+
+                    if (
+                        tee.women_course_rating !== null &&
+                        tee.women_course_rating !== undefined &&
+                        tee.women_slope !== null &&
+                        tee.women_slope !== undefined
+                    ) {
+                        ratingParts.push(
+                            `Women ${tee.women_course_rating}/${tee.women_slope}`
+                        );
+                    }
+
+                    return `
+                        <label class="scorecard-tee-card">
+                            <input
+                                type="checkbox"
+                                data-scorecard-tee-index="${index}"
+                                checked
+                            >
+
+                            <span>
+                                <strong>${escapeHtml(tee.name || tee.colour || `Tee ${index + 1}`)}</strong>
+
+                                <span>
+                                    ${
+                                        total
+                                            ? `${total.toLocaleString("en-GB")} yds`
+                                            : "Yardage incomplete"
+                                    }
+                                    ${
+                                        ratingParts.length
+                                            ? ` · ${escapeHtml(ratingParts.join(" · "))}`
+                                            : ""
+                                    }
+                                </span>
+                            </span>
+                        </label>
+                    `;
+                }).join("");
+        }
+
+        const warnings =
+            Array.isArray(extraction?.warnings)
+                ? extraction.warnings
+                    .filter(Boolean)
+                : [];
+
+        if (warnings.length) {
+            elements.scorecardWarnings.hidden = false;
+
+            elements.scorecardWarnings.innerHTML = `
+                <strong>Check these items</strong>
+                <ul>
+                    ${warnings.map(function (warning) {
+                        return `<li>${escapeHtml(warning)}</li>`;
+                    }).join("")}
+                </ul>
+            `;
+        } else {
+            elements.scorecardWarnings.hidden = true;
+            elements.scorecardWarnings.innerHTML = "";
+        }
+
+        elements.scorecardReviewTitle.textContent =
+            extraction?.course_name
+                ? `Scorecard recognised: ${extraction.course_name}`
+                : "Scorecard extracted";
+
+        elements.scorecardReviewMeta.textContent =
+            `${(extraction?.holes || []).length} hole rows · ${tees.length} tee rows`;
+
+        elements.scorecardUploadStep.hidden = true;
+        elements.scorecardReviewStep.hidden = false;
+    }
+
+    async function scanScorecardImage() {
+        if (!state.scorecardImageDataUrl) {
+            return;
+        }
+
+        elements.scorecardImportError.hidden = true;
+        elements.scanScorecardButton.disabled = true;
+        elements.scanScorecardButton.textContent =
+            "Scanning…";
+
+        try {
+            const client = getClient();
+
+            if (
+                !client.functions ||
+                typeof client.functions.invoke !==
+                    "function"
+            ) {
+                throw new Error(
+                    "Scorecard scanning is not available in this Paryx build."
+                );
+            }
+
+            const {
+                data,
+                error
+            } =
+                await client.functions.invoke(
+                    "scan-course-scorecard",
+                    {
+                        body: {
+                            clubId:
+                                state.clubId,
+                            courseId:
+                                state.selectedCourseId,
+                            courseName:
+                                state.config?.course?.name ||
+                                null,
+                            holeCount:
+                                Number(
+                                    state.config?.course?.holes ||
+                                    18
+                                ),
+                            imageDataUrl:
+                                state.scorecardImageDataUrl
+                        }
+                    }
+                );
+
+            if (error) {
+                throw error;
+            }
+
+            if (!data?.extraction) {
+                throw new Error(
+                    data?.error ||
+                    "Paryx could not extract scorecard data from this image."
+                );
+            }
+
+            state.scorecardExtraction =
+                data.extraction;
+
+            renderScorecardExtraction(
+                state.scorecardExtraction
+            );
+        } catch (error) {
+            console.error(
+                "Scorecard scan failed:",
+                error
+            );
+
+            elements.scorecardImportError.hidden =
+                false;
+
+            elements.scorecardImportError.textContent =
+                error?.message ||
+                "Scorecard scanning failed. Check the image and try again.";
+        } finally {
+            elements.scanScorecardButton.disabled = false;
+            elements.scanScorecardButton.textContent =
+                "Scan scorecard";
+        }
+    }
+
+    function mergeImportedHoleData(extraction) {
+        const current =
+            Array.isArray(state.config?.holes)
+                ? state.config.holes
+                : [];
+
+        const importedMap =
+            new Map(
+                (extraction?.holes || [])
+                    .map(function (hole) {
+                        return [
+                            Number(hole.hole_number),
+                            hole
+                        ];
+                    })
+            );
+
+        return current.map(function (hole) {
+            const imported =
+                importedMap.get(
+                    Number(hole.hole_number)
+                ) ||
+                {};
+
+            function importedOrCurrent(
+                importedValue,
+                currentValue
+            ) {
+                const parsed =
+                    scorecardNumber(
+                        importedValue
+                    );
+
+                return parsed === null
+                    ? currentValue ?? null
+                    : parsed;
+            }
+
+            return {
+                hole_number:
+                    Number(
+                        hole.hole_number
+                    ),
+
+                hole_name:
+                    hole.hole_name ||
+                    null,
+
+                men_par:
+                    importedOrCurrent(
+                        imported.men_par,
+                        hole.men_par
+                    ),
+
+                men_stroke_index:
+                    importedOrCurrent(
+                        imported.men_stroke_index,
+                        hole.men_stroke_index
+                    ),
+
+                women_par:
+                    importedOrCurrent(
+                        imported.women_par,
+                        hole.women_par
+                    ),
+
+                women_stroke_index:
+                    importedOrCurrent(
+                        imported.women_stroke_index,
+                        hole.women_stroke_index
+                    )
+            };
+        });
+    }
+
+    function teeMatchForImport(importedTee) {
+        const importedName =
+            normaliseTeeKey(
+                importedTee?.name
+            );
+
+        const importedColour =
+            normaliseTeeKey(
+                importedTee?.colour
+            );
+
+        return (
+            state.config?.tees ||
+            []
+        ).find(function (tee) {
+            const teeName =
+                normaliseTeeKey(
+                    tee.name
+                );
+
+            const teeColour =
+                normaliseTeeKey(
+                    tee.colour
+                );
+
+            return (
+                importedName &&
+                importedName === teeName
+            ) || (
+                importedColour &&
+                (
+                    importedColour === teeColour ||
+                    importedColour === teeName
+                )
+            );
+        }) || null;
+    }
+
+    function completeRating(
+        importedTee,
+        gender,
+        existingTee,
+        mergedHoles
+    ) {
+        const prefix =
+            gender === "women"
+                ? "women"
+                : "men";
+
+        const existing =
+            existingTee?.ratings?.[prefix] ||
+            null;
+
+        const importedPar =
+            scorecardNumber(
+                importedTee?.[
+                    `${prefix}_par`
+                ]
+            );
+
+        const importedRating =
+            scorecardNumber(
+                importedTee?.[
+                    `${prefix}_course_rating`
+                ]
+            );
+
+        const importedSlope =
+            scorecardNumber(
+                importedTee?.[
+                    `${prefix}_slope`
+                ]
+            );
+
+        const derivedPar =
+            completedParTotal(
+                mergedHoles.map(function (hole) {
+                    return hole[
+                        `${prefix}_par`
+                    ] ?? null;
+                })
+            );
+
+        const par =
+            importedPar ??
+            scorecardNumber(
+                existing?.par
+            ) ??
+            derivedPar;
+
+        const rating =
+            importedRating ??
+            scorecardNumber(
+                existing?.course_rating
+            );
+
+        const slope =
+            importedSlope ??
+            scorecardNumber(
+                existing?.slope_rating
+            );
+
+        if (
+            par !== null &&
+            rating !== null &&
+            slope !== null
+        ) {
+            return {
+                par,
+                rating,
+                slope
+            };
+        }
+
+        return {
+            par: null,
+            rating: null,
+            slope: null
+        };
+    }
+
+    function distancePayloadForImport(
+        importedTee,
+        existingTee
+    ) {
+        const holeCount =
+            Number(
+                state.config?.course?.holes ||
+                18
+            );
+
+        const importedMap =
+            new Map(
+                (importedTee?.yardages || [])
+                    .map(function (item) {
+                        return [
+                            Number(item.hole_number),
+                            scorecardNumber(
+                                item.yards
+                            )
+                        ];
+                    })
+            );
+
+        const existingMap =
+            new Map(
+                (existingTee?.distances || [])
+                    .map(function (item) {
+                        return [
+                            Number(item.hole_number),
+                            scorecardNumber(
+                                item.yards
+                            )
+                        ];
+                    })
+            );
+
+        return Array.from(
+            { length: holeCount },
+            function (_, index) {
+                const holeNumber =
+                    index + 1;
+
+                const imported =
+                    importedMap.has(
+                        holeNumber
+                    )
+                        ? importedMap.get(
+                            holeNumber
+                        )
+                        : null;
+
+                return {
+                    hole_number:
+                        holeNumber,
+
+                    yards:
+                        imported ??
+                        existingMap.get(
+                            holeNumber
+                        ) ??
+                        null
+                };
+            }
+        );
+    }
+
+    async function applyScorecardExtraction() {
+        const extraction =
+            state.scorecardExtraction;
+
+        if (!extraction) {
+            return;
+        }
+
+        elements.scorecardImportError.hidden = true;
+        elements.applyScorecardButton.disabled = true;
+        elements.applyScorecardButton.textContent =
+            "Applying…";
+
+        try {
+            const client = getClient();
+
+            const mergedHoles =
+                mergeImportedHoleData(
+                    extraction
+                );
+
+            const {
+                error: holeError
+            } =
+                await client.rpc(
+                    "admin_save_course_holes",
+                    {
+                        p_club_id:
+                            state.clubId,
+                        p_course_id:
+                            state.selectedCourseId,
+                        p_holes:
+                            mergedHoles
+                    }
+                );
+
+            if (holeError) {
+                throw holeError;
+            }
+
+            const selectedIndexes =
+                new Set(
+                    Array.from(
+                        elements.scorecardTeeReview
+                            .querySelectorAll(
+                                "[data-scorecard-tee-index]:checked"
+                            )
+                    ).map(function (input) {
+                        return Number(
+                            input.dataset.scorecardTeeIndex
+                        );
+                    })
+                );
+
+            const tees =
+                Array.isArray(
+                    extraction.tees
+                )
+                    ? extraction.tees
+                    : [];
+
+            for (
+                let index = 0;
+                index < tees.length;
+                index += 1
+            ) {
+                if (
+                    !selectedIndexes.has(
+                        index
+                    )
+                ) {
+                    continue;
+                }
+
+                const importedTee =
+                    tees[index];
+
+                const existingTee =
+                    teeMatchForImport(
+                        importedTee
+                    );
+
+                const men =
+                    completeRating(
+                        importedTee,
+                        "men",
+                        existingTee,
+                        mergedHoles
+                    );
+
+                const women =
+                    completeRating(
+                        importedTee,
+                        "women",
+                        existingTee,
+                        mergedHoles
+                    );
+
+                const teeName =
+                    String(
+                        importedTee.name ||
+                        importedTee.colour ||
+                        existingTee?.name ||
+                        `Tee ${index + 1}`
+                    ).trim();
+
+                const {
+                    data: teeData,
+                    error: teeError
+                } =
+                    await client.rpc(
+                        "admin_save_tee",
+                        {
+                            p_club_id:
+                                state.clubId,
+                            p_course_id:
+                                state.selectedCourseId,
+                            p_tee_id:
+                                existingTee?.id ||
+                                null,
+                            p_name:
+                                teeName,
+                            p_colour:
+                                String(
+                                    importedTee.colour ||
+                                    existingTee?.colour ||
+                                    ""
+                                ).trim() ||
+                                null,
+                            p_display_order:
+                                existingTee?.display_order ??
+                                index,
+                            p_is_active:
+                                existingTee?.is_active !==
+                                false,
+                            p_men_par:
+                                men.par,
+                            p_men_course_rating:
+                                men.rating,
+                            p_men_slope:
+                                men.slope,
+                            p_women_par:
+                                women.par,
+                            p_women_course_rating:
+                                women.rating,
+                            p_women_slope:
+                                women.slope
+                        }
+                    );
+
+                if (teeError) {
+                    throw teeError;
+                }
+
+                const teeId =
+                    Array.isArray(teeData)
+                        ? teeData[0]
+                        : teeData;
+
+                if (!teeId) {
+                    throw new Error(
+                        `Paryx could not save the ${teeName} tee.`
+                    );
+                }
+
+                const distances =
+                    distancePayloadForImport(
+                        importedTee,
+                        existingTee
+                    );
+
+                const {
+                    error: distanceError
+                } =
+                    await client.rpc(
+                        "admin_save_tee_distances",
+                        {
+                            p_club_id:
+                                state.clubId,
+                            p_course_id:
+                                state.selectedCourseId,
+                            p_tee_id:
+                                teeId,
+                            p_distances:
+                                distances
+                        }
+                    );
+
+                if (distanceError) {
+                    throw distanceError;
+                }
+            }
+
+            state.editingTeeId = null;
+
+            state.config =
+                await loadCourseConfiguration(
+                    state.selectedCourseId
+                );
+
+            await loadCourses();
+            renderCourseConfiguration();
+
+            closeScorecardImporter();
+
+            showSuccess(
+                "Scorecard data imported. Review the course and tee values before using them for play."
+            );
+        } catch (error) {
+            console.error(
+                "Scorecard import failed:",
+                error
+            );
+
+            elements.scorecardImportError.hidden =
+                false;
+
+            elements.scorecardImportError.textContent =
+                error?.message ||
+                "Scorecard data could not be applied.";
+        } finally {
+            elements.applyScorecardButton.disabled = false;
+            elements.applyScorecardButton.textContent =
+                "Apply to course";
+        }
+    }
+
     function bindEvents() {
         elements.addCourseButton.addEventListener(
             "click",
@@ -1247,6 +2268,48 @@
         elements.saveYardagesButton.addEventListener(
             "click",
             saveYardages
+        );
+
+        elements.scorecardImportButton.addEventListener(
+            "click",
+            openScorecardImporter
+        );
+
+        elements.scorecardImportClose.addEventListener(
+            "click",
+            closeScorecardImporter
+        );
+
+        elements.scorecardImageInput.addEventListener(
+            "change",
+            handleScorecardImageChange
+        );
+
+        elements.scanScorecardButton.addEventListener(
+            "click",
+            scanScorecardImage
+        );
+
+        elements.rescanScorecardButton.addEventListener(
+            "click",
+            resetScorecardImporter
+        );
+
+        elements.applyScorecardButton.addEventListener(
+            "click",
+            applyScorecardExtraction
+        );
+
+        elements.scorecardImportDialog.addEventListener(
+            "click",
+            function (event) {
+                if (
+                    event.target ===
+                    elements.scorecardImportDialog
+                ) {
+                    closeScorecardImporter();
+                }
+            }
         );
     }
 

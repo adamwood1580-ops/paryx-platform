@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="../styles/app-shell.css" />
     <link rel="stylesheet" href="../styles/components.css" />
     <link rel="stylesheet" href="../styles/staff-shell.css" />
-    <link rel="stylesheet" href="../styles/courses.css" />
+    <link rel="stylesheet" href="../styles/courses.css?v=0.4.1" />
 
     <link rel="manifest" href="../json/manifest.json" />
     <link rel="apple-touch-icon" href="../assets/paryx-apple-touch-icon.png" />
@@ -18,7 +18,7 @@
     <meta name="application-name" content="Paryx" />
     <title>Courses | Paryx</title>
 
-    <script src="../js/core/protected-loader.js?loader=4" defer></script>
+    <script src="../js/core/protected-loader.js?loader=5" defer></script>
 </head>
 <body data-page="courses">
     <div class="staff-shell">
@@ -192,13 +192,23 @@
                                         </p>
                                     </div>
 
-                                    <button
-                                        id="copyMenToWomenButton"
-                                        class="courses-button courses-button--secondary courses-button--compact"
-                                        type="button"
-                                    >
-                                        Copy men → women
-                                    </button>
+                                    <div class="courses-header-actions">
+                                        <button
+                                            id="scorecardImportButton"
+                                            class="courses-button courses-button--secondary courses-button--compact"
+                                            type="button"
+                                        >
+                                            Scan scorecard
+                                        </button>
+
+                                        <button
+                                            id="copyMenToWomenButton"
+                                            class="courses-button courses-button--secondary courses-button--compact"
+                                            type="button"
+                                        >
+                                            Copy men → women
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div class="course-hole-table-wrap">
@@ -321,7 +331,7 @@
                                                 <fieldset class="tee-rating-card">
                                                     <legend>Men's WHS rating</legend>
 
-                                                    <div class="courses-grid courses-grid--three">
+                                                    <div class="tee-rating-fields">
                                                         <label class="courses-field">
                                                             <span>Par</span>
                                                             <input
@@ -360,7 +370,7 @@
                                                 <fieldset class="tee-rating-card">
                                                     <legend>Women's WHS rating</legend>
 
-                                                    <div class="courses-grid courses-grid--three">
+                                                    <div class="tee-rating-fields">
                                                         <label class="courses-field">
                                                             <span>Par</span>
                                                             <input
@@ -442,5 +452,166 @@
             </main>
         </div>
     </div>
+
+    <dialog
+        id="scorecardImportDialog"
+        class="scorecard-import-dialog"
+    >
+        <div class="scorecard-import">
+            <header class="scorecard-import__header">
+                <div>
+                    <span class="courses-card__eyebrow">
+                        Smart setup
+                    </span>
+
+                    <h2>Import scorecard image</h2>
+
+                    <p>
+                        Photograph or upload the printed scorecard.
+                        Paryx will extract the hole, tee and WHS data for review before anything is saved.
+                    </p>
+                </div>
+
+                <button
+                    id="scorecardImportClose"
+                    class="scorecard-import__close"
+                    type="button"
+                    aria-label="Close scorecard importer"
+                >
+                    ×
+                </button>
+            </header>
+
+            <div
+                id="scorecardImportError"
+                class="admin-error"
+                role="alert"
+                hidden
+            ></div>
+
+            <section
+                id="scorecardUploadStep"
+                class="scorecard-import__upload"
+            >
+                <label class="scorecard-dropzone" for="scorecardImageInput">
+                    <input
+                        id="scorecardImageInput"
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        capture="environment"
+                    >
+
+                    <strong>Choose or photograph a scorecard</strong>
+                    <span>JPEG, PNG or WebP · Paryx reduces large images before scanning.</span>
+                </label>
+
+                <div
+                    id="scorecardPreviewWrap"
+                    class="scorecard-image-preview"
+                    hidden
+                >
+                    <img
+                        id="scorecardPreview"
+                        alt="Selected scorecard preview"
+                    >
+                </div>
+
+                <div class="courses-actions">
+                    <button
+                        id="scanScorecardButton"
+                        class="courses-button"
+                        type="button"
+                        disabled
+                    >
+                        Scan scorecard
+                    </button>
+                </div>
+
+                <p class="scorecard-import__privacy">
+                    The image is sent securely to Paryx's configured image-analysis service only for extraction.
+                    Always review the result before applying it.
+                </p>
+            </section>
+
+            <section
+                id="scorecardReviewStep"
+                class="scorecard-import__review"
+                hidden
+            >
+                <div class="scorecard-review-summary">
+                    <div>
+                        <strong id="scorecardReviewTitle">
+                            Scorecard extracted
+                        </strong>
+
+                        <span id="scorecardReviewMeta"></span>
+                    </div>
+
+                    <button
+                        id="rescanScorecardButton"
+                        class="courses-button courses-button--secondary courses-button--compact"
+                        type="button"
+                    >
+                        Use another image
+                    </button>
+                </div>
+
+                <div
+                    id="scorecardWarnings"
+                    class="scorecard-import__warnings"
+                    hidden
+                ></div>
+
+                <div class="scorecard-review-grid">
+                    <section class="scorecard-review-panel">
+                        <h3>Hole data</h3>
+
+                        <div class="course-hole-table-wrap">
+                            <table class="course-hole-table scorecard-review-table">
+                                <thead>
+                                    <tr>
+                                        <th>Hole</th>
+                                        <th>Men par</th>
+                                        <th>Men SI</th>
+                                        <th>Women par</th>
+                                        <th>Women SI</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="scorecardHoleReview"></tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    <section class="scorecard-review-panel">
+                        <h3>Tees found</h3>
+
+                        <div
+                            id="scorecardTeeReview"
+                            class="scorecard-tee-review"
+                        ></div>
+                    </section>
+                </div>
+
+                <div class="scorecard-import__apply">
+                    <div>
+                        <strong>Review first</strong>
+                        <span>
+                            Applying will merge recognised values into the selected course.
+                            Blank/unreadable fields will not overwrite existing data.
+                        </span>
+                    </div>
+
+                    <button
+                        id="applyScorecardButton"
+                        class="courses-button"
+                        type="button"
+                    >
+                        Apply to course
+                    </button>
+                </div>
+            </section>
+        </div>
+    </dialog>
+
 </body>
 </html>
