@@ -2,7 +2,8 @@
     "use strict";
 
     const state = {
-        rows: []
+        rows: [],
+        isOwner: false
     };
 
     const search =
@@ -110,16 +111,34 @@
                         <td>${Number(row.course_count || 0)}</td>
                         <td>${Number(row.upcoming_event_count || 0)}</td>
                         <td>
-                            <button
-                                class="console-button ${active ? "console-button--danger" : ""}"
-                                type="button"
-                                data-club-action
-                                data-club-id="${escapeHtml(row.club_id)}"
-                                data-club-name="${escapeHtml(row.club_name)}"
-                                data-active="${active ? "true" : "false"}"
-                            >
-                                ${active ? "Suspend" : "Reactivate"}
-                            </button>
+                            <div class="console-actions">
+                                <button
+                                    class="console-button ${active ? "console-button--danger" : ""}"
+                                    type="button"
+                                    data-club-action
+                                    data-club-id="${escapeHtml(row.club_id)}"
+                                    data-club-name="${escapeHtml(row.club_name)}"
+                                    data-active="${active ? "true" : "false"}"
+                                >
+                                    ${active ? "Suspend" : "Reactivate"}
+                                </button>
+
+                                ${
+                                    state.isOwner
+                                        ? `
+                                            <button
+                                                class="console-button console-button--secondary console-delete-link"
+                                                type="button"
+                                                data-club-delete
+                                                data-club-id="${escapeHtml(row.club_id)}"
+                                                data-club-name="${escapeHtml(row.club_name)}"
+                                            >
+                                                Delete
+                                            </button>
+                                        `
+                                        : ""
+                                }
+                            </div>
                         </td>
                     </tr>
                 `;
@@ -226,16 +245,105 @@
         }
     }
 
+    async function deleteClub(button) {
+        const clubId =
+            button.dataset.clubId;
+
+        const clubName =
+            button.dataset.clubName;
+
+        if (!clubId || !clubName) {
+            return;
+        }
+
+        const firstConfirmed =
+            window.confirm(
+                `Permanently delete ${clubName}?\\n\\nThis removes the tenant and its club-owned data. This cannot be undone.`
+            );
+
+        if (!firstConfirmed) {
+            return;
+        }
+
+        const typed =
+            window.prompt(
+                `Type the club name exactly to confirm deletion:\\n\\n${clubName}`
+            );
+
+        if (typed !== clubName) {
+            if (typed !== null) {
+                showMessage(
+                    errorBox,
+                    "Club name did not match. Nothing was deleted."
+                );
+            }
+
+            return;
+        }
+
+        button.disabled = true;
+        clearMessages();
+
+        try {
+            const {
+                error
+            } =
+                await window.supabaseClient.rpc(
+                    "platform_delete_club",
+                    {
+                        p_club_id:
+                            clubId,
+                        p_confirmation:
+                            typed
+                    }
+                );
+
+            if (error) {
+                throw error;
+            }
+
+            showMessage(
+                successBox,
+                `${clubName} was permanently deleted.`
+            );
+
+            await loadClubs();
+        } catch (error) {
+            console.error(
+                "Club deletion failed:",
+                error
+            );
+
+            showMessage(
+                errorBox,
+                error?.message ||
+                "The club could not be deleted."
+            );
+        } finally {
+            button.disabled = false;
+        }
+    }
+
     tableBody.addEventListener(
         "click",
         function (event) {
-            const button =
+            const statusButton =
                 event.target.closest(
                     "[data-club-action]"
                 );
 
-            if (button) {
-                changeClubState(button);
+            if (statusButton) {
+                changeClubState(statusButton);
+                return;
+            }
+
+            const deleteButton =
+                event.target.closest(
+                    "[data-club-delete]"
+                );
+
+            if (deleteButton) {
+                deleteClub(deleteButton);
             }
         }
     );
@@ -370,7 +478,13 @@
     );
 
     window.ParyxConsole.ready
-        .then(loadClubs)
+        .then(function (context) {
+            state.isOwner =
+                context?.access?.role ===
+                "platform_owner";
+
+            return loadClubs();
+        })
         .catch(function (error) {
             showMessage(
                 errorBox,

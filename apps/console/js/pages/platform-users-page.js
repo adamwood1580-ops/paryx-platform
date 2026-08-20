@@ -58,7 +58,7 @@
         if (!rows.length) {
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="5">
+                    <td colspan="6">
                         <div class="console-empty">
                             No platform users configured.
                         </div>
@@ -84,6 +84,23 @@
                         </td>
                         <td>${new Date(row.created_at).toLocaleDateString("en-GB")}</td>
                         <td>${new Date(row.updated_at).toLocaleDateString("en-GB")}</td>
+                        <td>
+                            ${
+                                row.user_id !== window.ParyxConsole?.context?.user?.id
+                                    ? `
+                                        <button
+                                            class="console-button console-button--secondary console-delete-link"
+                                            type="button"
+                                            data-platform-user-remove
+                                            data-user-id="${escapeHtml(row.user_id)}"
+                                            data-user-email="${escapeHtml(row.email)}"
+                                        >
+                                            Remove access
+                                        </button>
+                                    `
+                                    : "<small>Current account</small>"
+                            }
+                        </td>
                     </tr>
                 `;
             }).join("");
@@ -109,6 +126,67 @@
         );
     }
 
+    async function removePlatformAccess(button) {
+        const userId =
+            button.dataset.userId;
+
+        const email =
+            button.dataset.userEmail ||
+            "this account";
+
+        if (!userId) {
+            return;
+        }
+
+        if (
+            !window.confirm(
+                `Remove Paryx Console access from ${email}?\\n\\nThis does not delete the person's normal Paryx account or club memberships.`
+            )
+        ) {
+            return;
+        }
+
+        clear();
+        button.disabled = true;
+
+        try {
+            const {
+                error
+            } =
+                await window.supabaseClient.rpc(
+                    "platform_remove_user_access",
+                    {
+                        p_user_id:
+                            userId
+                    }
+                );
+
+            if (error) {
+                throw error;
+            }
+
+            show(
+                successBox,
+                `Paryx Console access removed from ${email}.`
+            );
+
+            await loadUsers();
+        } catch (error) {
+            console.error(
+                "Platform access removal failed:",
+                error
+            );
+
+            show(
+                errorBox,
+                error?.message ||
+                "Platform access could not be removed."
+            );
+        } finally {
+            button.disabled = false;
+        }
+    }
+
     async function initialise() {
         const context =
             await window.ParyxConsole.ready;
@@ -129,6 +207,20 @@
 
         await loadUsers();
     }
+
+    tableBody.addEventListener(
+        "click",
+        function (event) {
+            const button =
+                event.target.closest(
+                    "[data-platform-user-remove]"
+                );
+
+            if (button) {
+                removePlatformAccess(button);
+            }
+        }
+    );
 
     form.addEventListener(
         "submit",

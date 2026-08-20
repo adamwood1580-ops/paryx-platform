@@ -510,3 +510,20 @@ body {
         grid-template-columns: 1fr;
     }
 }
+
+
+.console-sidebar__note {
+    color: rgba(255,255,255,.48);
+    font-size: .76rem;
+}
+
+
+.console-delete-link {
+    color: #8D3434;
+    border-color: #E7BABA;
+}
+
+.console-delete-link:hover {
+    color: #7A2929;
+    background: #FFF2F2;
+}

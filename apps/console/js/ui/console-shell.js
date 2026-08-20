@@ -91,10 +91,20 @@
                     </span>
 
                     <a
+                        id="consoleClubWorkspaceLink"
                         href="../../club/html/dashboard.html"
+                        hidden
                     >
                         Club workspace
                     </a>
+
+                    <span
+                        id="consolePlatformOnlyNote"
+                        class="console-sidebar__note"
+                        hidden
+                    >
+                        Platform-only account
+                    </span>
 
                     <button
                         id="consoleSignOut"
@@ -145,6 +155,54 @@
             );
     }
 
+    async function hydrateClubWorkspaceLink() {
+        const link =
+            document.getElementById(
+                "consoleClubWorkspaceLink"
+            );
+
+        const note =
+            document.getElementById(
+                "consolePlatformOnlyNote"
+            );
+
+        if (!link || !note) {
+            return;
+        }
+
+        try {
+            const {
+                data,
+                error
+            } =
+                await window.supabaseClient.rpc(
+                    "get_my_staff_clubs"
+                );
+
+            if (error) {
+                note.hidden = false;
+                return;
+            }
+
+            const clubs =
+                Array.isArray(data)
+                    ? data
+                    : [];
+
+            if (clubs.length > 0) {
+                link.hidden = false;
+                note.hidden = true;
+                return;
+            }
+
+            link.hidden = true;
+            note.hidden = false;
+        } catch (error) {
+            link.hidden = true;
+            note.hidden = false;
+        }
+    }
+
     async function hydrate() {
         const context =
             await window.ParyxConsole.ready;
@@ -190,6 +248,8 @@
     }
 
     render();
+
+    hydrateClubWorkspaceLink();
 
     hydrate().catch(function (error) {
         console.error(

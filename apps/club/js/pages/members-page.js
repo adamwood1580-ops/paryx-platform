@@ -256,6 +256,21 @@
         return null;
     }
 
+    function canRemoveMember(member) {
+        const isSelf =
+            member.profile_id === state.currentUserId;
+
+        if (isSelf) {
+            return false;
+        }
+
+        if (state.adminRole !== "club_admin") {
+            return false;
+        }
+
+        return true;
+    }
+
     function renderMemberCard(member) {
         const action =
             getMemberAction(member);
@@ -319,18 +334,40 @@
                 </div>
 
                 ${
-                    action
+                    action || canRemoveMember(member)
                         ? `
                             <div class="admin-member-card__actions">
-                                <button
-                                    class="admin-member-action ${action.danger ? "admin-member-action--danger" : ""}"
-                                    type="button"
-                                    data-member-status-action="${escapeHtml(action.nextStatus)}"
-                                    data-membership-id="${escapeHtml(member.membership_id)}"
-                                    data-member-name="${escapeHtml(memberName(member))}"
-                                >
-                                    ${escapeHtml(action.label)}
-                                </button>
+                                ${
+                                    action
+                                        ? `
+                                            <button
+                                                class="admin-member-action ${action.danger ? "admin-member-action--danger" : ""}"
+                                                type="button"
+                                                data-member-status-action="${escapeHtml(action.nextStatus)}"
+                                                data-membership-id="${escapeHtml(member.membership_id)}"
+                                                data-member-name="${escapeHtml(memberName(member))}"
+                                            >
+                                                ${escapeHtml(action.label)}
+                                            </button>
+                                        `
+                                        : ""
+                                }
+
+                                ${
+                                    canRemoveMember(member)
+                                        ? `
+                                            <button
+                                                class="admin-member-action admin-member-action--remove"
+                                                type="button"
+                                                data-member-remove
+                                                data-membership-id="${escapeHtml(member.membership_id)}"
+                                                data-member-name="${escapeHtml(memberName(member))}"
+                                            >
+                                                Remove from club
+                                            </button>
+                                        `
+                                        : ""
+                                }
                             </div>
                         `
                         : ""
@@ -381,6 +418,15 @@
                 button.addEventListener(
                     "click",
                     handleStatusAction
+                );
+            });
+
+        document
+            .querySelectorAll("[data-member-remove]")
+            .forEach(function (button) {
+                button.addEventListener(
+                    "click",
+                    handleRemoveMember
                 );
             });
     }
@@ -513,6 +559,63 @@
                         nextStatus
                 }
             );
+
+            if (error) {
+                throw error;
+            }
+
+            await loadMembers({
+                reset: true
+            });
+        } catch (error) {
+            showError(error);
+            button.disabled = false;
+        }
+    }
+
+    async function handleRemoveMember(event) {
+        const button =
+            event.currentTarget;
+
+        const membershipId =
+            button.dataset.membershipId;
+
+        const memberNameValue =
+            button.dataset.memberName ||
+            "this member";
+
+        if (!membershipId) {
+            return;
+        }
+
+        const confirmed =
+            window.confirm(
+                `Remove ${memberNameValue} from this club?\\n\\nTheir membership at this club will be deleted. Their Paryx login account is not deleted.`
+            );
+
+        if (!confirmed) {
+            return;
+        }
+
+        button.disabled = true;
+        clearError();
+
+        try {
+            const client =
+                getClient();
+
+            const {
+                error
+            } =
+                await client.rpc(
+                    "admin_remove_member",
+                    {
+                        p_club_id:
+                            state.clubId,
+                        p_membership_id:
+                            membershipId
+                    }
+                );
 
             if (error) {
                 throw error;

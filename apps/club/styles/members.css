@@ -245,3 +245,20 @@
         grid-template-columns: repeat(4, minmax(0, 1fr));
     }
 }
+
+
+.admin-member-card__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .55rem;
+}
+
+.admin-member-action--remove {
+    color: #8D3434;
+    background: #fff;
+    border: 1px solid #E7BABA;
+}
+
+.admin-member-action--remove:hover {
+    background: #FFF2F2;
+}
