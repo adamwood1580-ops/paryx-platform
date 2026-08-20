@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en" class="auth-protected">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#064831" />
+
+    <link rel="stylesheet" href="../styles/tokens.css" />
+    <link rel="stylesheet" href="../styles/app-shell.css" />
+    <link rel="stylesheet" href="../styles/components.css" />
+    <link rel="stylesheet" href="../styles/staff-shell.css" />
+    <link rel="stylesheet" href="../styles/courses.css" />
+
+    <link rel="manifest" href="../json/manifest.json" />
+    <link rel="apple-touch-icon" href="../assets/paryx-apple-touch-icon.png" />
+    <link rel="icon" type="image/png" href="../assets/paryx-favicon.png" />
+
+    <meta name="application-name" content="Paryx" />
+    <title>Courses | Paryx</title>
+
+    <script src="../js/core/protected-loader.js?loader=4" defer></script>
+</head>
+<body data-page="courses">
+    <div class="staff-shell">
+        <aside class="staff-sidebar" data-staff-sidebar></aside>
+
+        <div class="staff-workspace">
+            <header class="staff-topbar" data-staff-header></header>
+
+            <main class="app-main courses-page">
+                <section class="courses-intro">
+                    <div>
+                        <p class="page-heading__eyebrow">
+                            Course configuration
+                        </p>
+
+                        <h1 class="courses-intro__title">
+                            Courses
+                        </h1>
+
+                        <p
+                            id="coursesClubName"
+                            class="courses-intro__subtitle"
+                        >
+                            Loading club courses...
+                        </p>
+                    </div>
+
+                    <span
+                        id="coursesRoleBadge"
+                        class="courses-role-badge"
+                    >
+                        Checking access
+                    </span>
+                </section>
+
+                <section
+                    id="coursesError"
+                    class="admin-error"
+                    role="alert"
+                    hidden
+                ></section>
+
+                <section
+                    id="coursesSuccess"
+                    class="courses-success"
+                    role="status"
+                    hidden
+                ></section>
+
+                <div class="courses-layout">
+                    <aside class="courses-directory">
+                        <div class="courses-directory__header">
+                            <div>
+                                <span class="courses-card__eyebrow">
+                                    Club courses
+                                </span>
+                                <h2>Directory</h2>
+                            </div>
+
+                            <button
+                                id="addCourseButton"
+                                class="courses-button courses-button--compact"
+                                type="button"
+                            >
+                                + Add course
+                            </button>
+                        </div>
+
+                        <div
+                            id="courseList"
+                            class="course-list"
+                        >
+                            <div class="courses-empty">
+                                Loading courses...
+                            </div>
+                        </div>
+                    </aside>
+
+                    <section class="courses-editor">
+                        <div
+                            id="courseEmptyState"
+                            class="courses-card courses-empty-state"
+                        >
+                            <span class="courses-card__eyebrow">
+                                Course data
+                            </span>
+                            <h2>Select a course</h2>
+                            <p>
+                                Choose a course from the directory or create a new one.
+                            </p>
+                        </div>
+
+                        <div id="courseEditor" hidden>
+                            <section class="courses-card">
+                                <div class="courses-card__header">
+                                    <div>
+                                        <span class="courses-card__eyebrow">
+                                            General
+                                        </span>
+                                        <h2 id="courseEditorTitle">
+                                            Course details
+                                        </h2>
+                                    </div>
+
+                                    <span
+                                        id="courseDefaultBadge"
+                                        class="course-default-badge"
+                                        hidden
+                                    >
+                                        Default course
+                                    </span>
+                                </div>
+
+                                <form id="courseForm">
+                                    <div class="courses-grid courses-grid--three">
+                                        <label class="courses-field courses-field--wide">
+                                            <span>Course name</span>
+                                            <input
+                                                id="courseName"
+                                                type="text"
+                                                maxlength="140"
+                                                required
+                                            >
+                                        </label>
+
+                                        <label class="courses-field">
+                                            <span>Number of holes</span>
+                                            <select id="courseHoles">
+                                                <option value="18">18 holes</option>
+                                                <option value="9">9 holes</option>
+                                            </select>
+                                        </label>
+
+                                        <label class="courses-check-field">
+                                            <input
+                                                id="courseActive"
+                                                type="checkbox"
+                                                checked
+                                            >
+                                            <span>
+                                                Active course
+                                                <small>Available to the club and member app.</small>
+                                            </span>
+                                        </label>
+                                    </div>
+
+                                    <div class="courses-actions">
+                                        <button
+                                            id="saveCourseButton"
+                                            class="courses-button"
+                                            type="submit"
+                                        >
+                                            Save course
+                                        </button>
+                                    </div>
+                                </form>
+                            </section>
+
+                            <section
+                                id="holeDataSection"
+                                class="courses-card"
+                            >
+                                <div class="courses-card__header courses-card__header--wrap">
+                                    <div>
+                                        <span class="courses-card__eyebrow">
+                                            Scorecard
+                                        </span>
+                                        <h2>Hole par & stroke index</h2>
+                                        <p id="holeParSummary">
+                                            Enter the men's and women's scorecard data.
+                                        </p>
+                                    </div>
+
+                                    <button
+                                        id="copyMenToWomenButton"
+                                        class="courses-button courses-button--secondary courses-button--compact"
+                                        type="button"
+                                    >
+                                        Copy men → women
+                                    </button>
+                                </div>
+
+                                <div class="course-hole-table-wrap">
+                                    <table class="course-hole-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Hole</th>
+                                                <th>Men par</th>
+                                                <th>Men SI</th>
+                                                <th>Women par</th>
+                                                <th>Women SI</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="holeTableBody"></tbody>
+                                    </table>
+                                </div>
+
+                                <div class="courses-actions">
+                                    <button
+                                        id="saveHolesButton"
+                                        class="courses-button"
+                                        type="button"
+                                    >
+                                        Save hole data
+                                    </button>
+                                </div>
+                            </section>
+
+                            <section
+                                id="teesSection"
+                                class="courses-card"
+                            >
+                                <div class="courses-card__header courses-card__header--wrap">
+                                    <div>
+                                        <span class="courses-card__eyebrow">
+                                            Tee sets
+                                        </span>
+                                        <h2>Tees & WHS ratings</h2>
+                                        <p>
+                                            Add physical tees, ratings and hole-by-hole yardages.
+                                        </p>
+                                    </div>
+
+                                    <button
+                                        id="addTeeButton"
+                                        class="courses-button courses-button--compact"
+                                        type="button"
+                                    >
+                                        + Add tee
+                                    </button>
+                                </div>
+
+                                <div class="tee-layout">
+                                    <div
+                                        id="teeList"
+                                        class="tee-list"
+                                    ></div>
+
+                                    <div
+                                        id="teeEditorEmpty"
+                                        class="tee-editor-empty"
+                                    >
+                                        Select a tee or add a new one.
+                                    </div>
+
+                                    <div
+                                        id="teeEditor"
+                                        class="tee-editor"
+                                        hidden
+                                    >
+                                        <form id="teeForm">
+                                            <div class="courses-grid courses-grid--three">
+                                                <label class="courses-field">
+                                                    <span>Tee name</span>
+                                                    <input
+                                                        id="teeName"
+                                                        type="text"
+                                                        maxlength="80"
+                                                        placeholder="White"
+                                                        required
+                                                    >
+                                                </label>
+
+                                                <label class="courses-field">
+                                                    <span>Colour / label</span>
+                                                    <input
+                                                        id="teeColour"
+                                                        type="text"
+                                                        maxlength="80"
+                                                        placeholder="White"
+                                                    >
+                                                </label>
+
+                                                <label class="courses-field">
+                                                    <span>Display order</span>
+                                                    <input
+                                                        id="teeDisplayOrder"
+                                                        type="number"
+                                                        min="0"
+                                                        max="99"
+                                                        step="1"
+                                                        value="0"
+                                                    >
+                                                </label>
+                                            </div>
+
+                                            <label class="courses-check-field courses-check-field--inline">
+                                                <input
+                                                    id="teeActive"
+                                                    type="checkbox"
+                                                    checked
+                                                >
+                                                <span>
+                                                    Active tee
+                                                    <small>Inactive tees remain stored but are hidden from normal play.</small>
+                                                </span>
+                                            </label>
+
+                                            <div class="tee-ratings-grid">
+                                                <fieldset class="tee-rating-card">
+                                                    <legend>Men's WHS rating</legend>
+
+                                                    <div class="courses-grid courses-grid--three">
+                                                        <label class="courses-field">
+                                                            <span>Par</span>
+                                                            <input
+                                                                id="teeMenPar"
+                                                                type="number"
+                                                                min="27"
+                                                                max="90"
+                                                                step="1"
+                                                            >
+                                                        </label>
+
+                                                        <label class="courses-field">
+                                                            <span>Course rating</span>
+                                                            <input
+                                                                id="teeMenCourseRating"
+                                                                type="number"
+                                                                min="20"
+                                                                max="100"
+                                                                step="0.1"
+                                                            >
+                                                        </label>
+
+                                                        <label class="courses-field">
+                                                            <span>Slope</span>
+                                                            <input
+                                                                id="teeMenSlope"
+                                                                type="number"
+                                                                min="55"
+                                                                max="155"
+                                                                step="1"
+                                                            >
+                                                        </label>
+                                                    </div>
+                                                </fieldset>
+
+                                                <fieldset class="tee-rating-card">
+                                                    <legend>Women's WHS rating</legend>
+
+                                                    <div class="courses-grid courses-grid--three">
+                                                        <label class="courses-field">
+                                                            <span>Par</span>
+                                                            <input
+                                                                id="teeWomenPar"
+                                                                type="number"
+                                                                min="27"
+                                                                max="90"
+                                                                step="1"
+                                                            >
+                                                        </label>
+
+                                                        <label class="courses-field">
+                                                            <span>Course rating</span>
+                                                            <input
+                                                                id="teeWomenCourseRating"
+                                                                type="number"
+                                                                min="20"
+                                                                max="100"
+                                                                step="0.1"
+                                                            >
+                                                        </label>
+
+                                                        <label class="courses-field">
+                                                            <span>Slope</span>
+                                                            <input
+                                                                id="teeWomenSlope"
+                                                                type="number"
+                                                                min="55"
+                                                                max="155"
+                                                                step="1"
+                                                            >
+                                                        </label>
+                                                    </div>
+                                                </fieldset>
+                                            </div>
+
+                                            <div class="courses-actions">
+                                                <button
+                                                    id="saveTeeButton"
+                                                    class="courses-button"
+                                                    type="submit"
+                                                >
+                                                    Save tee & ratings
+                                                </button>
+                                            </div>
+                                        </form>
+
+                                        <section
+                                            id="yardageSection"
+                                            class="tee-yardage-section"
+                                        >
+                                            <div class="tee-yardage-section__header">
+                                                <div>
+                                                    <h3>Hole yardages</h3>
+                                                    <p id="teeYardageSummary">
+                                                        Enter yardage for each hole.
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div class="tee-yardage-grid" id="teeYardageGrid"></div>
+
+                                            <div class="courses-actions">
+                                                <button
+                                                    id="saveYardagesButton"
+                                                    class="courses-button"
+                                                    type="button"
+                                                >
+                                                    Save yardages
+                                                </button>
+                                            </div>
+                                        </section>
+                                    </div>
+                                </div>
+                            </section>
+                        </div>
+                    </section>
+                </div>
+            </main>
+        </div>
+    </div>
+</body>
+</html>

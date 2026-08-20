@@ -8,7 +8,7 @@
         { key: "teesheet", label: "Tee Sheet", href: null },
         { key: "members", label: "Members", href: "members.html" },
         { key: "competitions", label: "Competitions", href: null },
-        { key: "courses", label: "Courses", href: null },
+        { key: "courses", label: "Courses", href: "courses.html" },
         { key: "communications", label: "Communications", href: null },
         { key: "reports", label: "Reports", href: null },
         { key: "settings", label: "Settings", href: "settings.html" }
@@ -415,6 +415,8 @@
     }
 
     renderShell();
+
+    hydratePlatformConsoleLink();
 
     window.addEventListener(
         "paryx:club-changed",

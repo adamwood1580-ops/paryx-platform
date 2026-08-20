@@ -17,7 +17,8 @@
         dashboard: ["../js/pages/dashboard-page.js"],
         members: ["../js/pages/members-page.js"],
         importmembers: ["../js/pages/import-members-page.js"],
-        settings: ["../js/pages/settings-page.js"]
+        settings: ["../js/pages/settings-page.js"],
+        courses: ["../js/pages/courses-page.js"]
     };
 
     function pageName() {
