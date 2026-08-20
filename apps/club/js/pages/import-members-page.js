@@ -1077,37 +1077,42 @@
         );
     }
 
-    async function loadAdminContext(context) {
-        const client = getClient();
-
-        const {
-            data,
-            error
-        } = await client.rpc(
-            "get_admin_dashboard"
-        );
-
-        if (error) {
-            throw error;
+    async function loadAdminContext() {
+        if (!window.Paryx.clubContext) {
+            throw new Error(
+                "Paryx club context is unavailable."
+            );
         }
 
-        const dashboard =
-            Array.isArray(data)
-                ? data[0]
-                : data;
+        const clubContext =
+            await window.Paryx
+                .clubContext
+                .ready;
 
-        if (!dashboard?.club_id) {
+        const activeClub =
+            clubContext?.activeClub ||
+            window.Paryx
+                .clubContext
+                .getActiveClub();
+
+        if (
+            !activeClub?.id ||
+            !window.Paryx
+                .clubContext
+                .isAdminRole(
+                    activeClub.role
+                )
+        ) {
             throw new Error(
                 "Admin access required."
             );
         }
 
         state.clubId =
-            dashboard.club_id;
+            activeClub.id;
 
         elements.clubName.textContent =
-            dashboard.club_name ||
-            context?.profile?.club?.name ||
+            activeClub.name ||
             "Your club";
     }
 
@@ -1130,7 +1135,7 @@
             const context =
                 await window.Paryx.ready;
 
-            await loadAdminContext(context);
+            await loadAdminContext();
         } catch (error) {
             const message =
                 getReadableError(error)
@@ -1139,6 +1144,9 @@
             if (
                 message.includes(
                     "admin access required"
+                ) ||
+                message.includes(
+                    "staff club access required"
                 )
             ) {
                 window.location.replace(

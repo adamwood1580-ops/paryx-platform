@@ -71,7 +71,8 @@
         return (
             message.includes("admin access required") ||
             message.includes("not authorised for admin") ||
-            message.includes("not authorized for admin")
+            message.includes("not authorized for admin") ||
+            message.includes("staff club access required")
         );
     }
 
@@ -240,14 +241,24 @@
         }
     }
 
-    async function loadDashboard() {
+    async function loadDashboard(clubId) {
+        if (!clubId) {
+            throw new Error(
+                "Staff club access required."
+            );
+        }
+
         const client = getClient();
 
         const {
             data,
             error
         } = await client.rpc(
-            "get_admin_dashboard"
+            "get_admin_dashboard",
+            {
+                p_club_id:
+                    clubId
+            }
         );
 
         if (error) {
@@ -282,8 +293,27 @@
 
             await window.Paryx.ready;
 
+            if (!window.Paryx.clubContext) {
+                throw new Error(
+                    "Paryx club context is unavailable."
+                );
+            }
+
+            const clubContext =
+                await window.Paryx
+                    .clubContext
+                    .ready;
+
+            const activeClub =
+                clubContext?.activeClub ||
+                window.Paryx
+                    .clubContext
+                    .getActiveClub();
+
             const dashboard =
-                await loadDashboard();
+                await loadDashboard(
+                    activeClub?.id
+                );
 
             renderDashboard(dashboard);
         } catch (error) {

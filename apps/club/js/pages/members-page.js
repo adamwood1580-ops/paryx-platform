@@ -38,6 +38,7 @@
         status: "all",
         members: [],
         currentUserId: null,
+        clubId: null,
         adminRole: null,
         debounceTimer: null
     };
@@ -410,6 +411,8 @@
             } = await client.rpc(
                 "get_admin_members",
                 {
+                    p_club_id:
+                        state.clubId,
                     p_search:
                         state.search || null,
                     p_status:
@@ -502,6 +505,8 @@
             } = await client.rpc(
                 "admin_set_member_status",
                 {
+                    p_club_id:
+                        state.clubId,
                     p_membership_id:
                         membershipId,
                     p_status:
@@ -577,36 +582,45 @@
     }
 
     async function loadAdminContext() {
-        const client = getClient();
-
-        const {
-            data,
-            error
-        } = await client.rpc(
-            "get_admin_dashboard"
-        );
-
-        if (error) {
-            throw error;
+        if (!window.Paryx.clubContext) {
+            throw new Error(
+                "Paryx club context is unavailable."
+            );
         }
 
-        const dashboard =
-            Array.isArray(data)
-                ? data[0]
-                : data;
+        const clubContext =
+            await window.Paryx
+                .clubContext
+                .ready;
 
-        if (!dashboard) {
+        const activeClub =
+            clubContext?.activeClub ||
+            window.Paryx
+                .clubContext
+                .getActiveClub();
+
+        if (
+            !activeClub?.id ||
+            !window.Paryx
+                .clubContext
+                .isAdminRole(
+                    activeClub.role
+                )
+        ) {
             throw new Error(
                 "Admin access required."
             );
         }
 
+        state.clubId =
+            activeClub.id;
+
         state.adminRole =
-            dashboard.admin_role;
+            activeClub.role;
 
         if (elements.clubName) {
             elements.clubName.textContent =
-                dashboard.club_name ||
+                activeClub.name ||
                 "Your club";
         }
     }
@@ -647,6 +661,9 @@
             if (
                 message.includes(
                     "admin access required"
+                ) ||
+                message.includes(
+                    "staff club access required"
                 )
             ) {
                 window.location.replace(
