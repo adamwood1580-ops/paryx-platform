@@ -1187,13 +1187,24 @@
 
 
     function scorecardNumber(value) {
-        const number =
-            Number(value);
-
-        return Number.isFinite(number)
-            ? number
-            : null;
+    if (
+        value === null ||
+        value === undefined ||
+        (
+            typeof value === "string" &&
+            value.trim() === ""
+        )
+    ) {
+        return null;
     }
+
+    const number =
+        Number(value);
+
+    return Number.isFinite(number)
+        ? number
+        : null;
+}
 
     function normaliseTeeKey(value) {
         return String(value || "")
