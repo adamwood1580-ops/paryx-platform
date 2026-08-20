@@ -9,6 +9,7 @@
     }
 
     const SHARED_SCRIPTS = [
+        "../js/core/club-context.js",
         "../js/ui/staff-shell.js"
     ];
 
