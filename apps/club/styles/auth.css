@@ -694,3 +694,59 @@ a {
         transition: none;
     }
 }
+
+
+/* =========================================================
+   ACCESS SWITCH
+   ========================================================= */
+
+.auth-access-switch {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+
+    margin-top: 1rem;
+    padding-top: 0.9rem;
+
+    border-top:
+        1px solid
+        rgba(6, 72, 49, 0.11);
+
+    color: #7a8881;
+
+    font-size: 0.79rem;
+    font-weight: 500;
+    line-height: 1.35;
+}
+
+.auth-access-switch a {
+    color: var(--auth-page-green);
+
+    font-weight: 650;
+
+    text-decoration: none;
+}
+
+.auth-access-switch a:hover,
+.auth-access-switch a:focus-visible {
+    color: var(--auth-gold-dark);
+}
+
+.auth-access-switch a:focus-visible {
+    border-radius: 0.2rem;
+
+    outline:
+        2px solid
+        var(--auth-gold);
+
+    outline-offset: 0.2rem;
+}
+
+@media (max-width: 390px) {
+    .auth-access-switch {
+        margin-top: 0.8rem;
+        padding-top: 0.75rem;
+        font-size: 0.75rem;
+    }
+}
