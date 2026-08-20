@@ -14,7 +14,7 @@
     <meta name="application-name" content="Paryx" />
     <title>Dashboard | Paryx</title>
     <link rel="stylesheet" href="../styles/dashboard.css" />
-    <script src="../js/core/protected-loader.js?loader=2" defer></script>
+    <script src="../js/core/protected-loader.js?loader=3" defer></script>
 </head>
 <body data-page="dashboard">
     <div class="staff-shell">
@@ -266,10 +266,9 @@
                         </span>
                     </button>
 
-                    <button
-                        class="admin-tool-card"
-                        type="button"
-                        disabled
+                    <a
+                        class="admin-tool-card admin-tool-card--featured"
+                        href="settings.html"
                     >
                         <span class="admin-tool-card__icon" aria-hidden="true">
                             <svg viewBox="0 0 24 24">
@@ -280,13 +279,13 @@
 
                         <span class="admin-tool-card__content">
                             <strong>Club settings</strong>
-                            <small>Operational and member-facing settings.</small>
+                            <small>Identity, branding and club defaults.</small>
                         </span>
 
                         <span class="admin-tool-card__status">
-                            Planned
+                            Live
                         </span>
-                    </button>
+                    </a>
                 </div>
             </section>
 

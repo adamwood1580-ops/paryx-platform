@@ -16,7 +16,8 @@
     const PAGE_SCRIPTS = {
         dashboard: ["../js/pages/dashboard-page.js"],
         members: ["../js/pages/members-page.js"],
-        importmembers: ["../js/pages/import-members-page.js"]
+        importmembers: ["../js/pages/import-members-page.js"],
+        settings: ["../js/pages/settings-page.js"]
     };
 
     function pageName() {

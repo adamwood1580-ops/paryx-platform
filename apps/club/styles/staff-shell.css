@@ -46,7 +46,9 @@ html.auth-protected.auth-ready body {
 .staff-brand__logo {
     width: 2.4rem;
     height: 2.4rem;
+    padding: .18rem;
     object-fit: contain;
+    background: rgba(255,255,255,.96);
     border-radius: .55rem;
 }
 
@@ -111,6 +113,33 @@ html.auth-protected.auth-ready body {
 .staff-topbar strong { display:block; color: var(--color-text); font-size: var(--font-size-sm); }
 .staff-topbar__user { color: var(--color-text-muted); font-size: var(--font-size-sm); }
 
+.staff-club-switcher {
+    display: grid;
+    gap: .2rem;
+    min-width: min(22rem, 50vw);
+}
+
+.staff-club-switcher__select {
+    width: 100%;
+    max-width: 24rem;
+    padding: .25rem 1.8rem .25rem 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--color-text);
+    font: inherit;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    cursor: pointer;
+}
+
+.staff-club-switcher__select:disabled {
+    appearance: none;
+    opacity: 1;
+    cursor: default;
+}
+
+
 .staff-workspace .app-main {
     width: min(100%, 82rem);
     padding: var(--space-6);
@@ -133,5 +162,40 @@ html.auth-protected.auth-ready body {
     .staff-nav__item--disabled { display: none; }
     .staff-sidebar__footer { display: none; }
     .staff-topbar { position: static; padding: var(--space-3) var(--space-4); }
+    .staff-club-switcher { min-width: 0; flex: 1; }
+    .staff-club-switcher__select { max-width: 100%; }
     .staff-workspace .app-main { padding: var(--space-5) var(--space-4) var(--space-8); }
+}
+
+/* =========================================================
+   V0.3 CLUB IDENTITY
+   ========================================================= */
+
+.staff-club-identity {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-width: 0;
+}
+
+.staff-club-identity__logo {
+    flex: 0 0 auto;
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: .2rem;
+    object-fit: contain;
+    background: #fff;
+    border: 1px solid var(--color-border);
+    border-radius: .7rem;
+}
+
+.staff-club-identity__logo[hidden] {
+    display: none;
+}
+
+@media (max-width: 38rem) {
+    .staff-club-identity__logo {
+        width: 2.15rem;
+        height: 2.15rem;
+    }
 }

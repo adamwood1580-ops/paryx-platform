@@ -1,8 +1,12 @@
-# Active migrations
+# Active Paryx migrations
 
-This directory is intentionally empty in the Platform Foundation package.
+These migrations are for the **existing Paryx development Supabase project**.
 
-- The existing development Supabase project already contains the prototype schema.
-- `../baseline/001_platform_baseline.sql` is provided for a future **fresh** Paryx environment only.
-- Do **not** run the baseline against the current development database.
-- New multi-club platform changes should begin here with a fresh migration sequence after the tenant model is agreed.
+Run them in order:
+
+1. `001_multi_club_tenant_foundation.sql`
+2. `002_club_configuration_and_branding.sql`
+
+The separate baseline file under `../baseline/` is for a future clean production
+environment only. Do **not** run the baseline against the current development
+database.

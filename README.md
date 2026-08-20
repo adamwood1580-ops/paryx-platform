@@ -1,5 +1,3 @@
-https://adamwood1580-ops.github.io/paryx-platform/
-
 # Paryx Platform
 
 **Paryx** is a golf club management platform. This repository contains the clean platform foundation for the **club/staff workspace**. The golfer-facing experience will be developed separately as **Paryx Member**, while sharing platform services and the same tenant-aware data model.
@@ -14,6 +12,8 @@ https://adamwood1580-ops.github.io/paryx-platform/
 - CSV member importer
 - secure Supabase Edge Function for account invitations/imports
 - reusable Paryx design tokens and interface components
+- explicit multi-club tenant switching and tenant-safe staff RPCs
+- club configuration, branding, logo storage and per-club defaults
 - neutral multi-club database baseline for future clean environments
 
 The staff application deliberately excludes golfer scorecards, golfer home/profile pages, customer-specific course data, customer logos/domains, weather and prototype-only diagnostics.
@@ -41,4 +41,6 @@ docs/                       Architecture, deployment, roadmap and brand guidance
 
 The current `apps/club/js/core/config.js` points to the existing development Supabase project using a publishable client key only. Never place a Supabase secret/service-role key in browser code or commit one to Git.
 
-See `INSTALL_FIRST.md` and `docs/deployment.md` for deployment notes.
+See `INSTALL_FIRST.md`, `INSTALL_V0.3.md` and `docs/deployment.md` for deployment notes.
+
+Current platform milestone: **Paryx v0.3 — Club Configuration & Branding**.

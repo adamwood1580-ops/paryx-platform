@@ -11,7 +11,7 @@
         { key: "courses", label: "Courses", href: null },
         { key: "communications", label: "Communications", href: null },
         { key: "reports", label: "Reports", href: null },
-        { key: "settings", label: "Settings", href: null }
+        { key: "settings", label: "Settings", href: "settings.html" }
     ];
 
     const ROLE_LABELS = {
@@ -123,22 +123,31 @@
 
         if (header) {
             header.innerHTML = `
-                <label class="staff-club-switcher">
-                    <span class="staff-topbar__label">
-                        Current club
-                    </span>
-
-                    <select
-                        id="staffClubSelect"
-                        class="staff-club-switcher__select"
-                        aria-label="Current club"
-                        disabled
+                <div class="staff-club-identity">
+                    <img
+                        id="staffClubLogo"
+                        class="staff-club-identity__logo"
+                        alt=""
+                        hidden
                     >
-                        <option value="">
-                            Loading club…
-                        </option>
-                    </select>
-                </label>
+
+                    <label class="staff-club-switcher">
+                        <span class="staff-topbar__label">
+                            Current club
+                        </span>
+
+                        <select
+                            id="staffClubSelect"
+                            class="staff-club-switcher__select"
+                            aria-label="Current club"
+                            disabled
+                        >
+                            <option value="">
+                                Loading club…
+                            </option>
+                        </select>
+                    </label>
+                </div>
 
                 <div
                     class="staff-topbar__user"
@@ -166,6 +175,32 @@
                     }
                 }
             );
+    }
+
+    function updateClubLogo(activeClub) {
+        const logo =
+            document.getElementById(
+                "staffClubLogo"
+            );
+
+        if (!logo) {
+            return;
+        }
+
+        const url =
+            activeClub?.branding?.logoUrl ||
+            "";
+
+        if (!url) {
+            logo.hidden = true;
+            logo.removeAttribute("src");
+            logo.alt = "";
+            return;
+        }
+
+        logo.src = url;
+        logo.alt = `${activeClub.name} logo`;
+        logo.hidden = false;
     }
 
     function populateClubSelector(
@@ -198,8 +233,7 @@
         select.disabled =
             clubs.length <= 1;
 
-        select.addEventListener(
-            "change",
+        select.onchange =
             function () {
                 const clubId =
                     select.value;
@@ -229,9 +263,42 @@
                         error
                     );
                 }
-            },
-            { once: false }
+            };
+    }
+
+    function applyActiveClubUi(activeClub) {
+        if (!activeClub) {
+            return;
+        }
+
+        updateClubLogo(activeClub);
+
+        const clubs =
+            window.Paryx
+                .clubContext
+                ?.getClubs?.() ||
+            [];
+
+        populateClubSelector(
+            clubs,
+            activeClub
         );
+
+        const role =
+            document.getElementById(
+                "staffRole"
+            );
+
+        if (role) {
+            role.textContent =
+                ROLE_LABELS[
+                    activeClub.role
+                ] ||
+                String(
+                    activeClub.role ||
+                    "staff"
+                ).replaceAll("_", " ");
+        }
     }
 
     async function hydrateUserContext() {
@@ -256,12 +323,6 @@
                     .clubContext
                     .getActiveClub();
 
-            const clubs =
-                clubContext?.clubs ||
-                window.Paryx
-                    .clubContext
-                    .getClubs();
-
             const displayName =
                 accountContext?.profile?.displayName ||
                 accountContext?.user?.email ||
@@ -272,29 +333,12 @@
                     "staffUserName"
                 );
 
-            const role =
-                document.getElementById(
-                    "staffRole"
-                );
-
             if (user) {
                 user.textContent =
                     displayName;
             }
 
-            if (role) {
-                role.textContent =
-                    ROLE_LABELS[
-                        activeClub?.role
-                    ] ||
-                    String(
-                        activeClub?.role ||
-                        "staff"
-                    ).replaceAll("_", " ");
-            }
-
-            populateClubSelector(
-                clubs,
+            applyActiveClubUi(
                 activeClub
             );
         } catch (error) {
@@ -320,6 +364,15 @@
     }
 
     renderShell();
+
+    window.addEventListener(
+        "paryx:club-changed",
+        function (event) {
+            applyActiveClubUi(
+                event.detail?.club || null
+            );
+        }
+    );
 
     if (window.Paryx.ready) {
         hydrateUserContext();
