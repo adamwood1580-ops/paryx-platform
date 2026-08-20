@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="../styles/app-shell.css" />
     <link rel="stylesheet" href="../styles/components.css" />
     <link rel="stylesheet" href="../styles/staff-shell.css" />
-    <link rel="stylesheet" href="../styles/courses.css?v=0.4.1" />
+    <link rel="stylesheet" href="../styles/courses.css?v=0.5.0" />
 
     <link rel="manifest" href="../json/manifest.json" />
     <link rel="apple-touch-icon" href="../assets/paryx-apple-touch-icon.png" />
@@ -179,28 +179,20 @@
 
                             <section
                                 id="holeDataSection"
-                                class="courses-card"
+                                class="courses-card courses-card--scorecard"
                             >
                                 <div class="courses-card__header courses-card__header--wrap">
                                     <div>
                                         <span class="courses-card__eyebrow">
-                                            Scorecard
+                                            Scorecard setup
                                         </span>
-                                        <h2>Hole par & stroke index</h2>
+                                        <h2>Complete course scorecard</h2>
                                         <p id="holeParSummary">
-                                            Enter the men's and women's scorecard data.
+                                            Manage par, stroke index, tee yardages and WHS ratings in one place.
                                         </p>
                                     </div>
 
                                     <div class="courses-header-actions">
-                                        <button
-                                            id="scorecardImportButton"
-                                            class="courses-button courses-button--secondary courses-button--compact"
-                                            type="button"
-                                        >
-                                            Scan scorecard
-                                        </button>
-
                                         <button
                                             id="copyMenToWomenButton"
                                             class="courses-button courses-button--secondary courses-button--compact"
@@ -211,44 +203,101 @@
                                     </div>
                                 </div>
 
-                                <div class="course-hole-table-wrap">
-                                    <table class="course-hole-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Hole</th>
-                                                <th>Men par</th>
-                                                <th>Men SI</th>
-                                                <th>Women par</th>
-                                                <th>Women SI</th>
-                                            </tr>
-                                        </thead>
+                                <div class="course-setup-choice" aria-label="Course setup options">
+                                    <button
+                                        id="scorecardImportButton"
+                                        class="course-setup-choice__item course-setup-choice__item--primary"
+                                        type="button"
+                                    >
+                                        <span class="course-setup-choice__badge">Recommended</span>
+                                        <strong>Scan a printed scorecard</strong>
+                                        <span>Upload or photograph a card and let Paryx populate holes, tees, yardages and WHS data.</span>
+                                    </button>
+
+                                    <button
+                                        id="manualEntryScrollButton"
+                                        class="course-setup-choice__item"
+                                        type="button"
+                                    >
+                                        <strong>Enter or correct manually</strong>
+                                        <span>Use the scorecard below for direct editing and final checks.</span>
+                                    </button>
+                                </div>
+
+                                <div
+                                    id="courseSetupStatus"
+                                    class="course-setup-status"
+                                >
+                                    <div>
+                                        <span class="courses-card__eyebrow">Setup status</span>
+                                        <strong id="courseSetupStatusTitle">Checking course data…</strong>
+                                    </div>
+                                    <div
+                                        id="courseSetupStatusItems"
+                                        class="course-setup-status__items"
+                                    ></div>
+                                </div>
+
+                                <section class="course-tee-ratings-overview">
+                                    <div class="course-tee-ratings-overview__header">
+                                        <div>
+                                            <h3>Tee ratings</h3>
+                                            <p>Course Rating and Slope are kept with each physical tee. Missing values stay clearly marked.</p>
+                                        </div>
+
+                                        <button
+                                            id="addTeeQuickButton"
+                                            class="courses-button courses-button--secondary courses-button--compact"
+                                            type="button"
+                                        >
+                                            + Add tee
+                                        </button>
+                                    </div>
+
+                                    <div
+                                        id="teeRatingsOverview"
+                                        class="course-tee-rating-cards"
+                                    ></div>
+                                </section>
+
+                                <div
+                                    id="scorecardEditorAnchor"
+                                    class="course-hole-table-wrap course-scorecard-table-wrap"
+                                >
+                                    <table class="course-hole-table course-scorecard-table">
+                                        <thead id="scorecardTableHead"></thead>
                                         <tbody id="holeTableBody"></tbody>
+                                        <tfoot id="scorecardTotals"></tfoot>
                                     </table>
                                 </div>
 
-                                <div class="courses-actions">
+                                <div class="courses-actions courses-actions--sticky-save">
                                     <button
                                         id="saveHolesButton"
                                         class="courses-button"
                                         type="button"
                                     >
-                                        Save hole data
+                                        Save course setup
                                     </button>
+
+                                    <span class="courses-actions__hint">
+                                        Saves hole data, tee ratings and all visible tee yardages.
+                                    </span>
                                 </div>
                             </section>
 
                             <section
                                 id="teesSection"
-                                class="courses-card"
+                                class="courses-card courses-card--advanced"
                             >
                                 <div class="courses-card__header courses-card__header--wrap">
                                     <div>
                                         <span class="courses-card__eyebrow">
-                                            Tee sets
+                                            Advanced
                                         </span>
-                                        <h2>Tees & WHS ratings</h2>
+                                        <h2>Tee management</h2>
                                         <p>
-                                            Add physical tees, ratings and hole-by-hole yardages.
+                                            Add, rename, reorder or deactivate tees. Normal scorecard editing is handled above.
                                         </p>
                                     </div>
 
@@ -562,32 +611,29 @@
                     hidden
                 ></div>
 
-                <div class="scorecard-review-grid">
+                <div class="scorecard-review-stack">
                     <section class="scorecard-review-panel">
-                        <h3>Hole data</h3>
+                        <div class="scorecard-review-panel__header">
+                            <div>
+                                <h3>Complete extracted scorecard</h3>
+                                <p>Check every recognised par, stroke index and tee yardage before applying it.</p>
+                            </div>
+                        </div>
 
-                        <div class="course-hole-table-wrap">
-                            <table class="course-hole-table scorecard-review-table">
-                                <thead>
-                                    <tr>
-                                        <th>Hole</th>
-                                        <th>Men par</th>
-                                        <th>Men SI</th>
-                                        <th>Women par</th>
-                                        <th>Women SI</th>
-                                    </tr>
-                                </thead>
+                        <div class="course-hole-table-wrap scorecard-review-table-wrap">
+                            <table class="course-hole-table scorecard-review-table course-scorecard-table">
+                                <thead id="scorecardReviewHead"></thead>
                                 <tbody id="scorecardHoleReview"></tbody>
                             </table>
                         </div>
                     </section>
 
                     <section class="scorecard-review-panel">
-                        <h3>Tees found</h3>
+                        <h3>Tees & WHS values found</h3>
 
                         <div
                             id="scorecardTeeReview"
-                            class="scorecard-tee-review"
+                            class="scorecard-tee-review scorecard-tee-review--cards"
                         ></div>
                     </section>
                 </div>
@@ -596,8 +642,8 @@
                     <div>
                         <strong>Review first</strong>
                         <span>
-                            Applying will merge recognised values into the selected course.
-                            Blank/unreadable fields will not overwrite existing data.
+                            Applying will save recognised hole data, selected tees, yardages and any complete WHS ratings.
+                            Blank/unreadable fields will not overwrite existing values.
                         </span>
                     </div>
 
@@ -606,7 +652,7 @@
                         class="courses-button"
                         type="button"
                     >
-                        Apply to course
+                        Apply & save
                     </button>
                 </div>
             </section>

@@ -864,3 +864,500 @@
         padding: var(--space-4);
     }
 }
+
+/* =========================================================
+   V0.5.0 COURSE SETUP V2
+   Unified scorecard, tee ratings and scan review
+   ========================================================= */
+
+.courses-page {
+    max-width: 96rem;
+}
+
+.courses-card--scorecard {
+    overflow: visible;
+}
+
+.courses-button--smart {
+    position: relative;
+    padding-inline: .9rem;
+    color: #fff;
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+.course-setup-choice {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .8rem;
+    margin-top: var(--space-4);
+}
+
+.course-setup-choice__item {
+    position: relative;
+    min-height: 7.2rem;
+    display: grid;
+    align-content: center;
+    gap: .35rem;
+    padding: 1rem 1.1rem;
+    color: var(--color-text);
+    text-align: left;
+    background: #fff;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font: inherit;
+}
+
+.course-setup-choice__item:hover,
+.course-setup-choice__item:focus-visible {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 10%, transparent);
+    outline: none;
+}
+
+.course-setup-choice__item--primary {
+    background:
+        linear-gradient(
+            135deg,
+            color-mix(in srgb, var(--color-primary-light) 78%, #fff),
+            #fff
+        );
+    border-color: var(--color-border-brand);
+}
+
+.course-setup-choice__item strong {
+    color: var(--color-primary);
+    font-size: var(--font-size-md);
+}
+
+.course-setup-choice__item > span:not(.course-setup-choice__badge) {
+    max-width: 34rem;
+    color: var(--color-text-muted);
+    font-size: .78rem;
+    line-height: 1.45;
+}
+
+.course-setup-choice__badge {
+    position: absolute;
+    top: .65rem;
+    right: .65rem;
+    padding: .2rem .48rem;
+    color: #765500;
+    background: var(--color-accent-light);
+    border-radius: 999px;
+    font-size: .62rem;
+    font-weight: var(--font-weight-bold);
+    letter-spacing: .03em;
+    text-transform: uppercase;
+}
+
+.course-setup-status {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: var(--space-4);
+    padding: .85rem 1rem;
+    background: #fff8e7;
+    border: 1px solid #ead8a4;
+    border-radius: var(--radius-md);
+}
+
+.course-setup-status.is-complete {
+    background: #effaf3;
+    border-color: #cbe8d5;
+}
+
+.course-setup-status > div:first-child {
+    display: grid;
+    gap: .2rem;
+}
+
+.course-setup-status > div:first-child strong {
+    color: var(--color-primary);
+}
+
+.course-setup-status__items {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: .4rem;
+}
+
+.course-setup-status__item {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.8rem;
+    padding: .3rem .55rem;
+    color: #765500;
+    background: rgba(255, 255, 255, .8);
+    border: 1px solid rgba(118, 85, 0, .14);
+    border-radius: 999px;
+    font-size: .7rem;
+    font-weight: var(--font-weight-semibold);
+}
+
+.course-setup-status__item.is-ok {
+    color: #245d3e;
+    border-color: #cbe8d5;
+}
+
+.course-tee-ratings-overview {
+    margin-top: var(--space-5);
+}
+
+.course-tee-ratings-overview__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-3);
+}
+
+.course-tee-ratings-overview__header h3 {
+    margin: 0;
+    color: var(--color-primary);
+}
+
+.course-tee-ratings-overview__header p {
+    margin: .3rem 0 0;
+    color: var(--color-text-muted);
+    font-size: .76rem;
+}
+
+.course-tee-rating-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+    gap: .75rem;
+    margin-top: .8rem;
+}
+
+.course-tee-rating-cards__empty {
+    grid-column: 1 / -1;
+    padding: 1rem;
+    background: var(--color-surface-muted);
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-md);
+}
+
+.course-tee-rating-card {
+    min-width: 0;
+    padding: .9rem;
+    background: var(--color-surface-muted);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+}
+
+.course-tee-rating-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .65rem;
+    padding-bottom: .65rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.course-tee-rating-card__header > div {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+}
+
+.course-tee-rating-card__header strong {
+    color: var(--color-primary);
+}
+
+.course-tee-rating-card__header > span {
+    color: var(--color-text-muted);
+    font-size: .7rem;
+}
+
+.course-tee-rating-card__swatch {
+    width: .7rem;
+    height: .7rem;
+    border-radius: 999px;
+    background: var(--color-primary);
+    box-shadow: 0 0 0 2px #fff;
+}
+
+.course-tee-rating-card__gender {
+    display: grid;
+    grid-template-columns: 3.2rem repeat(3, minmax(0, 1fr));
+    gap: .5rem;
+    align-items: end;
+    margin-top: .65rem;
+}
+
+.course-tee-rating-card__gender > strong {
+    align-self: center;
+    color: var(--color-text-muted);
+    font-size: .72rem;
+}
+
+.course-tee-rating-card__gender label {
+    display: grid;
+    gap: .22rem;
+    min-width: 0;
+}
+
+.course-tee-rating-card__gender label > span {
+    color: var(--color-text-muted);
+    font-size: .62rem;
+    font-weight: var(--font-weight-bold);
+    text-transform: uppercase;
+}
+
+.course-tee-rating-card__gender input {
+    width: 100%;
+    min-width: 0;
+    min-height: 2.25rem;
+    box-sizing: border-box;
+    padding: .35rem .42rem;
+    color: var(--color-text);
+    background: #fff;
+    border: 1px solid var(--color-border);
+    border-radius: .5rem;
+    font: inherit;
+    font-size: .78rem;
+    text-align: center;
+}
+
+.course-tee-rating-card__gender input::placeholder {
+    color: #9a9f9c;
+    font-size: .66rem;
+}
+
+.course-scorecard-table-wrap {
+    margin-top: var(--space-5);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+}
+
+.course-scorecard-table {
+    min-width: max(48rem, 100%);
+    background: #fff;
+}
+
+.course-scorecard-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #f7f9f8;
+    box-shadow: 0 1px 0 var(--color-border);
+}
+
+.course-scorecard-table th,
+.course-scorecard-table td {
+    white-space: nowrap;
+}
+
+.course-scorecard-table__hole {
+    width: 3.5rem;
+}
+
+.course-scorecard-table__tee {
+    min-width: 6.8rem;
+}
+
+.course-scorecard-table__tee span,
+.course-scorecard-table__tee small {
+    display: block;
+}
+
+.course-scorecard-table__tee small {
+    margin-top: .12rem;
+    color: var(--color-text-muted);
+    font-size: .58rem;
+    font-weight: var(--font-weight-regular);
+    text-transform: none;
+}
+
+.course-scorecard-table input {
+    width: 4.2rem;
+}
+
+.course-scorecard-table__yardage input {
+    width: 5rem;
+}
+
+.course-scorecard-table tbody tr:nth-child(9) td {
+    border-bottom-width: 2px;
+    border-bottom-color: var(--color-border-brand);
+}
+
+.course-scorecard-table tfoot th,
+.course-scorecard-table tfoot td {
+    padding: .55rem .5rem;
+    color: var(--color-primary);
+    background: #f4f8f6;
+    border-top: 1px solid var(--color-border);
+    text-align: center;
+    font-size: .72rem;
+    font-weight: var(--font-weight-bold);
+}
+
+.courses-actions--sticky-save {
+    position: sticky;
+    bottom: .75rem;
+    z-index: 4;
+    align-items: center;
+    padding: .7rem;
+    background: color-mix(in srgb, #fff 94%, transparent);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: 0 10px 28px rgba(2, 45, 29, .1);
+    backdrop-filter: blur(8px);
+}
+
+.courses-actions__hint {
+    color: var(--color-text-muted);
+    font-size: .7rem;
+}
+
+.courses-card--advanced {
+    background: color-mix(in srgb, var(--color-surface-muted) 45%, #fff);
+}
+
+.scorecard-review-stack {
+    display: grid;
+    gap: var(--space-3);
+    margin-top: var(--space-4);
+}
+
+.scorecard-review-panel__header h3 {
+    margin: 0;
+}
+
+.scorecard-review-panel__header p {
+    margin: .3rem 0 0;
+    color: var(--color-text-muted);
+    font-size: .74rem;
+}
+
+.scorecard-review-table-wrap {
+    max-height: min(34rem, 55vh);
+    overflow: auto;
+    border: 1px solid var(--color-border);
+    border-radius: .65rem;
+}
+
+.scorecard-review-table {
+    min-width: max(48rem, 100%);
+}
+
+.scorecard-review-table td {
+    font-size: .76rem;
+}
+
+.scorecard-value-missing {
+    color: #9a9f9c;
+    font-style: italic;
+}
+
+.scorecard-tee-review--cards {
+    grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr));
+}
+
+.scorecard-tee-card--detail {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: .75rem;
+}
+
+.scorecard-tee-card__select {
+    display: flex;
+    align-items: flex-start;
+    gap: .65rem;
+}
+
+.scorecard-tee-card__select > span,
+.scorecard-tee-card__select strong,
+.scorecard-tee-card__select small {
+    display: block;
+}
+
+.scorecard-tee-card__select small {
+    margin-top: .18rem;
+    color: var(--color-text-muted);
+    font-size: .68rem;
+}
+
+.scorecard-tee-card__ratings {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .6rem;
+}
+
+.scorecard-tee-card__ratings > div {
+    padding: .55rem;
+    background: var(--color-surface-muted);
+    border-radius: .55rem;
+}
+
+.scorecard-tee-card__ratings strong,
+.scorecard-tee-card__ratings span {
+    display: block;
+}
+
+.scorecard-tee-card__ratings strong {
+    margin-bottom: .25rem;
+    color: var(--color-primary);
+    font-size: .72rem;
+}
+
+.scorecard-tee-card__ratings span {
+    color: var(--color-text-muted);
+    font-size: .68rem;
+    line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+    .course-setup-choice {
+        grid-template-columns: 1fr;
+    }
+
+    .course-setup-status {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .course-setup-status__items {
+        justify-content: flex-start;
+    }
+
+    .course-tee-rating-card__gender {
+        grid-template-columns: 3rem repeat(3, minmax(5rem, 1fr));
+        overflow-x: auto;
+    }
+}
+
+@media (max-width: 620px) {
+    .course-setup-choice__item {
+        min-height: 6.5rem;
+        padding: .9rem;
+    }
+
+    .course-tee-ratings-overview__header {
+        flex-direction: column;
+    }
+
+    .course-tee-rating-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .course-tee-rating-card__gender {
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+
+    .course-tee-rating-card__gender > strong {
+        grid-column: 1 / -1;
+    }
+
+    .scorecard-tee-card__ratings {
+        grid-template-columns: 1fr;
+    }
+
+    .courses-actions--sticky-save {
+        bottom: .4rem;
+    }
+}

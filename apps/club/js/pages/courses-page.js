@@ -44,6 +44,15 @@
         holeDataSection: document.getElementById("holeDataSection"),
         holeTableBody: document.getElementById("holeTableBody"),
         holeParSummary: document.getElementById("holeParSummary"),
+        scorecardTableHead: document.getElementById("scorecardTableHead"),
+        scorecardTotals: document.getElementById("scorecardTotals"),
+        courseSetupStatus: document.getElementById("courseSetupStatus"),
+        courseSetupStatusTitle: document.getElementById("courseSetupStatusTitle"),
+        courseSetupStatusItems: document.getElementById("courseSetupStatusItems"),
+        teeRatingsOverview: document.getElementById("teeRatingsOverview"),
+        manualEntryScrollButton: document.getElementById("manualEntryScrollButton"),
+        scorecardEditorAnchor: document.getElementById("scorecardEditorAnchor"),
+        addTeeQuickButton: document.getElementById("addTeeQuickButton"),
         copyMenToWomenButton: document.getElementById("copyMenToWomenButton"),
         saveHolesButton: document.getElementById("saveHolesButton"),
         teesSection: document.getElementById("teesSection"),
@@ -81,6 +90,7 @@
         scorecardReviewTitle: document.getElementById("scorecardReviewTitle"),
         scorecardReviewMeta: document.getElementById("scorecardReviewMeta"),
         scorecardWarnings: document.getElementById("scorecardWarnings"),
+        scorecardReviewHead: document.getElementById("scorecardReviewHead"),
         scorecardHoleReview: document.getElementById("scorecardHoleReview"),
         scorecardTeeReview: document.getElementById("scorecardTeeReview"),
         applyScorecardButton: document.getElementById("applyScorecardButton")
@@ -341,24 +351,87 @@
         elements.courseName.focus();
     }
 
+    function teeKey(tee) {
+        return String(tee?.id || "");
+    }
+
+    function teeDistanceMap(tee) {
+        return new Map(
+            (tee?.distances || []).map(function (item) {
+                return [
+                    Number(item.hole_number),
+                    item.yards
+                ];
+            })
+        );
+    }
+
     function renderHoleRows() {
         const holes =
             Array.isArray(state.config?.holes)
                 ? state.config.holes
                 : [];
 
+        const tees =
+            Array.isArray(state.config?.tees)
+                ? state.config.tees
+                : [];
+
+        const maxSi =
+            Number(
+                state.config?.course?.holes ||
+                18
+            );
+
+        elements.scorecardTableHead.innerHTML = `
+            <tr>
+                <th class="course-scorecard-table__hole">Hole</th>
+                <th>Men par</th>
+                <th>Men SI</th>
+                <th>Women par</th>
+                <th>Women SI</th>
+                ${tees.map(function (tee) {
+                    return `
+                        <th class="course-scorecard-table__tee">
+                            <span>${escapeHtml(tee.name)}</span>
+                            <small>${escapeHtml(tee.colour || "Yards")}</small>
+                        </th>
+                    `;
+                }).join("")}
+            </tr>
+        `;
+
         elements.holeTableBody.innerHTML =
             holes
                 .map(function (hole) {
-                    const maxSi =
-                        Number(
-                            state.config?.course?.holes ||
-                            18
-                        );
+                    const holeNumber =
+                        Number(hole.hole_number);
+
+                    const teeCells =
+                        tees.map(function (tee) {
+                            const yards =
+                                teeDistanceMap(tee)
+                                    .get(holeNumber);
+
+                            return `
+                                <td class="course-scorecard-table__yardage">
+                                    <input
+                                        type="number"
+                                        min="20"
+                                        max="900"
+                                        step="1"
+                                        value="${yards ?? ""}"
+                                        data-scorecard-yardage-tee="${escapeHtml(teeKey(tee))}"
+                                        data-scorecard-yardage-hole="${holeNumber}"
+                                        aria-label="Hole ${holeNumber} ${escapeHtml(tee.name)} yardage"
+                                    >
+                                </td>
+                            `;
+                        }).join("");
 
                     return `
-                        <tr data-hole-number="${Number(hole.hole_number)}">
-                            <td>${Number(hole.hole_number)}</td>
+                        <tr data-hole-number="${holeNumber}">
+                            <td>${holeNumber}</td>
                             <td>
                                 <input
                                     type="number"
@@ -367,7 +440,7 @@
                                     step="1"
                                     value="${hole.men_par ?? ""}"
                                     data-men-par
-                                    aria-label="Hole ${Number(hole.hole_number)} men's par"
+                                    aria-label="Hole ${holeNumber} men's par"
                                 >
                             </td>
                             <td>
@@ -378,7 +451,7 @@
                                     step="1"
                                     value="${hole.men_stroke_index ?? ""}"
                                     data-men-si
-                                    aria-label="Hole ${Number(hole.hole_number)} men's stroke index"
+                                    aria-label="Hole ${holeNumber} men's stroke index"
                                 >
                             </td>
                             <td>
@@ -389,7 +462,7 @@
                                     step="1"
                                     value="${hole.women_par ?? ""}"
                                     data-women-par
-                                    aria-label="Hole ${Number(hole.hole_number)} women's par"
+                                    aria-label="Hole ${holeNumber} women's par"
                                 >
                             </td>
                             <td>
@@ -400,9 +473,10 @@
                                     step="1"
                                     value="${hole.women_stroke_index ?? ""}"
                                     data-women-si
-                                    aria-label="Hole ${Number(hole.hole_number)} women's stroke index"
+                                    aria-label="Hole ${holeNumber} women's stroke index"
                                 >
                             </td>
+                            ${teeCells}
                         </tr>
                     `;
                 })
@@ -417,6 +491,7 @@
                 );
             });
 
+        renderTeeRatingsOverview();
         updateHoleParSummary();
     }
 
@@ -482,6 +557,442 @@
         );
     }
 
+    function scorecardYardageRowsForTee(teeId) {
+        const holeCount =
+            Number(
+                state.config?.course?.holes ||
+                18
+            );
+
+        const values = new Map();
+
+        elements.holeTableBody
+            .querySelectorAll(
+                "[data-scorecard-yardage-tee]"
+            )
+            .forEach(function (input) {
+                if (
+                    input.dataset.scorecardYardageTee !==
+                    String(teeId)
+                ) {
+                    return;
+                }
+
+                values.set(
+                    Number(
+                        input.dataset.scorecardYardageHole
+                    ),
+                    numberOrNull(input.value)
+                );
+            });
+
+        return Array.from(
+            { length: holeCount },
+            function (_, index) {
+                const holeNumber = index + 1;
+
+                return {
+                    hole_number: holeNumber,
+                    yards:
+                        values.has(holeNumber)
+                            ? values.get(holeNumber)
+                            : null
+                };
+            }
+        );
+    }
+
+    function sumRange(values, start, end) {
+        const selected =
+            values.slice(start, end);
+
+        if (
+            !selected.length ||
+            selected.some(function (value) {
+                return value === null;
+            })
+        ) {
+            return null;
+        }
+
+        return selected.reduce(
+            function (sum, value) {
+                return sum + value;
+            },
+            0
+        );
+    }
+
+    function renderScorecardTotals() {
+        const rows = holeRowsPayload();
+        const tees =
+            Array.isArray(state.config?.tees)
+                ? state.config.tees
+                : [];
+
+        const menPars =
+            rows.map(function (row) {
+                return row.men_par;
+            });
+
+        const womenPars =
+            rows.map(function (row) {
+                return row.women_par;
+            });
+
+        const teeYardages =
+            tees.map(function (tee) {
+                return scorecardYardageRowsForTee(
+                    tee.id
+                ).map(function (row) {
+                    return row.yards;
+                });
+            });
+
+        const ranges =
+            rows.length > 9
+                ? [
+                    ["OUT", 0, 9],
+                    ["IN", 9, rows.length],
+                    ["TOTAL", 0, rows.length]
+                ]
+                : [
+                    ["TOTAL", 0, rows.length]
+                ];
+
+        elements.scorecardTotals.innerHTML =
+            ranges.map(function (range) {
+                const [label, start, end] = range;
+                const men =
+                    sumRange(
+                        menPars,
+                        start,
+                        end
+                    );
+
+                const women =
+                    sumRange(
+                        womenPars,
+                        start,
+                        end
+                    );
+
+                const teeCells =
+                    teeYardages.map(function (values) {
+                        const total =
+                            sumRange(
+                                values,
+                                start,
+                                end
+                            );
+
+                        return `<td>${total === null ? "—" : total.toLocaleString("en-GB")}</td>`;
+                    }).join("");
+
+                return `
+                    <tr>
+                        <th>${label}</th>
+                        <td>${men ?? "—"}</td>
+                        <td></td>
+                        <td>${women ?? "—"}</td>
+                        <td></td>
+                        ${teeCells}
+                    </tr>
+                `;
+            }).join("");
+    }
+
+    function overviewRatingPayload(teeId, gender) {
+        const prefix =
+            gender === "women"
+                ? "women"
+                : "men";
+
+        function value(field) {
+            const input =
+                elements.teeRatingsOverview
+                    .querySelector(
+                        `[data-rating-tee="${teeId}"][data-rating-gender="${prefix}"][data-rating-field="${field}"]`
+                    );
+
+            return numberOrNull(
+                input?.value
+            );
+        }
+
+        const par = value("par");
+        const rating = value("course_rating");
+        const slope = value("slope_rating");
+
+        const supplied =
+            [par, rating, slope]
+                .filter(function (item) {
+                    return item !== null;
+                })
+                .length;
+
+        if (
+            supplied !== 0 &&
+            supplied !== 3
+        ) {
+            throw new Error(
+                `${gender === "women" ? "Women's" : "Men's"} WHS rating for ${findTee(teeId)?.name || "this tee"} needs Par, Course Rating and Slope.`
+            );
+        }
+
+        return {
+            par,
+            rating,
+            slope
+        };
+    }
+
+    function renderTeeRatingsOverview() {
+        const tees =
+            Array.isArray(state.config?.tees)
+                ? state.config.tees
+                : [];
+
+        if (!tees.length) {
+            elements.teeRatingsOverview.innerHTML = `
+                <div class="courses-empty course-tee-rating-cards__empty">
+                    No tees configured yet. Scan a scorecard or add a tee to begin.
+                </div>
+            `;
+            return;
+        }
+
+        elements.teeRatingsOverview.innerHTML =
+            tees.map(function (tee) {
+                const men = tee.ratings?.men || {};
+                const women = tee.ratings?.women || {};
+                const total =
+                    tee.total_yards
+                        ? `${Number(tee.total_yards).toLocaleString("en-GB")} yds`
+                        : "Yardages incomplete";
+
+                function ratingFields(gender, label, rating) {
+                    return `
+                        <div class="course-tee-rating-card__gender">
+                            <strong>${label}</strong>
+                            <label>
+                                <span>Par</span>
+                                <input
+                                    type="number"
+                                    min="27"
+                                    max="90"
+                                    step="1"
+                                    value="${rating?.par ?? ""}"
+                                    placeholder="—"
+                                    data-rating-tee="${escapeHtml(tee.id)}"
+                                    data-rating-gender="${gender}"
+                                    data-rating-field="par"
+                                >
+                            </label>
+                            <label>
+                                <span>CR</span>
+                                <input
+                                    type="number"
+                                    min="20"
+                                    max="100"
+                                    step="0.1"
+                                    value="${rating?.course_rating ?? ""}"
+                                    placeholder="Not found"
+                                    data-rating-tee="${escapeHtml(tee.id)}"
+                                    data-rating-gender="${gender}"
+                                    data-rating-field="course_rating"
+                                >
+                            </label>
+                            <label>
+                                <span>Slope</span>
+                                <input
+                                    type="number"
+                                    min="55"
+                                    max="155"
+                                    step="1"
+                                    value="${rating?.slope_rating ?? ""}"
+                                    placeholder="Not found"
+                                    data-rating-tee="${escapeHtml(tee.id)}"
+                                    data-rating-gender="${gender}"
+                                    data-rating-field="slope_rating"
+                                >
+                            </label>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <article class="course-tee-rating-card">
+                        <div class="course-tee-rating-card__header">
+                            <div>
+                                <span class="course-tee-rating-card__swatch" aria-hidden="true"></span>
+                                <strong>${escapeHtml(tee.name)}</strong>
+                            </div>
+                            <span data-tee-total="${escapeHtml(tee.id)}">${escapeHtml(total)}</span>
+                        </div>
+
+                        ${ratingFields("men", "Men", men)}
+                        ${ratingFields("women", "Women", women)}
+                    </article>
+                `;
+            }).join("");
+
+        elements.teeRatingsOverview
+            .querySelectorAll("input")
+            .forEach(function (input) {
+                input.addEventListener(
+                    "input",
+                    updateCourseSetupStatus
+                );
+            });
+    }
+
+    function updateCourseSetupStatus() {
+        const holes = holeRowsPayload();
+        const tees =
+            Array.isArray(state.config?.tees)
+                ? state.config.tees
+                : [];
+
+        const holeDataComplete =
+            holes.length > 0 &&
+            holes.every(function (hole) {
+                return (
+                    hole.men_par !== null &&
+                    hole.men_stroke_index !== null &&
+                    hole.women_par !== null &&
+                    hole.women_stroke_index !== null
+                );
+            });
+
+        const completeYardageTees =
+            tees.filter(function (tee) {
+                const rows =
+                    scorecardYardageRowsForTee(
+                        tee.id
+                    );
+
+                return (
+                    rows.length === holes.length &&
+                    rows.every(function (row) {
+                        return row.yards !== null;
+                    })
+                );
+            }).length;
+
+        tees.forEach(function (tee) {
+            const distanceRows =
+                scorecardYardageRowsForTee(
+                    tee.id
+                );
+
+            const entered =
+                distanceRows.filter(function (row) {
+                    return row.yards !== null;
+                });
+
+            const total =
+                entered.reduce(
+                    function (sum, row) {
+                        return sum + (row.yards || 0);
+                    },
+                    0
+                );
+
+            const totalElement =
+                elements.teeRatingsOverview
+                    .querySelector(
+                        `[data-tee-total="${tee.id}"]`
+                    );
+
+            if (totalElement) {
+                totalElement.textContent =
+                    entered.length === holes.length && holes.length
+                        ? `${total.toLocaleString("en-GB")} yds`
+                        : `${entered.length}/${holes.length} yardages`;
+            }
+        });
+
+        let ratedTees = 0;
+
+        tees.forEach(function (tee) {
+            try {
+                const men =
+                    overviewRatingPayload(
+                        tee.id,
+                        "men"
+                    );
+
+                const women =
+                    overviewRatingPayload(
+                        tee.id,
+                        "women"
+                    );
+
+                if (
+                    men.rating !== null ||
+                    women.rating !== null
+                ) {
+                    ratedTees += 1;
+                }
+            } catch (error) {
+                // Incomplete ratings are reflected as incomplete below.
+            }
+        });
+
+        const teeCount = tees.length;
+        const yardagesComplete =
+            teeCount > 0 &&
+            completeYardageTees === teeCount;
+        const whsComplete =
+            teeCount > 0 &&
+            ratedTees === teeCount;
+        const complete =
+            holeDataComplete &&
+            yardagesComplete &&
+            whsComplete;
+
+        elements.courseSetupStatus.classList.toggle(
+            "is-complete",
+            complete
+        );
+
+        elements.courseSetupStatusTitle.textContent =
+            complete
+                ? "Course setup complete"
+                : "Course setup needs attention";
+
+        const items = [
+            {
+                ok: holeDataComplete,
+                text: holeDataComplete
+                    ? "Hole data complete"
+                    : "Hole par / SI incomplete"
+            },
+            {
+                ok: yardagesComplete,
+                text: teeCount
+                    ? `${completeYardageTees}/${teeCount} tee yardages complete`
+                    : "No tees configured"
+            },
+            {
+                ok: whsComplete,
+                text: teeCount
+                    ? `${ratedTees}/${teeCount} tees have WHS ratings`
+                    : "WHS ratings not configured"
+            }
+        ];
+
+        elements.courseSetupStatusItems.innerHTML =
+            items.map(function (item) {
+                return `
+                    <span class="course-setup-status__item${item.ok ? " is-ok" : ""}">
+                        ${item.ok ? "✓" : "!"} ${escapeHtml(item.text)}
+                    </span>
+                `;
+            }).join("");
+    }
+
     function updateHoleParSummary() {
         const rows = holeRowsPayload();
 
@@ -497,6 +1008,11 @@
             })
         );
 
+        const teeCount =
+            Array.isArray(state.config?.tees)
+                ? state.config.tees.length
+                : 0;
+
         const parts = [];
 
         parts.push(
@@ -511,10 +1027,16 @@
                 : `Women par ${womenTotal}`
         );
 
+        parts.push(
+            `${teeCount} tee${teeCount === 1 ? "" : "s"}`
+        );
+
         elements.holeParSummary.textContent =
             parts.join(" · ");
-    }
 
+        renderScorecardTotals();
+        updateCourseSetupStatus();
+    }
     function renderTeeList() {
         const tees =
             Array.isArray(state.config?.tees)
@@ -815,15 +1337,8 @@
         renderHoleRows();
         renderTeeList();
 
-        const tees =
-            Array.isArray(state.config.tees)
-                ? state.config.tees
-                : [];
-
         const selectedTee =
-            findTee(state.editingTeeId) ||
-            tees[0] ||
-            null;
+            findTee(state.editingTeeId);
 
         if (selectedTee) {
             renderTeeEditor(selectedTee);
@@ -831,6 +1346,7 @@
             state.editingTeeId = null;
             elements.teeEditor.hidden = true;
             elements.teeEditorEmpty.hidden = false;
+            renderTeeList();
         }
 
         renderCourseList();
@@ -932,14 +1448,55 @@
 
         elements.saveHolesButton.disabled = true;
         elements.saveHolesButton.textContent =
-            "Saving…";
+            "Saving course setup…";
 
         try {
+            const invalidInput =
+                Array.from(
+                    elements.holeDataSection
+                        .querySelectorAll("input")
+                ).find(function (input) {
+                    return !input.checkValidity();
+                });
+
+            if (invalidInput) {
+                invalidInput.focus();
+                invalidInput.reportValidity();
+                throw new Error(
+                    "Check the highlighted scorecard value before saving."
+                );
+            }
+
             const client = getClient();
-            const payload = holeRowsPayload();
+            const holes = holeRowsPayload();
+            const tees =
+                Array.isArray(state.config?.tees)
+                    ? state.config.tees
+                    : [];
+
+            const teePayloads =
+                tees.map(function (tee) {
+                    return {
+                        tee,
+                        men:
+                            overviewRatingPayload(
+                                tee.id,
+                                "men"
+                            ),
+                        women:
+                            overviewRatingPayload(
+                                tee.id,
+                                "women"
+                            ),
+                        distances:
+                            scorecardYardageRowsForTee(
+                                tee.id
+                            )
+                    };
+                });
 
             const {
-                error
+                error: holeError
             } = await client.rpc(
                 "admin_save_course_holes",
                 {
@@ -948,12 +1505,82 @@
                     p_course_id:
                         state.selectedCourseId,
                     p_holes:
-                        payload
+                        holes
                 }
             );
 
-            if (error) {
-                throw error;
+            if (holeError) {
+                throw holeError;
+            }
+
+            for (
+                const payload of teePayloads
+            ) {
+                const tee = payload.tee;
+
+                const {
+                    data: teeData,
+                    error: teeError
+                } = await client.rpc(
+                    "admin_save_tee",
+                    {
+                        p_club_id:
+                            state.clubId,
+                        p_course_id:
+                            state.selectedCourseId,
+                        p_tee_id:
+                            tee.id,
+                        p_name:
+                            tee.name,
+                        p_colour:
+                            tee.colour || null,
+                        p_display_order:
+                            tee.display_order ?? 0,
+                        p_is_active:
+                            tee.is_active !== false,
+                        p_men_par:
+                            payload.men.par,
+                        p_men_course_rating:
+                            payload.men.rating,
+                        p_men_slope:
+                            payload.men.slope,
+                        p_women_par:
+                            payload.women.par,
+                        p_women_course_rating:
+                            payload.women.rating,
+                        p_women_slope:
+                            payload.women.slope
+                    }
+                );
+
+                if (teeError) {
+                    throw teeError;
+                }
+
+                const savedTeeId =
+                    Array.isArray(teeData)
+                        ? teeData[0]
+                        : teeData;
+
+                const {
+                    error: distanceError
+                } = await client.rpc(
+                    "admin_save_tee_distances",
+                    {
+                        p_club_id:
+                            state.clubId,
+                        p_course_id:
+                            state.selectedCourseId,
+                        p_tee_id:
+                            savedTeeId || tee.id,
+                        p_distances:
+                            payload.distances
+                    }
+                );
+
+                if (distanceError) {
+                    throw distanceError;
+                }
             }
 
             state.config =
@@ -961,14 +1588,17 @@
                     state.selectedCourseId
                 );
 
+            await loadCourses();
             renderCourseConfiguration();
-            showSuccess("Hole data saved.");
+            showSuccess(
+                "Course setup saved. Hole data, tee ratings and yardages are up to date."
+            );
         } catch (error) {
             showError(error);
         } finally {
             elements.saveHolesButton.disabled = false;
             elements.saveHolesButton.textContent =
-                "Save hole data";
+                "Save course setup";
         }
     }
 
@@ -1187,24 +1817,24 @@
 
 
     function scorecardNumber(value) {
-    if (
-        value === null ||
-        value === undefined ||
-        (
-            typeof value === "string" &&
-            value.trim() === ""
-        )
-    ) {
-        return null;
+        if (
+            value === null ||
+            value === undefined ||
+            (
+                typeof value === "string" &&
+                value.trim() === ""
+            )
+        ) {
+            return null;
+        }
+
+        const number =
+            Number(value);
+
+        return Number.isFinite(number)
+            ? number
+            : null;
     }
-
-    const number =
-        Number(value);
-
-    return Number.isFinite(number)
-        ? number
-        : null;
-}
 
     function normaliseTeeKey(value) {
         return String(value || "")
@@ -1231,6 +1861,7 @@
         elements.scorecardUploadStep.hidden = false;
         elements.scorecardReviewStep.hidden = true;
 
+        elements.scorecardReviewHead.innerHTML = "";
         elements.scorecardHoleReview.innerHTML = "";
         elements.scorecardTeeReview.innerHTML = "";
         elements.scorecardWarnings.innerHTML = "";
@@ -1474,23 +2105,71 @@
                     })
             );
 
+        const tees =
+            Array.isArray(extraction?.tees)
+                ? extraction.tees
+                : [];
+
+        const teeYardageMaps =
+            tees.map(function (tee) {
+                return new Map(
+                    (tee.yardages || [])
+                        .map(function (item) {
+                            return [
+                                Number(item.hole_number),
+                                scorecardNumber(
+                                    item.yards
+                                )
+                            ];
+                        })
+                );
+            });
+
+        function display(value) {
+            return value === null ||
+                value === undefined
+                ? '<span class="scorecard-value-missing">—</span>'
+                : escapeHtml(value);
+        }
+
+        elements.scorecardReviewHead.innerHTML = `
+            <tr>
+                <th>Hole</th>
+                <th>Men par</th>
+                <th>Men SI</th>
+                <th>Women par</th>
+                <th>Women SI</th>
+                ${tees.map(function (tee) {
+                    return `
+                        <th class="course-scorecard-table__tee">
+                            <span>${escapeHtml(tee.name || tee.colour || "Tee")}</span>
+                            <small>${escapeHtml(tee.colour || "Yards")}</small>
+                        </th>
+                    `;
+                }).join("")}
+            </tr>
+        `;
+
         elements.scorecardHoleReview.innerHTML =
             Array.from(
                 { length: holeCount },
                 function (_, index) {
-                    const number =
-                        index + 1;
-
+                    const number = index + 1;
                     const hole =
                         holeMap.get(number) ||
                         {};
 
-                    function display(value) {
-                        return value === null ||
-                            value === undefined
-                            ? "—"
-                            : escapeHtml(value);
-                    }
+                    const teeCells =
+                        tees.map(function (_, teeIndex) {
+                            return `
+                                <td>
+                                    ${display(
+                                        teeYardageMaps[teeIndex]
+                                            .get(number)
+                                    )}
+                                </td>
+                            `;
+                        }).join("");
 
                     return `
                         <tr>
@@ -1499,15 +2178,11 @@
                             <td>${display(hole.men_stroke_index)}</td>
                             <td>${display(hole.women_par)}</td>
                             <td>${display(hole.women_stroke_index)}</td>
+                            ${teeCells}
                         </tr>
                     `;
                 }
             ).join("");
-
-        const tees =
-            Array.isArray(extraction?.tees)
-                ? extraction.tees
-                : [];
 
         if (!tees.length) {
             elements.scorecardTeeReview.innerHTML = `
@@ -1537,55 +2212,42 @@
                             0
                         );
 
-                    const ratingParts = [];
-
-                    if (
-                        tee.men_course_rating !== null &&
-                        tee.men_course_rating !== undefined &&
-                        tee.men_slope !== null &&
-                        tee.men_slope !== undefined
-                    ) {
-                        ratingParts.push(
-                            `Men ${tee.men_course_rating}/${tee.men_slope}`
-                        );
-                    }
-
-                    if (
-                        tee.women_course_rating !== null &&
-                        tee.women_course_rating !== undefined &&
-                        tee.women_slope !== null &&
-                        tee.women_slope !== undefined
-                    ) {
-                        ratingParts.push(
-                            `Women ${tee.women_course_rating}/${tee.women_slope}`
-                        );
+                    function ratingValue(value) {
+                        return value === null ||
+                            value === undefined
+                            ? '<span class="scorecard-value-missing">Not found</span>'
+                            : escapeHtml(value);
                     }
 
                     return `
-                        <label class="scorecard-tee-card">
-                            <input
-                                type="checkbox"
-                                data-scorecard-tee-index="${index}"
-                                checked
-                            >
-
-                            <span>
-                                <strong>${escapeHtml(tee.name || tee.colour || `Tee ${index + 1}`)}</strong>
-
+                        <article class="scorecard-tee-card scorecard-tee-card--detail">
+                            <label class="scorecard-tee-card__select">
+                                <input
+                                    type="checkbox"
+                                    data-scorecard-tee-index="${index}"
+                                    checked
+                                >
                                 <span>
-                                    ${
-                                        total
-                                            ? `${total.toLocaleString("en-GB")} yds`
-                                            : "Yardage incomplete"
-                                    }
-                                    ${
-                                        ratingParts.length
-                                            ? ` · ${escapeHtml(ratingParts.join(" · "))}`
-                                            : ""
-                                    }
+                                    <strong>${escapeHtml(tee.name || tee.colour || `Tee ${index + 1}`)}</strong>
+                                    <small>${yards.length}/${holeCount} yardages · ${total ? `${total.toLocaleString("en-GB")} yds` : "total unavailable"}</small>
                                 </span>
-                            </span>
-                        </label>
+                            </label>
+
+                            <div class="scorecard-tee-card__ratings">
+                                <div>
+                                    <strong>Men</strong>
+                                    <span>Par ${ratingValue(tee.men_par)}</span>
+                                    <span>CR ${ratingValue(tee.men_course_rating)}</span>
+                                    <span>Slope ${ratingValue(tee.men_slope)}</span>
+                                </div>
+                                <div>
+                                    <strong>Women</strong>
+                                    <span>Par ${ratingValue(tee.women_par)}</span>
+                                    <span>CR ${ratingValue(tee.women_course_rating)}</span>
+                                    <span>Slope ${ratingValue(tee.women_slope)}</span>
+                                </div>
+                            </div>
+                        </article>
                     `;
                 }).join("");
         }
@@ -1612,13 +2274,25 @@
             elements.scorecardWarnings.innerHTML = "";
         }
 
+        const recognisedYardages =
+            teeYardageMaps.reduce(
+                function (count, map) {
+                    return count +
+                        Array.from(map.values())
+                            .filter(function (value) {
+                                return value !== null;
+                            }).length;
+                },
+                0
+            );
+
         elements.scorecardReviewTitle.textContent =
             extraction?.course_name
                 ? `Scorecard recognised: ${extraction.course_name}`
                 : "Scorecard extracted";
 
         elements.scorecardReviewMeta.textContent =
-            `${(extraction?.holes || []).length} hole rows · ${tees.length} tee rows`;
+            `${(extraction?.holes || []).length} hole rows · ${tees.length} tee rows · ${recognisedYardages} yardages`;
 
         elements.scorecardUploadStep.hidden = true;
         elements.scorecardReviewStep.hidden = false;
@@ -1674,35 +2348,35 @@
                 );
 
             if (error) {
-    let errorMessage =
-        error?.message ||
-        "Scorecard scanning failed.";
+                let errorMessage =
+                    error?.message ||
+                    "Scorecard scanning failed.";
 
-    try {
-        if (
-            error?.context &&
-            typeof error.context.json ===
-                "function"
-        ) {
-            const errorBody =
-                await error.context.json();
+                try {
+                    if (
+                        error?.context &&
+                        typeof error.context.json ===
+                            "function"
+                    ) {
+                        const errorBody =
+                            await error.context.json();
 
-            errorMessage =
-                errorBody?.error ||
-                errorBody?.message ||
-                errorMessage;
-        }
-    } catch (parseError) {
-        console.warn(
-            "Could not read Edge Function error response:",
-            parseError
-        );
-    }
+                        errorMessage =
+                            errorBody?.error ||
+                            errorBody?.message ||
+                            errorMessage;
+                    }
+                } catch (parseError) {
+                    console.warn(
+                        "Could not read Edge Function error response:",
+                        parseError
+                    );
+                }
 
-    throw new Error(
-        errorMessage
-    );
-}
+                throw new Error(
+                    errorMessage
+                );
+            }
 
             if (!data?.extraction) {
                 throw new Error(
@@ -2221,7 +2895,7 @@
         } finally {
             elements.applyScorecardButton.disabled = false;
             elements.applyScorecardButton.textContent =
-                "Apply to course";
+                "Apply & save";
         }
     }
 
@@ -2265,6 +2939,29 @@
         elements.copyMenToWomenButton.addEventListener(
             "click",
             copyMenToWomen
+        );
+
+        elements.manualEntryScrollButton.addEventListener(
+            "click",
+            function () {
+                elements.scorecardEditorAnchor
+                    .scrollIntoView({
+                        behavior: "smooth",
+                        block: "start"
+                    });
+            }
+        );
+
+        elements.addTeeQuickButton.addEventListener(
+            "click",
+            function () {
+                clearMessages();
+                renderTeeEditor(null);
+                elements.teesSection.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start"
+                });
+            }
         );
 
         elements.addTeeButton.addEventListener(
