@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en" class="console-protected">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#022D1D" />
+    <title>Clubs | Paryx Console</title>
+
+    <link rel="stylesheet" href="../../club/styles/tokens.css" />
+    <link rel="stylesheet" href="../styles/console.css" />
+
+    <link rel="apple-touch-icon" href="../../club/assets/paryx-apple-touch-icon.png" />
+    <link rel="icon" type="image/png" href="../../club/assets/paryx-favicon.png" />
+
+    <script src="../js/core/console-loader.js?loader=1" defer></script>
+</head>
+<body data-page="clubs">
+    <div class="console-shell">
+        <aside class="console-sidebar" data-console-sidebar></aside>
+
+        <div class="console-workspace">
+            <header class="console-topbar" data-console-topbar></header>
+
+            <main class="console-main">
+
+<section class="console-page-header">
+    <div>
+        <p class="console-eyebrow">Tenants</p>
+        <h1 class="console-title">Clubs</h1>
+        <p class="console-subtitle">
+            Create and control the golf clubs using Paryx.
+        </p>
+    </div>
+
+    <span class="console-badge">Platform</span>
+</section>
+
+<div id="clubError" class="console-error" hidden></div>
+<div id="clubSuccess" class="console-success" hidden></div>
+
+<section class="console-panel">
+    <div class="console-panel__header">
+        <h2>Create club</h2>
+    </div>
+
+    <form id="createClubForm">
+        <div class="console-field-grid">
+            <div class="console-field">
+                <label for="newClubName">Club name</label>
+                <input id="newClubName" type="text" required placeholder="Example Golf Club" />
+            </div>
+
+            <div class="console-field">
+                <label for="newClubSlug">Slug</label>
+                <input id="newClubSlug" type="text" required placeholder="example-golf-club" />
+            </div>
+
+            <div class="console-field">
+                <label for="newClubTimezone">Timezone</label>
+                <input id="newClubTimezone" type="text" value="Europe/London" required />
+            </div>
+        </div>
+
+        <div class="console-actions" style="margin-top: .9rem;">
+            <button id="createClubButton" class="console-button" type="submit">
+                Create club
+            </button>
+        </div>
+    </form>
+</section>
+
+<section class="console-panel">
+    <div class="console-panel__header">
+        <div>
+            <h2>Club directory</h2>
+            <small id="clubResultCount">Loading…</small>
+        </div>
+
+        <input
+            id="clubSearch"
+            class="console-field console-search"
+            type="search"
+            placeholder="Search club name or slug"
+            aria-label="Search clubs"
+        />
+    </div>
+
+    <div class="console-table-wrap">
+        <table class="console-table">
+            <thead>
+                <tr>
+                    <th>Club</th>
+                    <th>Status</th>
+                    <th>Timezone</th>
+                    <th>Members</th>
+                    <th>Staff</th>
+                    <th>Courses</th>
+                    <th>Upcoming events</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody id="clubTableBody">
+                <tr>
+                    <td colspan="8">
+                        <div class="console-empty">Loading clubs…</div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+            </main>
+        </div>
+    </div>
+</body>
+</html>

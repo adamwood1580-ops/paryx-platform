@@ -111,6 +111,15 @@
                         Staff workspace
                     </span>
 
+                    <a
+                        id="staffConsoleLink"
+                        class="staff-console-link"
+                        href="../../console/html/dashboard.html"
+                        hidden
+                    >
+                        Paryx Console
+                    </a>
+
                     <button
                         id="staffSignOut"
                         type="button"
@@ -298,6 +307,48 @@
                     activeClub.role ||
                     "staff"
                 ).replaceAll("_", " ");
+        }
+    }
+
+    async function hydratePlatformConsoleLink() {
+        const link =
+            document.getElementById(
+                "staffConsoleLink"
+            );
+
+        if (!link) {
+            return;
+        }
+
+        try {
+            const {
+                data,
+                error
+            } =
+                await window.supabaseClient.rpc(
+                    "get_my_platform_access"
+                );
+
+            if (error) {
+                return;
+            }
+
+            const access =
+                Array.isArray(data)
+                    ? data[0]
+                    : data;
+
+            if (
+                access &&
+                access.is_active === true
+            ) {
+                link.hidden = false;
+            }
+        } catch (error) {
+            /*
+             * Console is optional for ordinary club staff.
+             * A missing migration/RPC must never break the club workspace.
+             */
         }
     }
 

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en" class="console-protected">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#022D1D" />
+    <title>Overview | Paryx Console</title>
+
+    <link rel="stylesheet" href="../../club/styles/tokens.css" />
+    <link rel="stylesheet" href="../styles/console.css" />
+
+    <link rel="apple-touch-icon" href="../../club/assets/paryx-apple-touch-icon.png" />
+    <link rel="icon" type="image/png" href="../../club/assets/paryx-favicon.png" />
+
+    <script src="../js/core/console-loader.js?loader=1" defer></script>
+</head>
+<body data-page="dashboard">
+    <div class="console-shell">
+        <aside class="console-sidebar" data-console-sidebar></aside>
+
+        <div class="console-workspace">
+            <header class="console-topbar" data-console-topbar></header>
+
+            <main class="console-main">
+
+<section class="console-page-header">
+    <div>
+        <p class="console-eyebrow">Paryx platform</p>
+        <h1 class="console-title">Console</h1>
+        <p class="console-subtitle">
+            Platform-wide visibility and control across every Paryx club.
+        </p>
+    </div>
+
+    <span class="console-badge">Internal</span>
+</section>
+
+<div id="consoleError" class="console-error" hidden></div>
+
+<section class="console-stat-grid" aria-label="Platform overview">
+    <article class="console-stat-card">
+        <span>Total clubs</span>
+        <strong id="totalClubs">--</strong>
+    </article>
+
+    <article class="console-stat-card">
+        <span>Active clubs</span>
+        <strong id="activeClubs">--</strong>
+    </article>
+
+    <article class="console-stat-card">
+        <span>Auth users</span>
+        <strong id="totalUsers">--</strong>
+    </article>
+
+    <article class="console-stat-card">
+        <span>Active memberships</span>
+        <strong id="activeMemberships">--</strong>
+    </article>
+
+    <article class="console-stat-card">
+        <span>Courses</span>
+        <strong id="totalCourses">--</strong>
+    </article>
+
+    <article class="console-stat-card">
+        <span>Platform users</span>
+        <strong id="platformUsers">--</strong>
+    </article>
+</section>
+
+<section class="console-panel">
+    <div class="console-panel__header">
+        <h2>Platform tools</h2>
+    </div>
+
+    <div class="console-actions">
+        <a class="console-button" href="clubs.html">Manage clubs</a>
+        <a class="console-button console-button--secondary" href="platform-users.html">Platform users</a>
+        <a class="console-button console-button--secondary" href="audit.html">View audit</a>
+    </div>
+</section>
+
+<section class="console-panel">
+    <div class="console-panel__header">
+        <h2>Recent platform activity</h2>
+        <a href="audit.html">View all</a>
+    </div>
+
+    <div id="recentAudit">
+        <div class="console-empty">Loading activity…</div>
+    </div>
+</section>
+
+            </main>
+        </div>
+    </div>
+</body>
+</html>

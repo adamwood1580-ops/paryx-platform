@@ -1,0 +1,106 @@
+html,
+body {
+    min-height: 100%;
+    margin: 0;
+}
+
+body {
+    display: grid;
+    place-items: center;
+    padding: 1.2rem;
+    box-sizing: border-box;
+    background:
+        radial-gradient(
+            circle at 50% 15%,
+            rgba(229, 196, 95, .16),
+            transparent 35%
+        ),
+        linear-gradient(
+            180deg,
+            #064831 0%,
+            #022D1D 100%
+        );
+    font-family: var(--font-family-base);
+}
+
+.console-login-card {
+    width: min(100%, 28rem);
+    box-sizing: border-box;
+    padding: 1.7rem;
+    background: #fffdf8;
+    border: 1px solid rgba(229,196,95,.56);
+    border-radius: 1.15rem;
+    box-shadow: 0 20px 50px rgba(0,0,0,.24);
+}
+
+.console-login-brand {
+    text-align: center;
+    margin-bottom: 1.35rem;
+}
+
+.console-login-brand img {
+    width: min(100%, 17rem);
+    height: auto;
+}
+
+.console-login-brand strong {
+    display: block;
+    margin-top: .55rem;
+    color: var(--color-primary);
+    font-size: 1.05rem;
+}
+
+.console-login-brand span {
+    display: block;
+    margin-top: .2rem;
+    color: var(--color-text-muted);
+    font-size: .8rem;
+}
+
+.console-login-form {
+    display: grid;
+    gap: .85rem;
+}
+
+.console-login-form input {
+    width: 100%;
+    min-height: 3rem;
+    box-sizing: border-box;
+    padding: .65rem .8rem;
+    border: 1px solid var(--color-border);
+    border-radius: .75rem;
+    background: #fff;
+    font: inherit;
+}
+
+.console-login-form button {
+    min-height: 3rem;
+    border: 0;
+    border-radius: .75rem;
+    background: var(--color-primary);
+    color: #fff;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 800;
+}
+
+.console-login-message {
+    margin: 0;
+    padding: .7rem .8rem;
+    border-radius: .7rem;
+    color: #9B2F2F;
+    background: #FFF0F0;
+    border: 1px solid #F2C8C8;
+    font-size: .82rem;
+}
+
+.console-login-footer {
+    margin-top: 1.15rem;
+    text-align: center;
+}
+
+.console-login-footer a {
+    color: var(--color-primary);
+    font-size: .78rem;
+    font-weight: 700;
+}

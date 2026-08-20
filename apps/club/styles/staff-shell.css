@@ -199,3 +199,15 @@ html.auth-protected.auth-ready body {
         height: 2.15rem;
     }
 }
+
+
+.staff-console-link {
+    width: fit-content;
+    color: var(--color-accent-light);
+    text-decoration: none;
+    font-weight: var(--font-weight-semibold);
+}
+
+.staff-console-link[hidden] {
+    display: none;
+}

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en" class="console-protected">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#022D1D" />
+    <title>Platform Users | Paryx Console</title>
+
+    <link rel="stylesheet" href="../../club/styles/tokens.css" />
+    <link rel="stylesheet" href="../styles/console.css" />
+
+    <link rel="apple-touch-icon" href="../../club/assets/paryx-apple-touch-icon.png" />
+    <link rel="icon" type="image/png" href="../../club/assets/paryx-favicon.png" />
+
+    <script src="../js/core/console-loader.js?loader=1" defer></script>
+</head>
+<body data-page="platformusers">
+    <div class="console-shell">
+        <aside class="console-sidebar" data-console-sidebar></aside>
+
+        <div class="console-workspace">
+            <header class="console-topbar" data-console-topbar></header>
+
+            <main class="console-main">
+
+<section class="console-page-header">
+    <div>
+        <p class="console-eyebrow">Security</p>
+        <h1 class="console-title">Platform Users</h1>
+        <p class="console-subtitle">
+            Paryx-level access is separate from every golf club role.
+        </p>
+    </div>
+
+    <span class="console-badge">Restricted</span>
+</section>
+
+<div id="platformUserError" class="console-error" hidden></div>
+<div id="platformUserSuccess" class="console-success" hidden></div>
+
+<p id="ownerOnlyNote" class="console-panel" hidden>
+    Only a platform owner can grant or change Paryx Console access.
+</p>
+
+<section class="console-panel">
+    <div class="console-panel__header">
+        <h2>Grant or update access</h2>
+    </div>
+
+    <form id="platformUserForm">
+        <div class="console-field-grid">
+            <div class="console-field">
+                <label for="platformUserEmail">Existing Paryx account email</label>
+                <input id="platformUserEmail" type="email" required placeholder="name@example.com" />
+            </div>
+
+            <div class="console-field">
+                <label for="platformUserRole">Platform role</label>
+                <select id="platformUserRole">
+                    <option value="platform_admin">Platform Admin</option>
+                    <option value="platform_support">Platform Support</option>
+                    <option value="platform_owner">Platform Owner</option>
+                </select>
+            </div>
+
+            <div class="console-field">
+                <label for="platformUserActive">Status</label>
+                <label style="display:flex;align-items:center;gap:.55rem;min-height:2.65rem;text-transform:none;letter-spacing:0;">
+                    <input id="platformUserActive" type="checkbox" checked />
+                    Active
+                </label>
+            </div>
+        </div>
+
+        <div class="console-actions" style="margin-top:.9rem;">
+            <button id="platformUserSubmit" class="console-button" type="submit">
+                Save platform access
+            </button>
+        </div>
+    </form>
+</section>
+
+<section class="console-panel">
+    <div class="console-panel__header">
+        <h2>Current platform users</h2>
+    </div>
+
+    <div class="console-table-wrap">
+        <table class="console-table">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Updated</th>
+                </tr>
+            </thead>
+            <tbody id="platformUserTableBody">
+                <tr>
+                    <td colspan="5">
+                        <div class="console-empty">Loading platform users…</div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+            </main>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en" class="console-protected">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#022D1D" />
+    <title>Audit | Paryx Console</title>
+
+    <link rel="stylesheet" href="../../club/styles/tokens.css" />
+    <link rel="stylesheet" href="../styles/console.css" />
+
+    <link rel="apple-touch-icon" href="../../club/assets/paryx-apple-touch-icon.png" />
+    <link rel="icon" type="image/png" href="../../club/assets/paryx-favicon.png" />
+
+    <script src="../js/core/console-loader.js?loader=1" defer></script>
+</head>
+<body data-page="audit">
+    <div class="console-shell">
+        <aside class="console-sidebar" data-console-sidebar></aside>
+
+        <div class="console-workspace">
+            <header class="console-topbar" data-console-topbar></header>
+
+            <main class="console-main">
+
+<section class="console-page-header">
+    <div>
+        <p class="console-eyebrow">Security & support</p>
+        <h1 class="console-title">Audit</h1>
+        <p class="console-subtitle">
+            Platform-level actions are recorded independently from club activity.
+        </p>
+    </div>
+
+    <span class="console-badge">Audit trail</span>
+</section>
+
+<div id="auditError" class="console-error" hidden></div>
+
+<section class="console-panel">
+    <div class="console-table-wrap">
+        <table class="console-table">
+            <thead>
+                <tr>
+                    <th>When</th>
+                    <th>Action</th>
+                    <th>Actor</th>
+                    <th>Club</th>
+                    <th>Target user</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody id="auditTableBody">
+                <tr>
+                    <td colspan="6">
+                        <div class="console-empty">Loading audit history…</div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+            </main>
+        </div>
+    </div>
+</body>
+</html>

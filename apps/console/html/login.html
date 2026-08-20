@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#022D1D" />
+
+    <title>Paryx Console | Sign In</title>
+
+    <link rel="stylesheet" href="../../club/styles/tokens.css" />
+    <link rel="stylesheet" href="../styles/console-auth.css" />
+
+    <link rel="apple-touch-icon" href="../../club/assets/paryx-apple-touch-icon.png" />
+    <link rel="icon" type="image/png" href="../../club/assets/paryx-favicon.png" />
+</head>
+<body>
+    <main class="console-login-card">
+        <header class="console-login-brand">
+            <img
+                src="../../club/assets/branding/paryx-logo.png"
+                alt="Paryx — The platform behind your club."
+            />
+            <strong>Paryx Console</strong>
+            <span>Internal platform administration</span>
+        </header>
+
+        <form id="consoleLoginForm" class="console-login-form">
+            <input
+                id="consoleEmail"
+                type="email"
+                autocomplete="email"
+                placeholder="Email address"
+                required
+            />
+
+            <input
+                id="consolePassword"
+                type="password"
+                autocomplete="current-password"
+                placeholder="Password"
+                required
+            />
+
+            <button id="consoleLoginButton" type="submit">
+                Sign in to Console
+            </button>
+
+            <p
+                id="consoleLoginMessage"
+                class="console-login-message"
+                role="alert"
+                hidden
+            ></p>
+        </form>
+
+        <footer class="console-login-footer">
+            <a href="../../club/html/login.html">
+                Return to Paryx Club
+            </a>
+        </footer>
+    </main>
+
+    <script src="../../club/js/core/config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../../club/js/core/supabase.js"></script>
+    <script src="../js/auth/login.js?console=1"></script>
+</body>
+</html>
