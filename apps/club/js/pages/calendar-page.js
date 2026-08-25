@@ -95,6 +95,8 @@
         yearHint: document.getElementById("fixtureYearHint"),
         scanFixture: document.getElementById("scanFixtureButton"),
         importProgress: document.getElementById("importProgress"),
+        importProgressTitle: document.getElementById("importProgressTitle"),
+        importProgressText: document.getElementById("importProgressText"),
         importReview: document.getElementById("importReview"),
         importReviewTitle: document.getElementById("importReviewTitle"),
         importReviewMeta: document.getElementById("importReviewMeta"),
@@ -927,6 +929,16 @@
         }
     }
 
+    function setImportProgress(title, text) {
+        if (elements.importProgressTitle) {
+            elements.importProgressTitle.textContent = title || "Scanning fixture calendar…";
+        }
+
+        if (elements.importProgressText) {
+            elements.importProgressText.textContent = text || "";
+        }
+    }
+
     function openImportDialog() {
         resetImport();
         elements.importDialog?.showModal();
@@ -1223,6 +1235,64 @@
         }
     }
 
+    async function invokeFixtureScanner(payload) {
+        const {
+            data,
+            error
+        } = await getClient().functions.invoke(
+            "scan-fixture-calendar",
+            {
+                body: payload
+            }
+        );
+
+        if (error) {
+            throw new Error(
+                await functionErrorMessage(error)
+            );
+        }
+
+        return data;
+    }
+
+    async function scanFixturePage(basePayload, pageNumber) {
+        let lastError = null;
+
+        for (let attempt = 1; attempt <= 2; attempt += 1) {
+            try {
+                const data = await invokeFixtureScanner({
+                    ...basePayload,
+                    mode: "page",
+                    pageNumber
+                });
+
+                if (!data?.extraction) {
+                    throw new Error(
+                        "Paryx did not receive fixture data from the scanner."
+                    );
+                }
+
+                return data;
+            } catch (error) {
+                lastError = error;
+
+                const message = getReadableError(error).toLowerCase();
+                const retryable =
+                    message.includes("idle timeout") ||
+                    message.includes("timeout") ||
+                    message.includes("timed out");
+
+                if (!retryable || attempt >= 2) {
+                    break;
+                }
+            }
+        }
+
+        throw new Error(
+            `Page ${pageNumber}: ${getReadableError(lastError)}`
+        );
+    }
+
     async function scanFixtureCalendar() {
         const file = state.importFile;
 
@@ -1237,6 +1307,10 @@
         elements.importPicker.hidden = true;
         elements.importReview.hidden = true;
         elements.importProgress.hidden = false;
+        setImportProgress(
+            "Preparing fixture scan…",
+            "Checking the PDF before scanning each page."
+        );
 
         try {
             const pdfDataUrl =
@@ -1245,41 +1319,170 @@
             const yearHint =
                 Number(elements.yearHint?.value || 0);
 
-            const {
-                data,
-                error
-            } = await getClient().functions.invoke(
-                "scan-fixture-calendar",
-                {
-                    body: {
-                        clubId: state.clubId,
-                        fileName: file.name,
-                        pdfDataUrl,
-                        yearHint:
-                            Number.isInteger(yearHint)
-                                ? yearHint
-                                : null
-                    }
-                }
+            const basePayload = {
+                clubId: state.clubId,
+                fileName: file.name,
+                pdfDataUrl,
+                yearHint:
+                    Number.isInteger(yearHint)
+                        ? yearHint
+                        : null
+            };
+
+            const inspection = await invokeFixtureScanner({
+                ...basePayload,
+                mode: "inspect"
+            });
+
+            const pageCount = Number(
+                inspection?.meta?.pageCount || 0
             );
 
-            if (error) {
+            if (
+                !Number.isInteger(pageCount) ||
+                pageCount < 1 ||
+                pageCount > 60
+            ) {
                 throw new Error(
-                    await functionErrorMessage(error)
+                    "Paryx could not determine a valid page count for this PDF."
                 );
             }
 
-            if (!data?.extraction) {
-                throw new Error(
-                    "Paryx did not receive fixture data from the scanner."
-                );
+            const pageResults = new Array(pageCount);
+            let nextPage = 1;
+            let completedPages = 0;
+            let recognisedEvents = 0;
+
+            setImportProgress(
+                "Scanning fixture pages…",
+                `0 of ${pageCount} pages scanned.`
+            );
+
+            async function worker() {
+                while (true) {
+                    const pageNumber = nextPage;
+                    nextPage += 1;
+
+                    if (pageNumber > pageCount) {
+                        return;
+                    }
+
+                    const result =
+                        await scanFixturePage(
+                            basePayload,
+                            pageNumber
+                        );
+
+                    pageResults[pageNumber - 1] = result;
+                    completedPages += 1;
+                    recognisedEvents += Array.isArray(
+                        result?.extraction?.events
+                    )
+                        ? result.extraction.events.length
+                        : 0;
+
+                    setImportProgress(
+                        "Scanning fixture pages…",
+                        `${completedPages} of ${pageCount} pages scanned · ${recognisedEvents} events recognised so far.`
+                    );
+                }
             }
+
+            const workerCount = Math.min(3, pageCount);
+
+            await Promise.all(
+                Array.from(
+                    { length: workerCount },
+                    function () {
+                        return worker();
+                    }
+                )
+            );
+
+            setImportProgress(
+                "Preparing review…",
+                "Combining the recognised fixtures into one editable calendar."
+            );
+
+            const combined = {
+                calendar_title: null,
+                calendar_year: null,
+                events: [],
+                warnings: []
+            };
+
+            pageResults.forEach(function (result, pageIndex) {
+                const extraction = result?.extraction || {};
+
+                if (
+                    !combined.calendar_title &&
+                    extraction.calendar_title
+                ) {
+                    combined.calendar_title =
+                        extraction.calendar_title;
+                }
+
+                if (
+                    !combined.calendar_year &&
+                    Number.isInteger(extraction.calendar_year)
+                ) {
+                    combined.calendar_year =
+                        extraction.calendar_year;
+                }
+
+                if (Array.isArray(extraction.events)) {
+                    combined.events.push(
+                        ...extraction.events
+                    );
+                }
+
+                if (Array.isArray(extraction.warnings)) {
+                    extraction.warnings
+                        .filter(Boolean)
+                        .forEach(function (warning) {
+                            combined.warnings.push(
+                                `Page ${pageIndex + 1}: ${warning}`
+                            );
+                        });
+                }
+            });
+
+            combined.events.sort(function (left, right) {
+                const dateCompare = String(
+                    left?.event_date || ""
+                ).localeCompare(
+                    String(right?.event_date || "")
+                );
+
+                if (dateCompare !== 0) {
+                    return dateCompare;
+                }
+
+                const leftTime =
+                    left?.start_time ||
+                    left?.time_text ||
+                    "99:99";
+                const rightTime =
+                    right?.start_time ||
+                    right?.time_text ||
+                    "99:99";
+
+                const timeCompare = String(leftTime)
+                    .localeCompare(String(rightTime));
+
+                if (timeCompare !== 0) {
+                    return timeCompare;
+                }
+
+                return Number(left?.source_page || 0) -
+                    Number(right?.source_page || 0);
+            });
 
             const extraction = {
-                ...data.extraction,
+                ...combined,
                 events:
                     normaliseImportEvents(
-                        data.extraction
+                        combined
                     )
             };
 

@@ -444,9 +444,9 @@
             <section id="importProgress" class="calendar-import-progress" hidden>
                 <div class="calendar-spinner" aria-hidden="true"></div>
                 <div>
-                    <strong>Reading the full fixture list…</strong>
-                    <p>
-                        This PDF contains many calendar entries, so the first scan can take a little while.
+                    <strong id="importProgressTitle">Preparing fixture scan…</strong>
+                    <p id="importProgressText">
+                        Paryx will scan the PDF one page at a time to keep each request within the Edge Function time limit.
                     </p>
                 </div>
             </section>

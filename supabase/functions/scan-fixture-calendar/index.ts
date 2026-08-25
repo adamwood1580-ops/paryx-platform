@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { PDFDocument } from "npm:pdf-lib@1.17.1";
 
 const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
@@ -135,6 +136,57 @@ function bytesFromDataUrl(
     }
 
     return bytes;
+}
+
+
+function bytesToBase64(
+    bytes: Uint8Array
+) {
+    let binary = "";
+    const chunkSize = 0x8000;
+
+    for (
+        let offset = 0;
+        offset < bytes.length;
+        offset += chunkSize
+    ) {
+        const chunk = bytes.subarray(
+            offset,
+            Math.min(
+                offset + chunkSize,
+                bytes.length
+            )
+        );
+
+        binary += String.fromCharCode(
+            ...chunk
+        );
+    }
+
+    return btoa(binary);
+}
+
+async function singlePagePdfDataUrl(
+    sourcePdf: PDFDocument,
+    pageIndex: number
+) {
+    const outputPdf =
+        await PDFDocument.create();
+
+    const [copiedPage] =
+        await outputPdf.copyPages(
+            sourcePdf,
+            [pageIndex]
+        );
+
+    outputPdf.addPage(copiedPage);
+
+    const bytes =
+        await outputPdf.save({
+            useObjectStreams: false
+        });
+
+    return `data:application/pdf;base64,${bytesToBase64(bytes)}`;
 }
 
 async function sha256Hex(
@@ -465,6 +517,16 @@ Deno.serve(
                     body?.yearHint || 0
                 );
 
+            const mode =
+                String(
+                    body?.mode || ""
+                ).trim();
+
+            const pageNumber =
+                Number(
+                    body?.pageNumber || 0
+                );
+
             if (!clubId) {
                 return jsonResponse(
                     {
@@ -526,10 +588,92 @@ Deno.serve(
                 );
             }
 
-            const prompt = `
-You are extracting a complete golf-club fixture calendar from a PDF for Paryx.
+            const pdfBytes =
+                bytesFromDataUrl(
+                    pdfDataUrl
+                );
 
-Read the entire PDF, including every monthly calendar page. Create one event record for every distinct fixture/event printed in a date cell.
+            let sourcePdf: PDFDocument;
+
+            try {
+                sourcePdf =
+                    await PDFDocument.load(
+                        pdfBytes,
+                        {
+                            ignoreEncryption:
+                                true
+                        }
+                    );
+            } catch (error) {
+                console.error(
+                    "Fixture PDF could not be opened:",
+                    error
+                );
+
+                return jsonResponse(
+                    {
+                        error:
+                            "Paryx could not open this fixture PDF."
+                    },
+                    400
+                );
+            }
+
+            const pageCount =
+                sourcePdf.getPageCount();
+
+            const documentHash =
+                await sha256Hex(
+                    pdfBytes
+                );
+
+            if (mode === "inspect") {
+                return jsonResponse({
+                    meta: {
+                        pageCount,
+                        documentHash:
+                            documentHash.slice(
+                                0,
+                                16
+                            )
+                    }
+                });
+            }
+
+            if (mode !== "page") {
+                return jsonResponse(
+                    {
+                        error:
+                            "This fixture scanner now works page by page. Refresh Paryx and try the import again."
+                    },
+                    400
+                );
+            }
+
+            if (
+                !Number.isInteger(pageNumber) ||
+                pageNumber < 1 ||
+                pageNumber > pageCount
+            ) {
+                return jsonResponse(
+                    {
+                        error:
+                            "A valid PDF page number is required."
+                    },
+                    400
+                );
+            }
+
+            const pagePdfDataUrl =
+                await singlePagePdfDataUrl(
+                    sourcePdf,
+                    pageNumber - 1
+                );
+
+            const prompt = `
+You are extracting one page from a golf-club fixture calendar PDF for Paryx.
+
+This request contains original PDF page ${pageNumber} of ${pageCount}. Read this page completely and create one event record for every distinct fixture/event printed in a dated calendar cell. A title/cover page may legitimately contain no dated events.
 
 ${
     Number.isInteger(yearHint) &&
@@ -557,10 +701,10 @@ Important extraction rules:
 9. is_qualifier is true only when the event is explicitly marked (Q) or otherwise explicitly shown as a qualifier.
 10. course_closed is true only when the PDF explicitly says the course is closed. Extract the closure window separately into course_closed_start_time/course_closed_end_time where printed. Do not replace the event's own start/end time with the closure window.
 11. Keep useful secondary text in notes, but do not duplicate the title unnecessarily.
-12. source_text should preserve the concise printed wording that led to this event. source_page is the 1-based PDF page number.
+12. source_text should preserve the concise printed wording that led to this event. source_page must be ${pageNumber}, the original 1-based PDF page number.
 13. Ignore calendar headings, slogans, legends, day numbers and decorative text unless they are actual dated events.
 14. Preserve names and spellings as printed. Do not silently correct competition or person names.
-15. Return every month present, not a sample.
+15. Return every dated event visible on this page, not a sample. Do not attempt to infer events from pages that are not present in this request.
 
 The output is a draft. A club administrator will review and edit all rows before anything is saved.
             `.trim();
@@ -588,10 +732,9 @@ The output is a draft. A club administrator will review and edit all rows before
                                                 type:
                                                     "input_file",
                                                 filename:
-                                                    fileName ||
-                                                    "fixture-calendar.pdf",
+                                                    `${fileName || "fixture-calendar.pdf"}-page-${pageNumber}.pdf`,
                                                 file_data:
-                                                    pdfDataUrl,
+                                                    pagePdfDataUrl,
                                                 detail:
                                                     "high"
                                             },
@@ -688,16 +831,6 @@ The output is a draft. A club administrator will review and edit all rows before
                     502
                 );
             }
-
-            const pdfBytes =
-                bytesFromDataUrl(
-                    pdfDataUrl
-                );
-
-            const documentHash =
-                await sha256Hex(
-                    pdfBytes
-                );
 
             const events =
                 Array.isArray(
@@ -801,11 +934,7 @@ The output is a draft. A club administrator will review and edit all rows before
                             event.source_text
                         ),
                     source_page:
-                        Number.isInteger(
-                            event.source_page
-                        )
-                            ? event.source_page
-                            : null,
+                        pageNumber,
                     warning:
                         cleanText(
                             event.warning
@@ -838,6 +967,8 @@ The output is a draft. A club administrator will review and edit all rows before
                 },
                 meta: {
                     model,
+                    pageNumber,
+                    pageCount,
                     eventCount:
                         normalisedEvents.length,
                     documentHash:
