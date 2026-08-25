@@ -19,7 +19,8 @@
         importmembers: ["../js/pages/import-members-page.js"],
         settings: ["../js/pages/settings-page.js"],
         courses: ["../js/pages/courses-page.js"],
-        calendar: ["../js/pages/calendar-page.js"]
+        calendar: ["../js/pages/calendar-page.js"],
+        teesheet: ["../js/pages/tee-sheet-page.js"]
     };
 
     function pageName() {

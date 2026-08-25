@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en" class="auth-protected">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#064831" />
+    <link rel="stylesheet" href="../styles/tokens.css" />
+    <link rel="stylesheet" href="../styles/app-shell.css" />
+    <link rel="stylesheet" href="../styles/components.css" />
+    <link rel="stylesheet" href="../styles/staff-shell.css" />
+    <link rel="stylesheet" href="../styles/tee-sheet.css" />
+    <link rel="manifest" href="../json/manifest.json" />
+    <link rel="apple-touch-icon" href="../assets/paryx-apple-touch-icon.png" />
+    <link rel="icon" type="image/png" href="../assets/paryx-favicon.png" />
+    <meta name="application-name" content="Paryx" />
+    <title>Tee Sheet | Paryx</title>
+    <script src="../js/core/protected-loader.js?loader=5" defer></script>
+</head>
+<body data-page="teesheet">
+    <div class="staff-shell">
+        <aside class="staff-sidebar" data-staff-sidebar></aside>
+
+        <div class="staff-workspace">
+            <header class="staff-topbar" data-staff-header></header>
+
+            <main class="app-main tee-sheet-page">
+                <section class="tee-sheet-intro">
+                    <div>
+                        <p class="page-heading__eyebrow">Club operations</p>
+                        <h1>Tee Sheet</h1>
+                        <p id="teeSheetClubName">Loading club information…</p>
+                    </div>
+
+                    <button
+                        id="manageSchedulesButton"
+                        class="tee-sheet-button tee-sheet-button--secondary"
+                        type="button"
+                    >
+                        Booking schedules
+                    </button>
+                </section>
+
+                <section id="teeSheetError" class="admin-error" role="alert" hidden></section>
+                <section id="teeSheetSuccess" class="tee-sheet-success" role="status" hidden></section>
+
+                <section class="tee-sheet-toolbar card" aria-label="Tee sheet controls">
+                    <label class="tee-sheet-field tee-sheet-field--course">
+                        <span>Course</span>
+                        <select id="teeSheetCourseSelect"></select>
+                    </label>
+
+                    <div class="tee-sheet-date-nav">
+                        <button id="previousDayButton" type="button" aria-label="Previous day">‹</button>
+                        <label class="tee-sheet-field">
+                            <span>Date</span>
+                            <input id="teeSheetDate" type="date" />
+                        </label>
+                        <button id="nextDayButton" type="button" aria-label="Next day">›</button>
+                    </div>
+
+                    <button id="todayTeeSheetButton" class="tee-sheet-button tee-sheet-button--secondary" type="button">
+                        Today
+                    </button>
+
+                    <button id="generateTeeSheetButton" class="tee-sheet-button" type="button">
+                        Generate / refresh
+                    </button>
+                </section>
+
+                <section class="tee-sheet-summary" aria-label="Tee sheet summary">
+                    <article>
+                        <span>Total tee times</span>
+                        <strong id="teeSheetTotalCount">0</strong>
+                    </article>
+                    <article>
+                        <span>Open</span>
+                        <strong id="teeSheetOpenCount">0</strong>
+                    </article>
+                    <article>
+                        <span>Booked</span>
+                        <strong id="teeSheetBookedCount">0</strong>
+                    </article>
+                    <article>
+                        <span>Event / unavailable</span>
+                        <strong id="teeSheetUnavailableCount">0</strong>
+                    </article>
+                </section>
+
+                <section class="tee-sheet-layout">
+                    <div class="tee-sheet-main card">
+                        <div class="tee-sheet-section-heading">
+                            <div>
+                                <p class="page-heading__eyebrow">Daily inventory</p>
+                                <h2 id="teeSheetDayTitle">Tee times</h2>
+                            </div>
+                            <span id="teeSheetLoadStatus">Loading…</span>
+                        </div>
+
+                        <div id="teeSheetEmpty" class="tee-sheet-empty" hidden>
+                            <strong>No tee times have been generated for this date.</strong>
+                            <p>Create a booking schedule, then generate the day.</p>
+                        </div>
+
+                        <div id="teeSheetRows" class="tee-sheet-rows" aria-live="polite"></div>
+                    </div>
+
+                    <aside class="tee-sheet-events card">
+                        <div class="tee-sheet-section-heading">
+                            <div>
+                                <p class="page-heading__eyebrow">Calendar</p>
+                                <h2>Events this day</h2>
+                            </div>
+                            <a href="calendar.html">Calendar</a>
+                        </div>
+
+                        <p class="tee-sheet-events__hint">
+                            Allocate calendar events to the tee sheet. For example, a men's roll-up can reserve four consecutive tee times from its start time.
+                        </p>
+
+                        <div id="teeSheetEventsEmpty" class="tee-sheet-events__empty" hidden>
+                            No calendar events on this date.
+                        </div>
+
+                        <div id="teeSheetEvents" class="tee-sheet-event-list"></div>
+                    </aside>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <dialog id="scheduleDialog" class="tee-sheet-dialog">
+        <form id="scheduleForm" method="dialog" class="tee-sheet-dialog__panel">
+            <header>
+                <div>
+                    <p class="page-heading__eyebrow">Booking setup</p>
+                    <h2 id="scheduleDialogTitle">Booking schedules</h2>
+                </div>
+                <button id="closeScheduleDialogButton" class="tee-sheet-dialog__close" type="button" aria-label="Close">×</button>
+            </header>
+
+            <section id="scheduleDialogError" class="admin-error" role="alert" hidden></section>
+
+            <div class="tee-sheet-schedule-layout">
+                <aside>
+                    <button id="newScheduleButton" class="tee-sheet-button" type="button">+ New schedule</button>
+                    <div id="scheduleList" class="tee-sheet-schedule-list"></div>
+                </aside>
+
+                <div class="tee-sheet-schedule-form">
+                    <input id="scheduleId" type="hidden" />
+
+                    <label class="tee-sheet-field">
+                        <span>Name</span>
+                        <input id="scheduleName" type="text" placeholder="e.g. Summer standard" required />
+                    </label>
+
+                    <div class="tee-sheet-form-grid tee-sheet-form-grid--3">
+                        <label class="tee-sheet-field">
+                            <span>First tee time</span>
+                            <input id="scheduleFirstTime" type="time" required />
+                        </label>
+                        <label class="tee-sheet-field">
+                            <span>Last tee time</span>
+                            <input id="scheduleLastTime" type="time" required />
+                        </label>
+                        <label class="tee-sheet-field">
+                            <span>Interval (minutes)</span>
+                            <input id="scheduleInterval" type="number" min="1" max="60" step="1" required />
+                        </label>
+                    </div>
+
+                    <div class="tee-sheet-form-grid tee-sheet-form-grid--3">
+                        <label class="tee-sheet-field">
+                            <span>Maximum players</span>
+                            <input id="scheduleMaxPlayers" type="number" min="1" max="8" step="1" value="4" required />
+                        </label>
+                        <label class="tee-sheet-field">
+                            <span>Effective from</span>
+                            <input id="scheduleFrom" type="date" required />
+                        </label>
+                        <label class="tee-sheet-field">
+                            <span>Effective to</span>
+                            <input id="scheduleTo" type="date" />
+                        </label>
+                    </div>
+
+                    <fieldset class="tee-sheet-weekdays">
+                        <legend>Days</legend>
+                        <label><input id="scheduleMonday" type="checkbox" checked /> Mon</label>
+                        <label><input id="scheduleTuesday" type="checkbox" checked /> Tue</label>
+                        <label><input id="scheduleWednesday" type="checkbox" checked /> Wed</label>
+                        <label><input id="scheduleThursday" type="checkbox" checked /> Thu</label>
+                        <label><input id="scheduleFriday" type="checkbox" checked /> Fri</label>
+                        <label><input id="scheduleSaturday" type="checkbox" checked /> Sat</label>
+                        <label><input id="scheduleSunday" type="checkbox" checked /> Sun</label>
+                    </fieldset>
+
+                    <label class="tee-sheet-toggle">
+                        <input id="scheduleActive" type="checkbox" checked />
+                        <span>Schedule active</span>
+                    </label>
+
+                    <div class="tee-sheet-dialog__actions">
+                        <button id="deleteScheduleButton" class="tee-sheet-button tee-sheet-button--danger" type="button" hidden>Delete schedule</button>
+                        <button id="saveScheduleButton" class="tee-sheet-button" type="submit">Save schedule</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </dialog>
+
+    <dialog id="statusDialog" class="tee-sheet-dialog tee-sheet-dialog--small">
+        <form id="statusForm" method="dialog" class="tee-sheet-dialog__panel">
+            <header>
+                <div>
+                    <p class="page-heading__eyebrow">Tee time</p>
+                    <h2 id="statusDialogTitle">Edit availability</h2>
+                </div>
+                <button id="closeStatusDialogButton" class="tee-sheet-dialog__close" type="button" aria-label="Close">×</button>
+            </header>
+
+            <section id="statusDialogError" class="admin-error" role="alert" hidden></section>
+            <input id="statusTeeTimeId" type="hidden" />
+
+            <label class="tee-sheet-field">
+                <span>Status</span>
+                <select id="statusValue">
+                    <option value="open">Open</option>
+                    <option value="reserved">Reserved</option>
+                    <option value="blocked">Blocked</option>
+                    <option value="maintenance">Maintenance</option>
+                    <option value="competition">Competition</option>
+                    <option value="closed">Closed</option>
+                </select>
+            </label>
+
+            <label class="tee-sheet-field">
+                <span>Note</span>
+                <input id="statusNotes" type="text" placeholder="Optional note" />
+            </label>
+
+            <div class="tee-sheet-dialog__actions">
+                <button class="tee-sheet-button" type="submit">Save tee time</button>
+            </div>
+        </form>
+    </dialog>
+</body>
+</html>

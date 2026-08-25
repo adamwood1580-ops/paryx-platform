@@ -5,7 +5,7 @@
 
     const NAV_ITEMS = [
         { key: "dashboard", label: "Dashboard", href: "dashboard.html" },
-        { key: "teesheet", label: "Tee Sheet", href: null },
+        { key: "teesheet", label: "Tee Sheet", href: "tee-sheet.html" },
         { key: "members", label: "Members", href: "members.html" },
         { key: "calendar", label: "Calendar", href: "calendar.html" },
         { key: "courses", label: "Courses", href: "courses.html" },
