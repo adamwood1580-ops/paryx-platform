@@ -808,3 +808,362 @@
         flex-direction: column;
     }
 }
+
+/* =========================================================
+   INTERACTIVE CALENDAR V2
+   ========================================================= */
+
+.calendar-more-menu {
+    position: relative;
+}
+
+.calendar-more-menu > summary {
+    list-style: none;
+    user-select: none;
+}
+
+.calendar-more-menu > summary::-webkit-details-marker {
+    display: none;
+}
+
+.calendar-more-menu__panel {
+    position: absolute;
+    top: calc(100% + 0.45rem);
+    right: 0;
+    z-index: 20;
+    min-width: 15rem;
+    padding: 0.4rem;
+    background: #fff;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: 0 0.8rem 2.2rem rgba(0, 0, 0, 0.12);
+}
+
+.calendar-more-menu__panel button {
+    display: grid;
+    gap: 0.12rem;
+    width: 100%;
+    padding: 0.7rem 0.8rem;
+    color: var(--color-primary-dark);
+    text-align: left;
+    background: transparent;
+    border: 0;
+    border-radius: 0.45rem;
+    font: inherit;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-bold);
+    cursor: pointer;
+}
+
+.calendar-more-menu__panel button:hover {
+    background: var(--color-surface-muted);
+}
+
+.calendar-more-menu__panel small {
+    color: var(--color-text-muted);
+    font-size: 0.68rem;
+    font-weight: var(--font-weight-medium);
+}
+
+.calendar-day {
+    cursor: pointer;
+}
+
+.calendar-day:hover {
+    background: #f8fbf9;
+}
+
+.calendar-day--outside:hover {
+    background: #f1f4f1;
+}
+
+.calendar-day__number {
+    appearance: none;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+}
+
+.calendar-dialog--day {
+    width: min(42rem, calc(100vw - 2rem));
+}
+
+.calendar-day-manager {
+    display: grid;
+    gap: var(--space-3);
+}
+
+.calendar-day-manager__empty {
+    padding: var(--space-6) var(--space-4);
+    color: var(--color-text-muted);
+    text-align: center;
+    background: var(--color-surface-muted);
+    border: 1px dashed var(--color-border-brand);
+    border-radius: var(--radius-md);
+}
+
+.calendar-day-manager__event {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-3);
+    align-items: center;
+    padding: var(--space-3);
+    background: #fff;
+    border: 1px solid var(--color-border-brand);
+    border-left: 0.28rem solid var(--color-primary);
+    border-radius: var(--radius-md);
+}
+
+.calendar-day-manager__event[data-section="club"] {
+    border-left-color: #287db6;
+}
+
+.calendar-day-manager__event[data-section="mens"] {
+    border-left-color: #272727;
+}
+
+.calendar-day-manager__event[data-section="seniors"] {
+    border-left-color: #2c9a59;
+}
+
+.calendar-day-manager__event[data-section="ladies"] {
+    border-left-color: #d44d4d;
+}
+
+.calendar-day-manager__event strong,
+.calendar-day-manager__event small {
+    display: block;
+}
+
+.calendar-day-manager__event strong {
+    color: var(--color-primary-dark);
+}
+
+.calendar-day-manager__event small {
+    margin-top: 0.22rem;
+    color: var(--color-text-muted);
+}
+
+.calendar-day-manager__actions {
+    display: flex;
+    gap: 0.4rem;
+}
+
+.calendar-mini-button {
+    min-height: 2.1rem;
+    padding: 0.42rem 0.65rem;
+    color: var(--color-primary);
+    background: var(--color-surface-muted);
+    border: 1px solid var(--color-border-brand);
+    border-radius: 0.45rem;
+    font: inherit;
+    font-size: 0.7rem;
+    font-weight: var(--font-weight-bold);
+    cursor: pointer;
+}
+
+.calendar-mini-button--danger {
+    color: #9d2f2f;
+    background: #fff5f5;
+    border-color: rgba(157, 47, 47, 0.22);
+}
+
+.calendar-form-section {
+    margin-top: var(--space-4);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--color-border);
+}
+
+.calendar-form-section:first-of-type {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+}
+
+.calendar-form-section__heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-bottom: var(--space-3);
+}
+
+.calendar-form-section__heading strong {
+    color: var(--color-primary-dark);
+    font-size: var(--font-size-sm);
+}
+
+.calendar-form-section__heading span {
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+    text-align: right;
+}
+
+.calendar-repeat-section {
+    padding: var(--space-4);
+    background: #f7faf8;
+    border: 1px solid var(--color-border-brand);
+    border-radius: var(--radius-md);
+}
+
+.calendar-weekday-picker {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+    margin-top: var(--space-3);
+}
+
+.calendar-weekday-picker__label {
+    margin-right: 0.2rem;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-bold);
+}
+
+.calendar-weekday-picker label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.28rem;
+    min-height: 2.1rem;
+    padding: 0.4rem 0.6rem;
+    color: var(--color-primary-dark);
+    background: #fff;
+    border: 1px solid var(--color-border-brand);
+    border-radius: var(--radius-round);
+    font-size: 0.72rem;
+    font-weight: var(--font-weight-semibold);
+    cursor: pointer;
+}
+
+.calendar-repeat-summary {
+    margin: var(--space-3) 0 0;
+    padding: 0.65rem 0.75rem;
+    color: var(--color-primary-dark);
+    background: #edf6ef;
+    border-radius: 0.5rem;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+}
+
+#seriesScopeSection {
+    padding: var(--space-4);
+    background: #fff8e8;
+    border: 1px solid rgba(184, 141, 34, 0.24);
+    border-radius: var(--radius-md);
+}
+
+@media (max-width: 760px) {
+    .calendar-more-menu {
+        flex: 1 1 auto;
+    }
+
+    .calendar-more-menu > summary {
+        width: 100%;
+        text-align: center;
+    }
+
+    .calendar-more-menu__panel {
+        right: auto;
+        left: 0;
+        width: min(19rem, calc(100vw - 2rem));
+    }
+
+    .calendar-day-manager__event {
+        grid-template-columns: 1fr;
+    }
+
+    .calendar-day-manager__actions {
+        justify-content: flex-start;
+    }
+
+    .calendar-form-section__heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .calendar-form-section__heading span {
+        text-align: left;
+    }
+}
+
+.calendar-agenda-day__heading--button {
+    appearance: none;
+    padding: 0;
+    text-align: left;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+}
+
+@media (max-width: 760px) {
+    /* V2 keeps the actual month grid on phones so empty days remain tappable. */
+    .calendar-board {
+        display: block;
+    }
+
+    .calendar-agenda {
+        display: none;
+    }
+
+    .calendar-weekdays span {
+        padding: 0.48rem 0.1rem;
+        font-size: 0.58rem;
+    }
+
+    .calendar-day {
+        min-height: 4.7rem;
+        padding: 0.28rem;
+    }
+
+    .calendar-day__number {
+        min-width: 1.45rem;
+        height: 1.45rem;
+        font-size: 0.68rem;
+    }
+
+    .calendar-day__events {
+        display: flex;
+        gap: 0.18rem;
+        flex-wrap: wrap;
+        margin-top: 0.28rem;
+    }
+
+    .calendar-event-pill {
+        width: 0.52rem;
+        height: 0.52rem;
+        padding: 0;
+        background: var(--color-primary);
+        border: 0;
+        border-radius: 50%;
+        overflow: hidden;
+    }
+
+    .calendar-event-pill[data-section="club"] {
+        background: #287db6;
+    }
+
+    .calendar-event-pill[data-section="mens"] {
+        background: #272727;
+    }
+
+    .calendar-event-pill[data-section="seniors"] {
+        background: #2c9a59;
+    }
+
+    .calendar-event-pill[data-section="ladies"] {
+        background: #d44d4d;
+    }
+
+    .calendar-event-pill__time,
+    .calendar-event-pill__title {
+        display: none;
+    }
+
+    .calendar-day__more {
+        padding: 0;
+        font-size: 0.55rem;
+        line-height: 1;
+    }
+}

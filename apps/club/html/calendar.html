@@ -45,20 +45,27 @@
 
                     <div class="calendar-intro__actions">
                         <button
-                            id="importFixtureButton"
-                            class="calendar-button calendar-button--secondary"
-                            type="button"
-                        >
-                            Import fixture PDF
-                        </button>
-
-                        <button
                             id="addEventButton"
                             class="calendar-button"
                             type="button"
                         >
                             + Add event
                         </button>
+
+                        <details class="calendar-more-menu">
+                            <summary class="calendar-button calendar-button--secondary">
+                                More
+                            </summary>
+                            <div class="calendar-more-menu__panel">
+                                <button
+                                    id="importFixtureButton"
+                                    type="button"
+                                >
+                                    Import fixture PDF
+                                    <small>Optional legacy / bulk setup tool</small>
+                                </button>
+                            </div>
+                        </details>
                     </div>
                 </section>
 
@@ -177,6 +184,44 @@
     </div>
 
     <dialog
+        id="dayDialog"
+        class="calendar-dialog calendar-dialog--day"
+    >
+        <div class="calendar-dialog__panel">
+            <div class="calendar-dialog__header">
+                <div>
+                    <p class="page-heading__eyebrow">
+                        Day planner
+                    </p>
+                    <h2 id="dayDialogTitle">--</h2>
+                    <p id="dayDialogMeta">Create, edit or remove events for this day.</p>
+                </div>
+
+                <button
+                    id="dayDialogClose"
+                    class="calendar-dialog__close"
+                    type="button"
+                    aria-label="Close"
+                >
+                    ×
+                </button>
+            </div>
+
+            <div id="dayEventList" class="calendar-day-manager"></div>
+
+            <div class="calendar-dialog__actions">
+                <button
+                    id="createDayEventButton"
+                    class="calendar-button"
+                    type="button"
+                >
+                    + Create event
+                </button>
+            </div>
+        </div>
+    </dialog>
+
+    <dialog
         id="eventDialog"
         class="calendar-dialog"
     >
@@ -193,6 +238,9 @@
                     <h2 id="eventDialogTitle">
                         Add event
                     </h2>
+                    <p id="eventDialogSubtitle">
+                        Choose a type and event, then set the time and repeat pattern.
+                    </p>
                 </div>
 
                 <button
@@ -206,6 +254,7 @@
             </div>
 
             <input id="eventId" type="hidden" />
+            <input id="eventTitle" type="hidden" />
             <input id="eventSourceKey" type="hidden" />
             <input id="eventSourceText" type="hidden" />
             <input id="eventSourcePage" type="hidden" />
@@ -217,128 +266,233 @@
                 hidden
             ></div>
 
-            <div class="calendar-form-grid">
-                <label class="calendar-field calendar-field--wide">
-                    <span>Title</span>
-                    <input id="eventTitle" type="text" maxlength="160" required />
-                </label>
+            <section class="calendar-form-section">
+                <div class="calendar-form-section__heading">
+                    <strong>Event</strong>
+                    <span>Start with the section and event type.</span>
+                </div>
+
+                <div class="calendar-form-grid">
+                    <label class="calendar-field">
+                        <span>Date</span>
+                        <input id="eventDate" type="date" required />
+                    </label>
+
+                    <label class="calendar-field">
+                        <span>Section</span>
+                        <select id="eventSection" required>
+                            <option value="club">Club</option>
+                            <option value="mens">Men</option>
+                            <option value="seniors">Seniors</option>
+                            <option value="ladies">Ladies</option>
+                        </select>
+                    </label>
+
+                    <label class="calendar-field">
+                        <span>Type</span>
+                        <select id="eventType">
+                            <option value="competition">Competition</option>
+                            <option value="roll_up">Roll-up</option>
+                            <option value="fixture">Fixture</option>
+                            <option value="social">Social</option>
+                            <option value="course_event">Course event</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </label>
+
+                    <label class="calendar-field calendar-field--wide">
+                        <span>Event</span>
+                        <select id="eventPreset" required>
+                            <option value="">Choose an event</option>
+                        </select>
+                    </label>
+
+                    <label
+                        id="eventCustomTitleField"
+                        class="calendar-field calendar-field--wide"
+                        hidden
+                    >
+                        <span>Event name</span>
+                        <input
+                            id="eventCustomTitle"
+                            type="text"
+                            maxlength="160"
+                            placeholder="e.g. Badman Cup"
+                        />
+                    </label>
+                </div>
+            </section>
+
+            <section class="calendar-form-section">
+                <div class="calendar-form-section__heading">
+                    <strong>Time & location</strong>
+                    <span>End time is optional.</span>
+                </div>
+
+                <div class="calendar-form-grid">
+                    <label class="calendar-field">
+                        <span>Start time</span>
+                        <input id="eventStartTime" type="time" />
+                    </label>
+
+                    <label class="calendar-field">
+                        <span>End time</span>
+                        <input id="eventEndTime" type="time" />
+                    </label>
+
+                    <label class="calendar-field calendar-field--wide">
+                        <span>Free-text time</span>
+                        <input id="eventTimeText" type="text" maxlength="80" placeholder="e.g. Time TBC" />
+                    </label>
+
+                    <label class="calendar-field">
+                        <span>Home / away</span>
+                        <select id="eventLocationType">
+                            <option value="">Not specified</option>
+                            <option value="home">Home</option>
+                            <option value="away">Away</option>
+                        </select>
+                    </label>
+
+                    <label class="calendar-field">
+                        <span>Course</span>
+                        <select id="eventCourseId">
+                            <option value="">All / not specified</option>
+                        </select>
+                    </label>
+
+                    <label class="calendar-field calendar-field--wide">
+                        <span>Venue</span>
+                        <input id="eventVenue" type="text" maxlength="160" placeholder="e.g. Monmouth Golf Club" />
+                    </label>
+                </div>
+            </section>
+
+            <section id="repeatSection" class="calendar-form-section calendar-repeat-section">
+                <div class="calendar-form-section__heading">
+                    <strong>Repeat</strong>
+                    <span>Create a full run of roll-ups or regular fixtures in one step.</span>
+                </div>
+
+                <div class="calendar-form-grid">
+                    <label class="calendar-field calendar-field--wide">
+                        <span>Repeat</span>
+                        <select id="eventRepeat">
+                            <option value="none">Does not repeat</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="fortnightly">Every 2 weeks</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="custom">Custom weekly pattern</option>
+                        </select>
+                    </label>
+
+                    <label id="eventRepeatEveryField" class="calendar-field" hidden>
+                        <span>Every</span>
+                        <select id="eventRepeatEvery">
+                            <option value="1">1 week</option>
+                            <option value="2">2 weeks</option>
+                            <option value="3">3 weeks</option>
+                            <option value="4">4 weeks</option>
+                        </select>
+                    </label>
+
+                    <label id="eventRepeatUntilField" class="calendar-field" hidden>
+                        <span>Repeat until</span>
+                        <input id="eventRepeatUntil" type="date" />
+                    </label>
+                </div>
+
+                <div id="eventRepeatWeekdays" class="calendar-weekday-picker" hidden>
+                    <span class="calendar-weekday-picker__label">Days</span>
+                    <label><input type="checkbox" value="1" /> Mon</label>
+                    <label><input type="checkbox" value="2" /> Tue</label>
+                    <label><input type="checkbox" value="3" /> Wed</label>
+                    <label><input type="checkbox" value="4" /> Thu</label>
+                    <label><input type="checkbox" value="5" /> Fri</label>
+                    <label><input type="checkbox" value="6" /> Sat</label>
+                    <label><input type="checkbox" value="0" /> Sun</label>
+                </div>
+
+                <p id="eventRepeatSummary" class="calendar-repeat-summary" hidden></p>
+            </section>
+
+            <section id="seriesScopeSection" class="calendar-form-section" hidden>
+                <div class="calendar-form-section__heading">
+                    <strong>Recurring series</strong>
+                    <span>This event is part of a recurring series. Series edits keep each occurrence on its existing date.</span>
+                </div>
 
                 <label class="calendar-field">
-                    <span>Date</span>
-                    <input id="eventDate" type="date" required />
-                </label>
-
-                <label class="calendar-field">
-                    <span>Section</span>
-                    <select id="eventSection" required>
-                        <option value="club">Club</option>
-                        <option value="mens">Men</option>
-                        <option value="seniors">Seniors</option>
-                        <option value="ladies">Ladies</option>
+                    <span>Apply changes to</span>
+                    <select id="eventSeriesScope">
+                        <option value="this">This event only</option>
+                        <option value="following">This and following events</option>
+                        <option value="all">Entire series</option>
                     </select>
                 </label>
+            </section>
 
-                <label class="calendar-field">
-                    <span>Start time</span>
-                    <input id="eventStartTime" type="time" />
-                </label>
+            <section class="calendar-form-section">
+                <div class="calendar-form-section__heading">
+                    <strong>Details</strong>
+                    <span>Optional calendar information.</span>
+                </div>
 
-                <label class="calendar-field">
-                    <span>End time</span>
-                    <input id="eventEndTime" type="time" />
-                </label>
+                <div class="calendar-form-grid">
+                    <label class="calendar-field">
+                        <span>Status</span>
+                        <select id="eventStatus">
+                            <option value="scheduled">Scheduled</option>
+                            <option value="postponed">Postponed</option>
+                            <option value="cancelled">Cancelled</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                    </label>
 
-                <label class="calendar-field calendar-field--wide">
-                    <span>Printed / free-text time</span>
-                    <input id="eventTimeText" type="text" maxlength="80" placeholder="e.g. Time TBC" />
-                </label>
+                    <label class="calendar-field calendar-field--wide">
+                        <span>Notes</span>
+                        <textarea id="eventNotes" rows="3" maxlength="1200"></textarea>
+                    </label>
+                </div>
 
-                <label class="calendar-field">
-                    <span>Type</span>
-                    <select id="eventType">
-                        <option value="competition">Competition</option>
-                        <option value="roll_up">Roll-up</option>
-                        <option value="fixture">Fixture</option>
-                        <option value="social">Social</option>
-                        <option value="course_event">Course event</option>
-                        <option value="other">Other</option>
-                    </select>
-                </label>
+                <div class="calendar-check-grid">
+                    <label class="calendar-check">
+                        <input id="eventQualifier" type="checkbox" />
+                        <span>
+                            Qualifier
+                            <small>Marked as a handicap qualifier.</small>
+                        </span>
+                    </label>
 
-                <label class="calendar-field">
-                    <span>Home / away</span>
-                    <select id="eventLocationType">
-                        <option value="">Not specified</option>
-                        <option value="home">Home</option>
-                        <option value="away">Away</option>
-                    </select>
-                </label>
+                    <label class="calendar-check">
+                        <input id="eventPublished" type="checkbox" checked />
+                        <span>
+                            Published
+                            <small>Visible to members when the member calendar is enabled.</small>
+                        </span>
+                    </label>
 
-                <label class="calendar-field">
-                    <span>Status</span>
-                    <select id="eventStatus">
-                        <option value="scheduled">Scheduled</option>
-                        <option value="postponed">Postponed</option>
-                        <option value="cancelled">Cancelled</option>
-                        <option value="completed">Completed</option>
-                    </select>
-                </label>
+                    <label class="calendar-check calendar-check--wide">
+                        <input id="eventCourseClosed" type="checkbox" />
+                        <span>
+                            Course closed
+                            <small>Records an explicit closure period. Tee-sheet enforcement will be connected later.</small>
+                        </span>
+                    </label>
+                </div>
 
-                <label class="calendar-field">
-                    <span>Course</span>
-                    <select id="eventCourseId">
-                        <option value="">All / not specified</option>
-                    </select>
-                </label>
+                <div id="courseClosureFields" class="calendar-closure-fields" hidden>
+                    <label class="calendar-field">
+                        <span>Closure from</span>
+                        <input id="eventCourseClosedStart" type="time" />
+                    </label>
 
-                <label class="calendar-field calendar-field--wide">
-                    <span>Venue</span>
-                    <input id="eventVenue" type="text" maxlength="160" placeholder="e.g. Monmouth Golf Club" />
-                </label>
-
-                <label class="calendar-field calendar-field--wide">
-                    <span>Notes</span>
-                    <textarea id="eventNotes" rows="3" maxlength="1200"></textarea>
-                </label>
-            </div>
-
-            <div class="calendar-check-grid">
-                <label class="calendar-check">
-                    <input id="eventQualifier" type="checkbox" />
-                    <span>
-                        Qualifier
-                        <small>Marked as a handicap qualifier.</small>
-                    </span>
-                </label>
-
-                <label class="calendar-check">
-                    <input id="eventPublished" type="checkbox" checked />
-                    <span>
-                        Published
-                        <small>Visible to members when the member calendar is enabled.</small>
-                    </span>
-                </label>
-
-                <label class="calendar-check calendar-check--wide">
-                    <input id="eventCourseClosed" type="checkbox" />
-                    <span>
-                        Course closed
-                        <small>Records an explicit closure from the fixture list.</small>
-                    </span>
-                </label>
-            </div>
-
-            <div id="courseClosureFields" class="calendar-closure-fields" hidden>
-                <label class="calendar-field">
-                    <span>Closure from</span>
-                    <input id="eventCourseClosedStart" type="time" />
-                </label>
-
-                <label class="calendar-field">
-                    <span>Closure until</span>
-                    <input id="eventCourseClosedEnd" type="time" />
-                </label>
-            </div>
+                    <label class="calendar-field">
+                        <span>Closure until</span>
+                        <input id="eventCourseClosedEnd" type="time" />
+                    </label>
+                </div>
+            </section>
 
             <div class="calendar-dialog__actions">
                 <button

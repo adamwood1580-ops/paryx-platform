@@ -24,6 +24,52 @@
         other: "Other"
     };
 
+    const BUILT_IN_EVENT_PRESETS = {
+        competition: [
+            "Medal",
+            "Stableford",
+            "Individual Medal",
+            "Individual Stableford",
+            "4BBB Stableford",
+            "4BBB Medal",
+            "Texas Scramble",
+            "Foursomes",
+            "Foursomes Medal",
+            "Greensomes",
+            "Bowmaker",
+            "Match Play",
+            "Club Championship",
+            "Open Competition"
+        ],
+        roll_up: [
+            "Men's Roll-Up",
+            "Ladies Roll-Up",
+            "Seniors Roll-Up",
+            "Club Roll-Up"
+        ],
+        fixture: [
+            "Home Fixture",
+            "Away Fixture",
+            "Friendly Match",
+            "League Match"
+        ],
+        social: [
+            "AGM",
+            "Presentation Night",
+            "Dinner & Dance",
+            "Coffee Morning",
+            "Presentation Lunch"
+        ],
+        course_event: [
+            "Club Night",
+            "Captain's Day",
+            "President's Day",
+            "Course Closed",
+            "Greenkeepers Event"
+        ],
+        other: []
+    };
+
     const state = {
         clubId: null,
         clubName: "",
@@ -32,6 +78,9 @@
         sectionFilter: "all",
         events: [],
         courses: [],
+        suggestions: [],
+        selectedDay: null,
+        returnToDayAfterEdit: false,
         importFile: null,
         importExtraction: null,
         initialised: false
@@ -53,9 +102,17 @@
         addEvent: document.getElementById("addEventButton"),
         importFixture: document.getElementById("importFixtureButton"),
 
+        dayDialog: document.getElementById("dayDialog"),
+        dayDialogTitle: document.getElementById("dayDialogTitle"),
+        dayDialogMeta: document.getElementById("dayDialogMeta"),
+        dayDialogClose: document.getElementById("dayDialogClose"),
+        dayEventList: document.getElementById("dayEventList"),
+        createDayEvent: document.getElementById("createDayEventButton"),
+
         eventDialog: document.getElementById("eventDialog"),
         eventForm: document.getElementById("eventForm"),
         eventDialogTitle: document.getElementById("eventDialogTitle"),
+        eventDialogSubtitle: document.getElementById("eventDialogSubtitle"),
         eventDialogClose: document.getElementById("eventDialogClose"),
         eventFormError: document.getElementById("eventFormError"),
         eventId: document.getElementById("eventId"),
@@ -63,6 +120,9 @@
         eventSourceText: document.getElementById("eventSourceText"),
         eventSourcePage: document.getElementById("eventSourcePage"),
         eventTitle: document.getElementById("eventTitle"),
+        eventPreset: document.getElementById("eventPreset"),
+        eventCustomTitleField: document.getElementById("eventCustomTitleField"),
+        eventCustomTitle: document.getElementById("eventCustomTitle"),
         eventDate: document.getElementById("eventDate"),
         eventSection: document.getElementById("eventSection"),
         eventStartTime: document.getElementById("eventStartTime"),
@@ -80,6 +140,16 @@
         closureFields: document.getElementById("courseClosureFields"),
         eventCourseClosedStart: document.getElementById("eventCourseClosedStart"),
         eventCourseClosedEnd: document.getElementById("eventCourseClosedEnd"),
+        repeatSection: document.getElementById("repeatSection"),
+        eventRepeat: document.getElementById("eventRepeat"),
+        eventRepeatEveryField: document.getElementById("eventRepeatEveryField"),
+        eventRepeatEvery: document.getElementById("eventRepeatEvery"),
+        eventRepeatUntilField: document.getElementById("eventRepeatUntilField"),
+        eventRepeatUntil: document.getElementById("eventRepeatUntil"),
+        eventRepeatWeekdays: document.getElementById("eventRepeatWeekdays"),
+        eventRepeatSummary: document.getElementById("eventRepeatSummary"),
+        seriesScopeSection: document.getElementById("seriesScopeSection"),
+        eventSeriesScope: document.getElementById("eventSeriesScope"),
         deleteEvent: document.getElementById("deleteEventButton"),
         cancelEvent: document.getElementById("cancelEventButton"),
         saveEvent: document.getElementById("saveEventButton"),
@@ -167,6 +237,12 @@
         );
     }
 
+    function addDays(date, amount) {
+        const copy = new Date(date);
+        copy.setDate(copy.getDate() + amount);
+        return copy;
+    }
+
     function isoDate(date) {
         const year = date.getFullYear();
         const month = String(
@@ -250,7 +326,8 @@
             {
                 weekday: "long",
                 day: "numeric",
-                month: "long"
+                month: "long",
+                year: "numeric"
             }
         ).format(date);
     }
@@ -287,7 +364,8 @@
                 : event.location_type === "away"
                     ? "Away"
                     : "",
-            event.venue || ""
+            event.venue || "",
+            event.series_id ? "Recurring" : ""
         ].filter(Boolean);
 
         return parts.join(" · ");
@@ -324,10 +402,8 @@
         elements.success.hidden = false;
 
         window.setTimeout(function () {
-            if (elements.success) {
-                elements.success.hidden = true;
-            }
-        }, 5000);
+            elements.success.hidden = true;
+        }, 4000);
     }
 
     function setImportError(message) {
@@ -335,8 +411,7 @@
             return;
         }
 
-        elements.importError.textContent =
-            String(message || "");
+        elements.importError.textContent = message || "";
         elements.importError.hidden = !message;
     }
 
@@ -345,8 +420,7 @@
             return;
         }
 
-        elements.eventFormError.textContent =
-            String(message || "");
+        elements.eventFormError.textContent = message || "";
         elements.eventFormError.hidden = !message;
     }
 
@@ -360,25 +434,35 @@
         });
     }
 
+    function allEventsForDate(dateValue) {
+        return state.events
+            .filter(function (event) {
+                return event.event_date === dateValue;
+            })
+            .sort(sortEvents);
+    }
+
     function eventsForDate(dateValue) {
         return filteredEvents()
             .filter(function (event) {
                 return event.event_date === dateValue;
             })
-            .sort(function (a, b) {
-                return (
-                    String(a.start_time || "99:99")
-                        .localeCompare(
-                            String(b.start_time || "99:99")
-                        ) ||
-                    Number(a.display_order || 1) -
-                        Number(b.display_order || 1) ||
-                    String(a.title || "")
-                        .localeCompare(
-                            String(b.title || "")
-                        )
-                );
-            });
+            .sort(sortEvents);
+    }
+
+    function sortEvents(a, b) {
+        return (
+            String(a.start_time || "99:99")
+                .localeCompare(
+                    String(b.start_time || "99:99")
+                ) ||
+            Number(a.display_order || 1) -
+                Number(b.display_order || 1) ||
+            String(a.title || "")
+                .localeCompare(
+                    String(b.title || "")
+                )
+        );
     }
 
     function eventButtonMarkup(event) {
@@ -390,7 +474,7 @@
             <button
                 class="calendar-event-pill${cancelled ? " calendar-event-pill--cancelled" : ""}"
                 type="button"
-                data-event-id="${escapeHtml(event.event_id)}"
+                data-day-date="${escapeHtml(event.event_date)}"
                 data-section="${escapeHtml(event.section)}"
             >
                 ${time ? `<span class="calendar-event-pill__time">${escapeHtml(time)}</span>` : ""}
@@ -425,8 +509,8 @@
                         <button
                             type="button"
                             class="calendar-day__number"
-                            data-add-date="${value}"
-                            aria-label="Add event on ${value}"
+                            data-day-date="${value}"
+                            aria-label="Manage ${value}"
                         >
                             ${date.getDate()}
                         </button>
@@ -479,24 +563,23 @@
                     return a[0].localeCompare(b[0]);
                 })
                 .map(function ([date, dayEvents]) {
-                    dayEvents.sort(function (a, b) {
-                        return String(a.start_time || "99:99")
-                            .localeCompare(
-                                String(b.start_time || "99:99")
-                            );
-                    });
+                    dayEvents.sort(sortEvents);
 
                     return `
                         <section class="calendar-agenda-day">
-                            <h2 class="calendar-agenda-day__heading">
+                            <button
+                                class="calendar-agenda-day__heading calendar-agenda-day__heading--button"
+                                type="button"
+                                data-day-date="${escapeHtml(date)}"
+                            >
                                 ${escapeHtml(formatAgendaDate(date))}
-                            </h2>
+                            </button>
                             ${dayEvents.map(function (event) {
                                 return `
                                     <button
                                         class="calendar-agenda-event"
                                         type="button"
-                                        data-event-id="${escapeHtml(event.event_id)}"
+                                        data-day-date="${escapeHtml(event.event_date)}"
                                     >
                                         <span class="calendar-agenda-event__time">
                                             ${escapeHtml(displayTime(event) || "All day")}
@@ -538,7 +621,7 @@
         if (elements.loadStatus) {
             elements.loadStatus.textContent =
                 state.sectionFilter === "all"
-                    ? "All club sections"
+                    ? "Click any day to manage its events"
                     : `${SECTION_LABELS[state.sectionFilter] || state.sectionFilter} events`;
         }
     }
@@ -550,12 +633,10 @@
     }
 
     async function loadCourses() {
-        const client = getClient();
-
         const {
             data,
             error
-        } = await client.rpc(
+        } = await getClient().rpc(
             "admin_get_courses",
             {
                 p_club_id: state.clubId
@@ -601,11 +682,35 @@
         );
     }
 
+    async function loadEventSuggestions() {
+        const {
+            data,
+            error
+        } = await getClient().rpc(
+            "admin_get_calendar_event_suggestions",
+            {
+                p_club_id: state.clubId
+            }
+        );
+
+        if (error) {
+            throw error;
+        }
+
+        state.suggestions =
+            Array.isArray(data)
+                ? data
+                : [];
+    }
+
     async function loadEvents() {
         clearError();
 
-        const client = getClient();
-        const range = monthRange(state.currentMonth);
+        const viewDates = gridDates(state.currentMonth);
+        const range = {
+            start: isoDate(viewDates[0]),
+            end: isoDate(viewDates[viewDates.length - 1])
+        };
 
         if (elements.loadStatus) {
             elements.loadStatus.textContent =
@@ -615,8 +720,8 @@
         const {
             data,
             error
-        } = await client.rpc(
-            "admin_get_calendar_events",
+        } = await getClient().rpc(
+            "admin_get_calendar_events_v2",
             {
                 p_club_id: state.clubId,
                 p_from_date: range.start,
@@ -634,14 +739,106 @@
                 : [];
 
         renderCalendar();
+
+        if (
+            elements.dayDialog?.open &&
+            state.selectedDay
+        ) {
+            renderDayDialog();
+        }
+    }
+
+    function renderDayDialog() {
+        if (!state.selectedDay || !elements.dayEventList) {
+            return;
+        }
+
+        const events = allEventsForDate(state.selectedDay);
+
+        if (elements.dayDialogTitle) {
+            elements.dayDialogTitle.textContent =
+                formatAgendaDate(state.selectedDay);
+        }
+
+        if (elements.dayDialogMeta) {
+            elements.dayDialogMeta.textContent =
+                events.length
+                    ? `${events.length} event${events.length === 1 ? "" : "s"} scheduled. Create, edit or delete below.`
+                    : "No events are scheduled. Create the first event for this day.";
+        }
+
+        if (!events.length) {
+            elements.dayEventList.innerHTML = `
+                <div class="calendar-day-manager__empty">
+                    Nothing scheduled for this day.
+                </div>
+            `;
+            return;
+        }
+
+        elements.dayEventList.innerHTML =
+            events.map(function (event) {
+                return `
+                    <article
+                        class="calendar-day-manager__event"
+                        data-section="${escapeHtml(event.section)}"
+                    >
+                        <div>
+                            <strong>${escapeHtml(event.title)}</strong>
+                            <small>
+                                ${escapeHtml(displayTime(event) || "All day")}
+                                · ${escapeHtml(eventMeta(event))}
+                            </small>
+                        </div>
+                        <div class="calendar-day-manager__actions">
+                            <button
+                                class="calendar-mini-button"
+                                type="button"
+                                data-day-edit-event="${escapeHtml(event.event_id)}"
+                            >
+                                Edit
+                            </button>
+                            <button
+                                class="calendar-mini-button calendar-mini-button--danger"
+                                type="button"
+                                data-day-delete-event="${escapeHtml(event.event_id)}"
+                            >
+                                Delete
+                            </button>
+                        </div>
+                    </article>
+                `;
+            }).join("");
+    }
+
+    function openDayDialog(dateValue) {
+        if (!dateValue) {
+            return;
+        }
+
+        state.selectedDay = dateValue;
+        renderDayDialog();
+
+        if (!elements.dayDialog?.open) {
+            elements.dayDialog?.showModal();
+        }
+    }
+
+    function closeDayDialog() {
+        elements.dayDialog?.close();
     }
 
     function resetEventForm() {
         elements.eventForm?.reset();
         setEventFormError("");
 
+        state.returnToDayAfterEdit = false;
+
         if (elements.eventId) {
             elements.eventId.value = "";
+        }
+        if (elements.eventTitle) {
+            elements.eventTitle.value = "";
         }
         if (elements.eventSourceKey) {
             elements.eventSourceKey.value = "";
@@ -674,16 +871,331 @@
             elements.deleteEvent.hidden = true;
         }
         if (elements.eventCourseId) {
-            elements.eventCourseId.value = "";
+            elements.eventCourseId.value = defaultCourseId() || "";
+        }
+        if (elements.eventRepeat) {
+            elements.eventRepeat.value = "none";
+        }
+        if (elements.eventRepeatEvery) {
+            elements.eventRepeatEvery.value = "1";
+        }
+        if (elements.eventRepeatUntil) {
+            elements.eventRepeatUntil.value = "";
+        }
+        if (elements.eventSeriesScope) {
+            elements.eventSeriesScope.value = "this";
+        }
+        if (elements.repeatSection) {
+            elements.repeatSection.hidden = false;
+        }
+        if (elements.seriesScopeSection) {
+            elements.seriesScopeSection.hidden = true;
+        }
+
+        populateEventPresetSelect("");
+        updateRepeatControls();
+    }
+
+    function presetTitlesForSelection() {
+        const type = elements.eventType?.value || "other";
+        const section = elements.eventSection?.value || "club";
+        const titles = new Map();
+
+        for (const title of BUILT_IN_EVENT_PRESETS[type] || []) {
+            titles.set(title.toLowerCase(), title);
+        }
+
+        for (const item of state.suggestions) {
+            if (
+                item.event_type !== type ||
+                item.section !== section
+            ) {
+                continue;
+            }
+
+            const title = String(item.title || "").trim();
+            if (title) {
+                titles.set(title.toLowerCase(), title);
+            }
+        }
+
+        return Array.from(titles.values())
+            .sort(function (a, b) {
+                return a.localeCompare(b);
+            });
+    }
+
+    function populateEventPresetSelect(currentTitle) {
+        if (!elements.eventPreset) {
+            return;
+        }
+
+        const titles = presetTitlesForSelection();
+        const wanted = String(currentTitle || "").trim();
+        const hasWanted = titles.some(function (title) {
+            return title.toLowerCase() === wanted.toLowerCase();
+        });
+
+        elements.eventPreset.innerHTML = [
+            '<option value="">Choose an event</option>',
+            ...titles.map(function (title) {
+                return `<option value="${escapeHtml(title)}">${escapeHtml(title)}</option>`;
+            }),
+            '<option value="__custom__">Custom / named event…</option>'
+        ].join("");
+
+        if (wanted && hasWanted) {
+            const match = titles.find(function (title) {
+                return title.toLowerCase() === wanted.toLowerCase();
+            });
+            elements.eventPreset.value = match || wanted;
+            elements.eventCustomTitleField.hidden = true;
+            elements.eventCustomTitle.value = "";
+        } else if (wanted) {
+            elements.eventPreset.value = "__custom__";
+            elements.eventCustomTitleField.hidden = false;
+            elements.eventCustomTitle.value = wanted;
+        } else {
+            elements.eventPreset.value = "";
+            elements.eventCustomTitleField.hidden = true;
+            elements.eventCustomTitle.value = "";
+        }
+
+        syncEventTitle();
+    }
+
+    function syncEventTitle() {
+        const selected = elements.eventPreset?.value || "";
+        const title = selected === "__custom__"
+            ? elements.eventCustomTitle?.value?.trim() || ""
+            : selected;
+
+        if (elements.eventTitle) {
+            elements.eventTitle.value = title;
+        }
+
+        if (elements.eventCustomTitleField) {
+            elements.eventCustomTitleField.hidden =
+                selected !== "__custom__";
         }
     }
 
-    function openNewEvent(dateValue) {
+    function setDefaultRepeatWeekday() {
+        const date = parseIsoDate(elements.eventDate?.value);
+
+        if (!date || !elements.eventRepeatWeekdays) {
+            return;
+        }
+
+        const checked = elements.eventRepeatWeekdays
+            .querySelectorAll('input[type="checkbox"]:checked');
+
+        if (checked.length) {
+            return;
+        }
+
+        const target = elements.eventRepeatWeekdays
+            .querySelector(`input[value="${date.getDay()}"]`);
+
+        if (target) {
+            target.checked = true;
+        }
+    }
+
+    function repeatWeekdays() {
+        if (!elements.eventRepeatWeekdays) {
+            return [];
+        }
+
+        return Array.from(
+            elements.eventRepeatWeekdays
+                .querySelectorAll('input[type="checkbox"]:checked')
+        ).map(function (input) {
+            return Number(input.value);
+        });
+    }
+
+    function repeatInterval() {
+        const mode = elements.eventRepeat?.value || "none";
+
+        if (mode === "fortnightly") {
+            return 2;
+        }
+
+        if (mode === "custom") {
+            return Math.max(
+                1,
+                Math.min(
+                    4,
+                    Number(elements.eventRepeatEvery?.value || 1)
+                )
+            );
+        }
+
+        return 1;
+    }
+
+    function buildRecurrenceDates() {
+        const start = parseIsoDate(elements.eventDate?.value);
+        const mode = elements.eventRepeat?.value || "none";
+
+        if (!start) {
+            return [];
+        }
+
+        if (mode === "none") {
+            return [isoDate(start)];
+        }
+
+        const until = parseIsoDate(elements.eventRepeatUntil?.value);
+
+        if (!until || until < start) {
+            return [];
+        }
+
+        const dates = [];
+
+        if (mode === "monthly") {
+            const dayOfMonth = start.getDate();
+            let cursor = new Date(
+                start.getFullYear(),
+                start.getMonth(),
+                1
+            );
+
+            while (cursor <= until && dates.length < 150) {
+                const candidate = new Date(
+                    cursor.getFullYear(),
+                    cursor.getMonth(),
+                    dayOfMonth
+                );
+
+                if (
+                    candidate.getMonth() === cursor.getMonth() &&
+                    candidate >= start &&
+                    candidate <= until
+                ) {
+                    dates.push(isoDate(candidate));
+                }
+
+                cursor = new Date(
+                    cursor.getFullYear(),
+                    cursor.getMonth() + 1,
+                    1
+                );
+            }
+        } else {
+            const weekdays = repeatWeekdays();
+            const interval = repeatInterval();
+            let cursor = new Date(start);
+
+            while (cursor <= until && dates.length < 150) {
+                const dayDiff = Math.floor(
+                    (cursor.getTime() - start.getTime()) /
+                    86400000
+                );
+                const weekIndex = Math.floor(dayDiff / 7);
+
+                if (
+                    weekIndex % interval === 0 &&
+                    weekdays.includes(cursor.getDay())
+                ) {
+                    dates.push(isoDate(cursor));
+                }
+
+                cursor = addDays(cursor, 1);
+            }
+        }
+
+        return Array.from(new Set(dates));
+    }
+
+    function recurrenceRuleFromForm() {
+        const mode = elements.eventRepeat?.value || "none";
+
+        return {
+            mode,
+            interval: repeatInterval(),
+            weekdays:
+                mode === "monthly"
+                    ? []
+                    : repeatWeekdays(),
+            until: elements.eventRepeatUntil?.value || null
+        };
+    }
+
+    function updateRepeatControls() {
+        const mode = elements.eventRepeat?.value || "none";
+        const repeats = mode !== "none";
+        const weeklyPattern = [
+            "weekly",
+            "fortnightly",
+            "custom"
+        ].includes(mode);
+
+        if (elements.eventRepeatEveryField) {
+            elements.eventRepeatEveryField.hidden =
+                mode !== "custom";
+        }
+
+        if (elements.eventRepeatUntilField) {
+            elements.eventRepeatUntilField.hidden = !repeats;
+        }
+
+        if (elements.eventRepeatWeekdays) {
+            elements.eventRepeatWeekdays.hidden = !weeklyPattern;
+        }
+
+        if (weeklyPattern) {
+            setDefaultRepeatWeekday();
+        }
+
+        if (repeats && !elements.eventRepeatUntil?.value) {
+            const start = parseIsoDate(elements.eventDate?.value);
+            if (start) {
+                const defaultEnd = new Date(
+                    start.getFullYear(),
+                    11,
+                    31
+                );
+                elements.eventRepeatUntil.value =
+                    isoDate(defaultEnd < start
+                        ? new Date(start.getFullYear() + 1, 11, 31)
+                        : defaultEnd);
+            }
+        }
+
+        const dates = buildRecurrenceDates();
+
+        if (elements.eventRepeatSummary) {
+            if (!repeats) {
+                elements.eventRepeatSummary.hidden = true;
+                elements.eventRepeatSummary.textContent = "";
+            } else if (!dates.length) {
+                elements.eventRepeatSummary.hidden = false;
+                elements.eventRepeatSummary.textContent =
+                    "Choose a valid end date and at least one day.";
+            } else {
+                elements.eventRepeatSummary.hidden = false;
+                elements.eventRepeatSummary.textContent =
+                    `${dates.length} event${dates.length === 1 ? "" : "s"} will be created, from ${formatAgendaDate(dates[0])} to ${formatAgendaDate(dates[dates.length - 1])}.`;
+            }
+        }
+    }
+
+    function openNewEvent(dateValue, returnToDay) {
         resetEventForm();
+
+        state.returnToDayAfterEdit = returnToDay === true;
 
         if (elements.eventDialogTitle) {
             elements.eventDialogTitle.textContent =
-                "Add event";
+                "Create event";
+        }
+
+        if (elements.eventDialogSubtitle) {
+            elements.eventDialogSubtitle.textContent =
+                "Use presets for common events, or enter a named event. Recurring events are created in one transaction.";
         }
 
         if (elements.eventDate) {
@@ -691,8 +1203,10 @@
                 dateValue || isoDate(new Date());
         }
 
+        populateEventPresetSelect("");
+        updateRepeatControls();
         elements.eventDialog?.showModal();
-        elements.eventTitle?.focus();
+        elements.eventPreset?.focus();
     }
 
     function findEvent(eventId) {
@@ -701,7 +1215,7 @@
         }) || null;
     }
 
-    function openExistingEvent(eventId) {
+    function openExistingEvent(eventId, returnToDay) {
         const event = findEvent(eventId);
 
         if (!event) {
@@ -709,17 +1223,24 @@
         }
 
         resetEventForm();
+        state.returnToDayAfterEdit = returnToDay === true;
 
         if (elements.eventDialogTitle) {
             elements.eventDialogTitle.textContent =
                 "Edit event";
         }
 
+        if (elements.eventDialogSubtitle) {
+            elements.eventDialogSubtitle.textContent =
+                event.series_id
+                    ? "This event is part of a recurring series. Choose how widely any changes should apply."
+                    : "Update the event details below.";
+        }
+
         elements.eventId.value = event.event_id || "";
         elements.eventSourceKey.value = event.source_key || "";
         elements.eventSourceText.value = event.source_text || "";
         elements.eventSourcePage.value = event.source_page || "";
-        elements.eventTitle.value = event.title || "";
         elements.eventDate.value = event.event_date || "";
         elements.eventSection.value = event.section || "club";
         elements.eventStartTime.value = String(event.start_time || "").slice(0, 5);
@@ -738,11 +1259,17 @@
         elements.eventCourseClosedEnd.value = String(event.course_closed_end_time || "").slice(0, 5);
         elements.closureFields.hidden = event.course_closed !== true;
         elements.deleteEvent.hidden = false;
+        elements.repeatSection.hidden = true;
+        elements.seriesScopeSection.hidden = !event.series_id;
+        elements.eventSeriesScope.value = "this";
 
+        populateEventPresetSelect(event.title || "");
         elements.eventDialog?.showModal();
     }
 
     function eventPayloadFromForm() {
+        syncEventTitle();
+
         return {
             id: elements.eventId?.value || null,
             event_date: elements.eventDate?.value || null,
@@ -775,6 +1302,27 @@
         };
     }
 
+    async function refreshAfterEventChange(targetDate) {
+        try {
+            await loadEventSuggestions();
+        } catch (error) {
+            console.warn(
+                "Could not refresh calendar event suggestions:",
+                error
+            );
+        }
+
+        await loadEvents();
+
+        if (
+            state.returnToDayAfterEdit &&
+            targetDate
+        ) {
+            state.selectedDay = targetDate;
+            openDayDialog(targetDate);
+        }
+    }
+
     async function saveEvent(event) {
         event.preventDefault();
         setEventFormError("");
@@ -783,7 +1331,27 @@
 
         if (!payload.title || !payload.event_date) {
             setEventFormError(
-                "Event title and date are required."
+                "Choose an event (or enter a custom event name) and date."
+            );
+            return;
+        }
+
+        const existing = payload.id
+            ? findEvent(payload.id)
+            : null;
+        const repeatMode = elements.eventRepeat?.value || "none";
+        const recurrenceDates = buildRecurrenceDates();
+
+        if (!payload.id && repeatMode !== "none" && recurrenceDates.length === 0) {
+            setEventFormError(
+                "Choose a valid repeat end date and at least one repeat day."
+            );
+            return;
+        }
+
+        if (recurrenceDates.length > 150) {
+            setEventFormError(
+                "Recurring events are limited to 150 occurrences at a time."
             );
             return;
         }
@@ -792,27 +1360,82 @@
         elements.saveEvent.textContent = "Saving...";
 
         try {
-            const {
-                error
-            } = await getClient().rpc(
-                "admin_save_calendar_event",
-                {
-                    p_club_id: state.clubId,
-                    p_event: payload
-                }
-            );
+            let successMessage = payload.id
+                ? "Event updated."
+                : "Event added.";
 
-            if (error) {
-                throw error;
+            if (!payload.id && repeatMode !== "none") {
+                const seriesPayload = {
+                    ...payload,
+                    id: null,
+                    source_key: null,
+                    source_text: null,
+                    source_page: null
+                };
+
+                const {
+                    data,
+                    error
+                } = await getClient().rpc(
+                    "admin_create_calendar_series",
+                    {
+                        p_club_id: state.clubId,
+                        p_event: seriesPayload,
+                        p_dates: recurrenceDates,
+                        p_rule: recurrenceRuleFromForm()
+                    }
+                );
+
+                if (error) {
+                    throw error;
+                }
+
+                const count = Number(data?.created || recurrenceDates.length);
+                successMessage =
+                    `${count} recurring events created.`;
+            } else if (payload.id && existing?.series_id) {
+                const scope = elements.eventSeriesScope?.value || "this";
+                const {
+                    data,
+                    error
+                } = await getClient().rpc(
+                    "admin_update_calendar_series",
+                    {
+                        p_club_id: state.clubId,
+                        p_event_id: payload.id,
+                        p_event: payload,
+                        p_scope: scope
+                    }
+                );
+
+                if (error) {
+                    throw error;
+                }
+
+                const count = Number(data || 1);
+                successMessage =
+                    count > 1
+                        ? `${count} recurring events updated.`
+                        : "Event updated.";
+            } else {
+                const {
+                    error
+                } = await getClient().rpc(
+                    "admin_save_calendar_event",
+                    {
+                        p_club_id: state.clubId,
+                        p_event: payload
+                    }
+                );
+
+                if (error) {
+                    throw error;
+                }
             }
 
             elements.eventDialog?.close();
-            showSuccess(
-                payload.id
-                    ? "Event updated."
-                    : "Event added."
-            );
-            await loadEvents();
+            showSuccess(successMessage);
+            await refreshAfterEventChange(payload.event_date);
         } catch (error) {
             setEventFormError(
                 getReadableError(error)
@@ -820,6 +1443,48 @@
         } finally {
             elements.saveEvent.disabled = false;
             elements.saveEvent.textContent = "Save event";
+        }
+    }
+
+    async function deleteSingleEvent(eventId, returnToDay) {
+        const current = findEvent(eventId);
+
+        if (!current) {
+            return;
+        }
+
+        if (!window.confirm(
+            `Delete ${current.title || "this calendar event"} on ${formatAgendaDate(current.event_date)}?`
+        )) {
+            return;
+        }
+
+        const {
+            data,
+            error
+        } = await getClient().rpc(
+            "admin_delete_calendar_event",
+            {
+                p_club_id: state.clubId,
+                p_event_id: eventId
+            }
+        );
+
+        if (error) {
+            throw error;
+        }
+
+        if (data !== true) {
+            throw new Error(
+                "The calendar event could not be deleted."
+            );
+        }
+
+        showSuccess("Event deleted.");
+        await loadEvents();
+
+        if (returnToDay) {
+            openDayDialog(current.event_date);
         }
     }
 
@@ -833,8 +1498,21 @@
 
         const current = findEvent(eventId);
 
+        if (!current) {
+            return;
+        }
+
+        const scope = current.series_id
+            ? elements.eventSeriesScope?.value || "this"
+            : "this";
+        const scopeLabel = scope === "all"
+            ? "the entire recurring series"
+            : scope === "following"
+                ? "this and all following events"
+                : "this event";
+
         if (!window.confirm(
-            `Delete ${current?.title || "this calendar event"}?`
+            `Delete ${scopeLabel} for ${current.title}?`
         )) {
             return;
         }
@@ -842,30 +1520,54 @@
         elements.deleteEvent.disabled = true;
 
         try {
-            const {
-                data,
-                error
-            } = await getClient().rpc(
-                "admin_delete_calendar_event",
-                {
-                    p_club_id: state.clubId,
-                    p_event_id: eventId
-                }
-            );
-
-            if (error) {
-                throw error;
-            }
-
-            if (data !== true) {
-                throw new Error(
-                    "The calendar event could not be deleted."
+            if (current.series_id) {
+                const {
+                    data,
+                    error
+                } = await getClient().rpc(
+                    "admin_delete_calendar_series",
+                    {
+                        p_club_id: state.clubId,
+                        p_event_id: eventId,
+                        p_scope: scope
+                    }
                 );
+
+                if (error) {
+                    throw error;
+                }
+
+                if (Number(data || 0) < 1) {
+                    throw new Error(
+                        "The recurring event could not be deleted."
+                    );
+                }
+            } else {
+                const {
+                    data,
+                    error
+                } = await getClient().rpc(
+                    "admin_delete_calendar_event",
+                    {
+                        p_club_id: state.clubId,
+                        p_event_id: eventId
+                    }
+                );
+
+                if (error) {
+                    throw error;
+                }
+
+                if (data !== true) {
+                    throw new Error(
+                        "The calendar event could not be deleted."
+                    );
+                }
             }
 
             elements.eventDialog?.close();
             showSuccess("Event deleted.");
-            await loadEvents();
+            await refreshAfterEventChange(current.event_date);
         } catch (error) {
             setEventFormError(
                 getReadableError(error)
@@ -1679,27 +2381,71 @@
     }
 
     function handleCalendarClick(event) {
-        const edit =
+        const directDay =
             event.target.closest(
-                "[data-event-id]"
+                "[data-day-date]"
             );
 
-        if (edit) {
-            openExistingEvent(
-                edit.dataset.eventId
+        if (directDay) {
+            event.stopPropagation();
+            openDayDialog(
+                directDay.dataset.dayDate
             );
             return;
         }
 
-        const add =
+        const day =
             event.target.closest(
-                "[data-add-date]"
+                "[data-calendar-date]"
             );
 
-        if (add) {
-            openNewEvent(
-                add.dataset.addDate
+        if (day) {
+            openDayDialog(
+                day.dataset.calendarDate
             );
+        }
+    }
+
+    async function handleDayManagerClick(event) {
+        const edit =
+            event.target.closest(
+                "[data-day-edit-event]"
+            );
+
+        if (edit) {
+            closeDayDialog();
+            openExistingEvent(
+                edit.dataset.dayEditEvent,
+                true
+            );
+            return;
+        }
+
+        const remove =
+            event.target.closest(
+                "[data-day-delete-event]"
+            );
+
+        if (remove) {
+            try {
+                await deleteSingleEvent(
+                    remove.dataset.dayDeleteEvent,
+                    true
+                );
+            } catch (error) {
+                showError(error);
+            }
+        }
+    }
+
+    function closeEventAndReturn() {
+        elements.eventDialog?.close();
+
+        if (
+            state.returnToDayAfterEdit &&
+            state.selectedDay
+        ) {
+            openDayDialog(state.selectedDay);
         }
     }
 
@@ -1794,22 +2540,40 @@
                         ? isoDate(today)
                         : isoDate(state.currentMonth);
 
-                openNewEvent(defaultDate);
+                state.selectedDay = defaultDate;
+                openNewEvent(defaultDate, false);
             }
+        );
+
+        elements.dayDialogClose?.addEventListener(
+            "click",
+            closeDayDialog
+        );
+
+        elements.createDayEvent?.addEventListener(
+            "click",
+            function () {
+                const date =
+                    state.selectedDay ||
+                    isoDate(new Date());
+                closeDayDialog();
+                openNewEvent(date, true);
+            }
+        );
+
+        elements.dayEventList?.addEventListener(
+            "click",
+            handleDayManagerClick
         );
 
         elements.eventDialogClose?.addEventListener(
             "click",
-            function () {
-                elements.eventDialog?.close();
-            }
+            closeEventAndReturn
         );
 
         elements.cancelEvent?.addEventListener(
             "click",
-            function () {
-                elements.eventDialog?.close();
-            }
+            closeEventAndReturn
         );
 
         elements.eventCourseClosed?.addEventListener(
@@ -1818,6 +2582,69 @@
                 elements.closureFields.hidden =
                     elements.eventCourseClosed.checked !== true;
             }
+        );
+
+        elements.eventSection?.addEventListener(
+            "change",
+            function () {
+                populateEventPresetSelect("");
+            }
+        );
+
+        elements.eventType?.addEventListener(
+            "change",
+            function () {
+                populateEventPresetSelect("");
+            }
+        );
+
+        elements.eventPreset?.addEventListener(
+            "change",
+            function () {
+                syncEventTitle();
+                if (elements.eventPreset.value === "__custom__") {
+                    elements.eventCustomTitle?.focus();
+                }
+            }
+        );
+
+        elements.eventCustomTitle?.addEventListener(
+            "input",
+            syncEventTitle
+        );
+
+        elements.eventRepeat?.addEventListener(
+            "change",
+            updateRepeatControls
+        );
+
+        elements.eventRepeatEvery?.addEventListener(
+            "change",
+            updateRepeatControls
+        );
+
+        elements.eventRepeatUntil?.addEventListener(
+            "change",
+            updateRepeatControls
+        );
+
+        elements.eventDate?.addEventListener(
+            "change",
+            function () {
+                if (elements.eventRepeat?.value !== "none") {
+                    elements.eventRepeatWeekdays
+                        ?.querySelectorAll('input[type="checkbox"]')
+                        .forEach(function (input) {
+                            input.checked = false;
+                        });
+                }
+                updateRepeatControls();
+            }
+        );
+
+        elements.eventRepeatWeekdays?.addEventListener(
+            "change",
+            updateRepeatControls
         );
 
         elements.eventForm?.addEventListener(
@@ -1832,7 +2659,11 @@
 
         elements.importFixture?.addEventListener(
             "click",
-            openImportDialog
+            function () {
+                document.querySelector(".calendar-more-menu")
+                    ?.removeAttribute("open");
+                openImportDialog();
+            }
         );
 
         elements.importDialogClose?.addEventListener(
@@ -1923,6 +2754,7 @@
             }
 
             await loadCourses();
+            await loadEventSuggestions();
             await loadEvents();
         } catch (error) {
             showError(error);
