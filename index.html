@@ -75,6 +75,15 @@
             display: block;
             width: min(250px, 75%);
             margin: 0 auto 8px;
+            cursor: default;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .paryx-home__logo:focus-visible {
+            outline: 3px solid rgba(229, 196, 95, 0.7);
+            outline-offset: 6px;
+            border-radius: 12px;
         }
 
         .paryx-home__intro {
@@ -208,9 +217,13 @@
     <main class="paryx-home">
         <section class="paryx-home__panel" aria-labelledby="paryx-home-heading">
             <img
+                id="paryxLogo"
                 class="paryx-home__logo"
                 src="apps/member/assets/branding/paryx-logo.png"
                 alt="Paryx"
+                tabindex="0"
+                role="button"
+                aria-label="Paryx"
             />
 
             <p id="paryx-home-heading" class="paryx-home__intro">
@@ -245,25 +258,95 @@
                 </a>
             </div>
 
-            <div class="paryx-home__section">
-                <p class="paryx-home__section-title">Paryx internal</p>
-
-                <a
-                    class="paryx-home__console"
-                    href="apps/console/html/login.html"
-                >
-                    <span>
-                        <strong>Console</strong><br />
-                        Platform administration
-                    </span>
-                    <span aria-hidden="true">›</span>
-                </a>
-            </div>
-
             <p class="paryx-home__footer">
                 One Paryx account can be used across participating clubs.
             </p>
         </section>
     </main>
+    <script>
+        (function () {
+            "use strict";
+
+            const logo =
+                document.getElementById("paryxLogo");
+
+            if (!logo) {
+                return;
+            }
+
+            const CONSOLE_URL =
+                "apps/console/html/login.html";
+
+            const CLICK_WINDOW_MS =
+                900;
+
+            let clickCount =
+                0;
+
+            let resetTimer =
+                null;
+
+            function resetClicks() {
+                clickCount =
+                    0;
+
+                if (resetTimer) {
+                    window.clearTimeout(
+                        resetTimer
+                    );
+                    resetTimer =
+                        null;
+                }
+            }
+
+            function registerHiddenConsoleClick() {
+                clickCount +=
+                    1;
+
+                if (resetTimer) {
+                    window.clearTimeout(
+                        resetTimer
+                    );
+                }
+
+                if (clickCount >= 3) {
+                    resetClicks();
+
+                    window.location.href =
+                        CONSOLE_URL;
+
+                    return;
+                }
+
+                resetTimer =
+                    window.setTimeout(
+                        resetClicks,
+                        CLICK_WINDOW_MS
+                    );
+            }
+
+            logo.addEventListener(
+                "click",
+                registerHiddenConsoleClick
+            );
+
+            /*
+             * Keyboard equivalent for accessibility:
+             * three Enter/Space activations within the same window.
+             */
+            logo.addEventListener(
+                "keydown",
+                function (event) {
+                    if (
+                        event.key === "Enter" ||
+                        event.key === " "
+                    ) {
+                        event.preventDefault();
+                        registerHiddenConsoleClick();
+                    }
+                }
+            );
+        })();
+    </script>
 </body>
 </html>
