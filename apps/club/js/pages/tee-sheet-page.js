@@ -794,11 +794,21 @@
     }
 
     async function searchBookingMembers(term) {
+        const searchTerm =
+            String(term || "").trim();
+
+        if (!searchTerm) {
+            state.booking.searchResults = [];
+            elements.bookingMemberResults.innerHTML = "";
+            elements.bookingMemberResults.hidden = true;
+            return;
+        }
+
         try {
             state.booking.searchResults = normaliseRows(
                 await rpc("staff_search_booking_members", {
                     p_club_id: state.clubId,
-                    p_search: String(term || "").trim() || null,
+                    p_search: searchTerm,
                     p_limit: 20
                 })
             );
@@ -813,8 +823,18 @@
             window.clearTimeout(state.booking.searchTimer);
         }
 
+        const searchTerm =
+            String(elements.bookingMemberSearch.value || "").trim();
+
+        if (!searchTerm) {
+            state.booking.searchResults = [];
+            elements.bookingMemberResults.innerHTML = "";
+            elements.bookingMemberResults.hidden = true;
+            return;
+        }
+
         state.booking.searchTimer = window.setTimeout(function () {
-            searchBookingMembers(elements.bookingMemberSearch.value);
+            searchBookingMembers(searchTerm);
         }, 220);
     }
 
@@ -846,9 +866,13 @@
             party_size: Number(member.party_size || 1)
         });
 
+        elements.bookingMemberSearch.value = "";
+        state.booking.searchResults = [];
+        elements.bookingMemberResults.innerHTML = "";
+        elements.bookingMemberResults.hidden = true;
+
         hide(elements.bookingDialogError);
         renderBookingPlayers();
-        renderMemberResults();
     }
 
     function addGuest() {
@@ -934,7 +958,7 @@
 
         resetBookingDialog(row);
         elements.bookingDialog.showModal();
-        await searchBookingMembers("");
+        elements.bookingMemberSearch.focus();
     }
 
     async function openEditBooking(row) {
@@ -989,8 +1013,7 @@
             renderBookingPlayers();
             elements.bookingMemberResults.hidden = true;
             elements.bookingDialog.showModal();
-
-            await searchBookingMembers("");
+            elements.bookingMemberSearch.focus();
         } catch (error) {
             showError(error);
         }
@@ -1562,13 +1585,27 @@
         elements.bookingMemberSearch.addEventListener(
             "focus",
             function () {
-                if (!state.booking.searchResults.length) {
-                    searchBookingMembers(
-                        elements.bookingMemberSearch.value
-                    );
-                } else {
-                    renderMemberResults();
+                const searchTerm =
+                    String(
+                        elements.bookingMemberSearch.value || ""
+                    ).trim();
+
+                if (searchTerm) {
+                    if (!state.booking.searchResults.length) {
+                        searchBookingMembers(searchTerm);
+                    } else {
+                        renderMemberResults();
+                    }
                 }
+            }
+        );
+
+        elements.bookingMemberSearch.addEventListener(
+            "blur",
+            function () {
+                window.setTimeout(function () {
+                    elements.bookingMemberResults.hidden = true;
+                }, 160);
             }
         );
 
