@@ -42,6 +42,14 @@
         schedules: [],
         teeTimes: [],
         events: [],
+        booking: {
+            mode: "create",
+            maxPlayers: 4,
+            members: [],
+            guests: [],
+            searchResults: [],
+            searchTimer: null
+        },
         initialised: false
     };
 
@@ -92,6 +100,32 @@
         scheduleActive: document.getElementById("scheduleActive"),
         deleteSchedule: document.getElementById("deleteScheduleButton"),
         saveSchedule: document.getElementById("saveScheduleButton"),
+
+        bookingDialog: document.getElementById("bookingDialog"),
+        bookingForm: document.getElementById("bookingForm"),
+        bookingDialogTitle: document.getElementById("bookingDialogTitle"),
+        bookingDialogSubtitle: document.getElementById("bookingDialogSubtitle"),
+        bookingDialogError: document.getElementById("bookingDialogError"),
+        bookingId: document.getElementById("bookingId"),
+        bookingTeeTimeId: document.getElementById("bookingTeeTimeId"),
+        bookingCapacity: document.getElementById("bookingCapacity"),
+        bookingSelectedPlayers: document.getElementById("bookingSelectedPlayers"),
+        bookingMemberSearch: document.getElementById("bookingMemberSearch"),
+        bookingMemberResults: document.getElementById("bookingMemberResults"),
+        bookingGuestName: document.getElementById("bookingGuestName"),
+        addBookingGuest: document.getElementById("addBookingGuestButton"),
+        bookingType: document.getElementById("bookingType"),
+        bookingContactNumber: document.getElementById("bookingContactNumber"),
+        bookingNotes: document.getElementById("bookingNotes"),
+        closeBookingDialog: document.getElementById("closeBookingDialogButton"),
+        saveBooking: document.getElementById("saveBookingButton"),
+        cancelBooking: document.getElementById("cancelBookingButton"),
+        moveBooking: document.getElementById("moveBookingButton"),
+        moveBookingPanel: document.getElementById("moveBookingPanel"),
+        moveBookingDate: document.getElementById("moveBookingDate"),
+        moveBookingTeeTime: document.getElementById("moveBookingTeeTime"),
+        confirmMoveBooking: document.getElementById("confirmMoveBookingButton"),
+        cancelMoveBooking: document.getElementById("cancelMoveBookingButton"),
 
         statusDialog: document.getElementById("statusDialog"),
         statusForm: document.getElementById("statusForm"),
@@ -416,14 +450,40 @@
                             <strong>${escapeHtml(String(row.player_count || 0))}/${escapeHtml(String(row.max_players || 4))}</strong>
                         </div>
 
-                        <button
-                            class="tee-sheet-row__action"
-                            type="button"
-                            data-action="availability"
-                            ${row.booking_id ? "disabled" : ""}
-                        >
-                            ${row.booking_id ? "Booked" : "Availability"}
-                        </button>
+                        <div class="tee-sheet-row__actions">
+                            ${row.booking_id ? `
+                                <button
+                                    class="tee-sheet-row__action tee-sheet-row__action--primary"
+                                    type="button"
+                                    data-action="manage-booking"
+                                >
+                                    Manage
+                                </button>
+                            ` : row.operational_status === "open" ? `
+                                <button
+                                    class="tee-sheet-row__action tee-sheet-row__action--primary"
+                                    type="button"
+                                    data-action="book"
+                                >
+                                    Book
+                                </button>
+                                <button
+                                    class="tee-sheet-row__action tee-sheet-row__action--secondary"
+                                    type="button"
+                                    data-action="availability"
+                                >
+                                    Availability
+                                </button>
+                            ` : `
+                                <button
+                                    class="tee-sheet-row__action tee-sheet-row__action--secondary"
+                                    type="button"
+                                    data-action="availability"
+                                >
+                                    Availability
+                                </button>
+                            `}
+                        </div>
                     </article>
                 `;
             })
@@ -591,6 +651,548 @@
             showSuccess("Tee-time availability updated.");
         } catch (error) {
             showError(error, elements.statusDialogError);
+        }
+    }
+
+
+    function selectedPlayerCount() {
+        const memberPlaces = state.booking.members.reduce(function (total, member) {
+            return total + Math.max(1, Number(member.party_size || 1));
+        }, 0);
+        return memberPlaces + state.booking.guests.length;
+    }
+
+    function memberDisplay(member) {
+        return (
+            String(member?.display_name || "").trim() ||
+            String(member?.email || "").trim() ||
+            "Member"
+        );
+    }
+
+    function bookingLeadName() {
+        if (state.booking.members.length) {
+            return memberDisplay(state.booking.members[0]);
+        }
+        if (state.booking.guests.length) {
+            return String(state.booking.guests[0]?.guest_name || "").trim() || null;
+        }
+        return null;
+    }
+
+    function renderBookingPlayers() {
+        const total = selectedPlayerCount();
+        elements.bookingCapacity.textContent = `${total} / ${state.booking.maxPlayers}`;
+
+        const entries = [
+            ...state.booking.members.map(function (member) {
+                return {
+                    type: "member",
+                    key: member.membership_id,
+                    name: memberDisplay(member),
+                    meta: [
+                        Number(member.party_size || 1) > 1
+                            ? `${Number(member.party_size)} places`
+                            : "1 place",
+                        member.membership_number
+                            ? `Member ${member.membership_number}`
+                            : "Club member",
+                        member.email || ""
+                    ].filter(Boolean).join(" · ")
+                };
+            }),
+            ...state.booking.guests.map(function (guest, index) {
+                return {
+                    type: "guest",
+                    key: String(index),
+                    name: String(guest.guest_name || "Guest"),
+                    meta: "Guest · 1 place"
+                };
+            })
+        ];
+
+        if (!entries.length) {
+            elements.bookingSelectedPlayers.innerHTML = `
+                <div class="tee-sheet-selected-players__empty">
+                    No players added yet.
+                </div>
+            `;
+        } else {
+            elements.bookingSelectedPlayers.innerHTML = entries.map(function (entry) {
+                return `
+                    <div class="tee-sheet-selected-player">
+                        <div>
+                            <strong>${escapeHtml(entry.name)}</strong>
+                            <span>${escapeHtml(entry.meta)}</span>
+                        </div>
+                        <button
+                            type="button"
+                            data-remove-player-type="${escapeHtml(entry.type)}"
+                            data-remove-player-key="${escapeHtml(entry.key)}"
+                        >
+                            Remove
+                        </button>
+                    </div>
+                `;
+            }).join("");
+        }
+
+        const full = total >= state.booking.maxPlayers;
+        elements.bookingMemberSearch.disabled = full;
+        elements.bookingGuestName.disabled = full;
+        elements.addBookingGuest.disabled = full;
+    }
+
+    function renderMemberResults() {
+        const selected = new Set(
+            state.booking.members.map(function (member) {
+                return member.membership_id;
+            })
+        );
+
+        const rows = state.booking.searchResults.filter(function (member) {
+            return !selected.has(member.membership_id);
+        });
+
+        if (elements.bookingMemberSearch.disabled) {
+            elements.bookingMemberResults.hidden = true;
+            return;
+        }
+
+        elements.bookingMemberResults.hidden = false;
+
+        if (!rows.length) {
+            elements.bookingMemberResults.innerHTML = `
+                <div class="tee-sheet-member-results__empty">
+                    No matching active members.
+                </div>
+            `;
+            return;
+        }
+
+        elements.bookingMemberResults.innerHTML = rows.map(function (member) {
+            const meta = [
+                member.membership_number ? `#${member.membership_number}` : "",
+                member.email || ""
+            ].filter(Boolean).join(" · ");
+
+            return `
+                <div class="tee-sheet-member-result">
+                    <div>
+                        <strong>${escapeHtml(memberDisplay(member))}</strong>
+                        <span>${escapeHtml(meta || "Active member")}</span>
+                    </div>
+                    <button
+                        type="button"
+                        data-add-member-id="${escapeHtml(member.membership_id)}"
+                    >
+                        Add
+                    </button>
+                </div>
+            `;
+        }).join("");
+    }
+
+    async function searchBookingMembers(term) {
+        try {
+            state.booking.searchResults = normaliseRows(
+                await rpc("staff_search_booking_members", {
+                    p_club_id: state.clubId,
+                    p_search: String(term || "").trim() || null,
+                    p_limit: 20
+                })
+            );
+            renderMemberResults();
+        } catch (error) {
+            showError(error, elements.bookingDialogError);
+        }
+    }
+
+    function queueMemberSearch() {
+        if (state.booking.searchTimer) {
+            window.clearTimeout(state.booking.searchTimer);
+        }
+
+        state.booking.searchTimer = window.setTimeout(function () {
+            searchBookingMembers(elements.bookingMemberSearch.value);
+        }, 220);
+    }
+
+    function addSelectedMember(membershipId) {
+        if (selectedPlayerCount() >= state.booking.maxPlayers) {
+            showError(
+                "This tee time is already at capacity.",
+                elements.bookingDialogError
+            );
+            return;
+        }
+
+        const member = state.booking.searchResults.find(function (item) {
+            return item.membership_id === membershipId;
+        });
+
+        if (!member) {
+            return;
+        }
+
+        if (state.booking.members.some(function (item) {
+            return item.membership_id === membershipId;
+        })) {
+            return;
+        }
+
+        state.booking.members.push({
+            ...member,
+            party_size: Number(member.party_size || 1)
+        });
+
+        hide(elements.bookingDialogError);
+        renderBookingPlayers();
+        renderMemberResults();
+    }
+
+    function addGuest() {
+        const name = String(elements.bookingGuestName.value || "").trim();
+
+        if (!name) {
+            showError("Enter the guest name first.", elements.bookingDialogError);
+            return;
+        }
+
+        if (selectedPlayerCount() >= state.booking.maxPlayers) {
+            showError(
+                "This tee time is already at capacity.",
+                elements.bookingDialogError
+            );
+            return;
+        }
+
+        state.booking.guests.push({
+            guest_name: name
+        });
+
+        elements.bookingGuestName.value = "";
+        hide(elements.bookingDialogError);
+        renderBookingPlayers();
+    }
+
+    function removeSelectedPlayer(type, key) {
+        if (type === "member") {
+            state.booking.members = state.booking.members.filter(function (member) {
+                return member.membership_id !== key;
+            });
+        } else if (type === "guest") {
+            const index = Number(key);
+
+            if (Number.isInteger(index) && index >= 0) {
+                state.booking.guests.splice(index, 1);
+            }
+        }
+
+        hide(elements.bookingDialogError);
+        renderBookingPlayers();
+        renderMemberResults();
+    }
+
+    function resetBookingDialog(row) {
+        state.booking.mode = "create";
+        state.booking.maxPlayers = Number(row?.max_players || 4);
+        state.booking.members = [];
+        state.booking.guests = [];
+        state.booking.searchResults = [];
+
+        hide(elements.bookingDialogError);
+
+        elements.bookingId.value = "";
+        elements.bookingTeeTimeId.value = row?.tee_time_id || "";
+        elements.bookingType.value = "joinable";
+        elements.bookingContactNumber.value = "";
+        elements.bookingNotes.value = "";
+        elements.bookingMemberSearch.value = "";
+        elements.bookingGuestName.value = "";
+        elements.moveBookingPanel.hidden = true;
+        elements.cancelBooking.hidden = true;
+        elements.moveBooking.hidden = true;
+        elements.saveBooking.textContent = "Create booking";
+        elements.bookingDialogTitle.textContent = "Create booking";
+        elements.bookingDialogSubtitle.textContent =
+            `${formatDayTitle(state.playDate)} · ${shortTime(row?.start_time)} · ${currentCourseName()}`;
+        elements.moveBookingDate.value = state.playDate;
+
+        renderBookingPlayers();
+        elements.bookingMemberResults.hidden = true;
+    }
+
+    async function openCreateBooking(row) {
+        if (
+            !row ||
+            row.booking_id ||
+            row.operational_status !== "open"
+        ) {
+            return;
+        }
+
+        resetBookingDialog(row);
+        elements.bookingDialog.showModal();
+        await searchBookingMembers("");
+    }
+
+    async function openEditBooking(row) {
+        if (!row?.booking_id) {
+            return;
+        }
+
+        hide(elements.bookingDialogError);
+
+        try {
+            const rows = normaliseRows(
+                await rpc("staff_get_booking_detail", {
+                    p_club_id: state.clubId,
+                    p_booking_id: row.booking_id
+                })
+            );
+
+            const detail = rows[0];
+
+            if (!detail) {
+                throw new Error("The selected booking could not be loaded.");
+            }
+
+            state.booking.mode = "edit";
+            state.booking.maxPlayers =
+                Number(detail.max_players || row.max_players || 4);
+            state.booking.members = Array.isArray(detail.members)
+                ? detail.members
+                : [];
+            state.booking.guests = Array.isArray(detail.guests)
+                ? detail.guests
+                : [];
+            state.booking.searchResults = [];
+
+            elements.bookingId.value = detail.booking_id;
+            elements.bookingTeeTimeId.value = detail.tee_time_id;
+            elements.bookingType.value = detail.booking_type || "joinable";
+            elements.bookingContactNumber.value = detail.contact_number || "";
+            elements.bookingNotes.value = detail.notes || "";
+            elements.bookingMemberSearch.value = "";
+            elements.bookingGuestName.value = "";
+            elements.bookingDialogTitle.textContent = "Manage booking";
+            elements.bookingDialogSubtitle.textContent =
+                `${formatDayTitle(detail.play_date)} · ${shortTime(detail.start_time)} · ${detail.course_name || currentCourseName()}`;
+            elements.saveBooking.textContent = "Save changes";
+            elements.cancelBooking.hidden = false;
+            elements.moveBooking.hidden = false;
+            elements.moveBookingPanel.hidden = true;
+            elements.moveBookingDate.value =
+                detail.play_date || state.playDate;
+
+            renderBookingPlayers();
+            elements.bookingMemberResults.hidden = true;
+            elements.bookingDialog.showModal();
+
+            await searchBookingMembers("");
+        } catch (error) {
+            showError(error);
+        }
+    }
+
+    function bookingPayload() {
+        return {
+            memberIds: state.booking.members.map(function (member) {
+                return member.membership_id;
+            }),
+            memberPartySizes: state.booking.members.map(function (member) {
+                return Math.max(1, Number(member.party_size || 1));
+            }),
+            guestNames: state.booking.guests.map(function (guest) {
+                return String(guest.guest_name || "").trim();
+            }).filter(Boolean),
+            bookingType: elements.bookingType.value || "joinable",
+            leadName: bookingLeadName(),
+            contactNumber: elements.bookingContactNumber.value || null,
+            notes: elements.bookingNotes.value || null
+        };
+    }
+
+    async function saveBooking(event) {
+        event.preventDefault();
+        hide(elements.bookingDialogError);
+
+        if (selectedPlayerCount() < 1) {
+            showError(
+                "Add at least one member or guest to the booking.",
+                elements.bookingDialogError
+            );
+            return;
+        }
+
+        const payload = bookingPayload();
+
+        elements.saveBooking.disabled = true;
+        elements.saveBooking.textContent =
+            state.booking.mode === "edit"
+                ? "Saving…"
+                : "Booking…";
+
+        try {
+            if (state.booking.mode === "edit") {
+                await rpc("staff_update_booking", {
+                    p_club_id: state.clubId,
+                    p_booking_id: elements.bookingId.value,
+                    p_member_ids: payload.memberIds,
+                    p_member_party_sizes: payload.memberPartySizes,
+                    p_guest_names: payload.guestNames,
+                    p_booking_type: payload.bookingType,
+                    p_lead_name: payload.leadName,
+                    p_contact_number: payload.contactNumber,
+                    p_notes: payload.notes
+                });
+            } else {
+                await rpc("staff_create_booking", {
+                    p_club_id: state.clubId,
+                    p_tee_time_id: elements.bookingTeeTimeId.value,
+                    p_member_ids: payload.memberIds,
+                    p_member_party_sizes: payload.memberPartySizes,
+                    p_guest_names: payload.guestNames,
+                    p_booking_type: payload.bookingType,
+                    p_lead_name: payload.leadName,
+                    p_contact_number: payload.contactNumber,
+                    p_notes: payload.notes
+                });
+            }
+
+            const wasEdit = state.booking.mode === "edit";
+            elements.bookingDialog.close();
+            await loadTeeSheet();
+            showSuccess(wasEdit ? "Booking updated." : "Booking created.");
+        } catch (error) {
+            showError(error, elements.bookingDialogError);
+        } finally {
+            elements.saveBooking.disabled = false;
+            elements.saveBooking.textContent =
+                state.booking.mode === "edit"
+                    ? "Save changes"
+                    : "Create booking";
+        }
+    }
+
+    async function cancelCurrentBooking() {
+        const bookingId = elements.bookingId.value;
+
+        if (!bookingId) {
+            return;
+        }
+
+        if (!window.confirm(
+            "Cancel this booking? The tee time will become available again."
+        )) {
+            return;
+        }
+
+        hide(elements.bookingDialogError);
+
+        try {
+            await rpc("staff_cancel_booking", {
+                p_club_id: state.clubId,
+                p_booking_id: bookingId
+            });
+
+            elements.bookingDialog.close();
+            await loadTeeSheet();
+            showSuccess("Booking cancelled.");
+        } catch (error) {
+            showError(error, elements.bookingDialogError);
+        }
+    }
+
+    async function loadMoveOptions() {
+        const date =
+            elements.moveBookingDate.value ||
+            state.playDate;
+
+        elements.moveBookingTeeTime.innerHTML =
+            `<option value="">Loading…</option>`;
+        elements.confirmMoveBooking.disabled = true;
+
+        try {
+            const rows = normaliseRows(
+                await rpc("staff_get_tee_sheet", {
+                    p_club_id: state.clubId,
+                    p_course_id: state.courseId,
+                    p_play_date: date
+                })
+            );
+
+            const total = selectedPlayerCount();
+
+            const available = rows.filter(function (row) {
+                return (
+                    row.operational_status === "open" &&
+                    !row.booking_id &&
+                    Number(row.max_players || 0) >= total
+                );
+            });
+
+            elements.moveBookingTeeTime.innerHTML = available.length
+                ? available.map(function (row) {
+                    return `
+                        <option value="${escapeHtml(row.tee_time_id)}">
+                            ${escapeHtml(shortTime(row.start_time))}
+                            · ${escapeHtml(String(row.max_players || 4))} players
+                        </option>
+                    `;
+                }).join("")
+                : `<option value="">No open generated tee times</option>`;
+
+            elements.confirmMoveBooking.disabled =
+                available.length === 0;
+        } catch (error) {
+            elements.moveBookingTeeTime.innerHTML =
+                `<option value="">Could not load tee times</option>`;
+            showError(error, elements.bookingDialogError);
+        }
+    }
+
+    async function openMoveBooking() {
+        elements.moveBookingPanel.hidden = false;
+        await loadMoveOptions();
+    }
+
+    async function confirmMoveBooking() {
+        const bookingId = elements.bookingId.value;
+        const teeTimeId = elements.moveBookingTeeTime.value;
+
+        if (!bookingId || !teeTimeId) {
+            showError(
+                "Choose an available destination tee time.",
+                elements.bookingDialogError
+            );
+            return;
+        }
+
+        elements.confirmMoveBooking.disabled = true;
+
+        try {
+            await rpc("staff_move_booking", {
+                p_club_id: state.clubId,
+                p_booking_id: bookingId,
+                p_new_tee_time_id: teeTimeId
+            });
+
+            const targetDate =
+                elements.moveBookingDate.value ||
+                state.playDate;
+
+            elements.bookingDialog.close();
+            state.playDate = targetDate;
+            elements.date.value = targetDate;
+
+            await loadDay();
+            showSuccess("Booking moved.");
+        } catch (error) {
+            showError(error, elements.bookingDialogError);
+        } finally {
+            elements.confirmMoveBooking.disabled = false;
         }
     }
 
@@ -863,15 +1465,34 @@
         elements.manageSchedules.addEventListener("click", openSchedules);
 
         elements.rows.addEventListener("click", function (event) {
-            const button = event.target.closest('[data-action="availability"]');
+            const button = event.target.closest("[data-action]");
+
             if (!button) {
                 return;
             }
+
             const rowElement = button.closest("[data-tee-time-id]");
             const row = state.teeTimes.find(function (item) {
                 return item.tee_time_id === rowElement?.dataset?.teeTimeId;
             });
-            openStatusDialog(row);
+
+            if (!row) {
+                return;
+            }
+
+            if (button.dataset.action === "book") {
+                openCreateBooking(row);
+                return;
+            }
+
+            if (button.dataset.action === "manage-booking") {
+                openEditBooking(row);
+                return;
+            }
+
+            if (button.dataset.action === "availability") {
+                openStatusDialog(row);
+            }
         });
 
         elements.events.addEventListener("change", function (event) {
@@ -917,12 +1538,123 @@
             editSchedule(schedule);
         });
 
+
+        elements.closeBookingDialog.addEventListener("click", function () {
+            elements.bookingDialog.close();
+        });
+
+        elements.bookingForm.addEventListener("submit", saveBooking);
+
+        elements.bookingMemberSearch.addEventListener(
+            "input",
+            queueMemberSearch
+        );
+
+        elements.bookingMemberSearch.addEventListener(
+            "keydown",
+            function (event) {
+                if (event.key === "Enter") {
+                    event.preventDefault();
+                }
+            }
+        );
+
+        elements.bookingMemberSearch.addEventListener(
+            "focus",
+            function () {
+                if (!state.booking.searchResults.length) {
+                    searchBookingMembers(
+                        elements.bookingMemberSearch.value
+                    );
+                } else {
+                    renderMemberResults();
+                }
+            }
+        );
+
+        elements.bookingMemberResults.addEventListener(
+            "click",
+            function (event) {
+                const button = event.target.closest(
+                    "[data-add-member-id]"
+                );
+
+                if (button) {
+                    addSelectedMember(
+                        button.dataset.addMemberId
+                    );
+                }
+            }
+        );
+
+        elements.bookingSelectedPlayers.addEventListener(
+            "click",
+            function (event) {
+                const button = event.target.closest(
+                    "[data-remove-player-type]"
+                );
+
+                if (button) {
+                    removeSelectedPlayer(
+                        button.dataset.removePlayerType,
+                        button.dataset.removePlayerKey
+                    );
+                }
+            }
+        );
+
+        elements.addBookingGuest.addEventListener(
+            "click",
+            addGuest
+        );
+
+        elements.bookingGuestName.addEventListener(
+            "keydown",
+            function (event) {
+                if (event.key === "Enter") {
+                    event.preventDefault();
+                    addGuest();
+                }
+            }
+        );
+
+        elements.cancelBooking.addEventListener(
+            "click",
+            cancelCurrentBooking
+        );
+
+        elements.moveBooking.addEventListener(
+            "click",
+            openMoveBooking
+        );
+
+        elements.cancelMoveBooking.addEventListener(
+            "click",
+            function () {
+                elements.moveBookingPanel.hidden = true;
+            }
+        );
+
+        elements.moveBookingDate.addEventListener(
+            "change",
+            loadMoveOptions
+        );
+
+        elements.confirmMoveBooking.addEventListener(
+            "click",
+            confirmMoveBooking
+        );
+
         elements.closeStatusDialog.addEventListener("click", function () {
             elements.statusDialog.close();
         });
         elements.statusForm.addEventListener("submit", saveStatus);
 
-        [elements.scheduleDialog, elements.statusDialog].forEach(function (dialog) {
+        [
+            elements.scheduleDialog,
+            elements.bookingDialog,
+            elements.statusDialog
+        ].forEach(function (dialog) {
             dialog.addEventListener("click", function (event) {
                 if (event.target === dialog) {
                     dialog.close();

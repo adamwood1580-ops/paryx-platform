@@ -630,3 +630,256 @@
         margin-right: 0;
     }
 }
+
+
+/* =========================================================
+   STAFF BOOKING MANAGEMENT
+   ========================================================= */
+
+.tee-sheet-row__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+}
+
+.tee-sheet-row__action--primary {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: #fff;
+}
+
+.tee-sheet-row__action--secondary {
+    background: #f7f9f8;
+}
+
+.tee-sheet-dialog--booking {
+    width: min(1040px, calc(100vw - 32px));
+}
+
+.tee-sheet-dialog__subtitle {
+    margin: 0.3rem 0 0;
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+}
+
+.tee-sheet-booking-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
+    gap: 1.2rem;
+}
+
+.tee-sheet-booking-players,
+.tee-sheet-booking-details {
+    display: grid;
+    align-content: start;
+    gap: 1rem;
+    padding: 1rem;
+    border: 1px solid var(--color-border-brand);
+    border-radius: 18px;
+    background: #fbfcfb;
+}
+
+.tee-sheet-booking-players h3,
+.tee-sheet-booking-details h3,
+.tee-sheet-move-panel h3 {
+    margin: 0;
+    color: var(--color-primary);
+    font-size: 1rem;
+}
+
+.tee-sheet-booking-section-heading {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.tee-sheet-booking-section-heading p {
+    margin: 0.15rem 0 0;
+    color: var(--color-text-muted);
+    font-size: 0.82rem;
+}
+
+#bookingCapacity {
+    flex: 0 0 auto;
+    padding: 0.32rem 0.65rem;
+    border-radius: 999px;
+    background: #e8f6ef;
+    color: #12613f;
+    font-size: 0.82rem;
+}
+
+.tee-sheet-selected-players {
+    display: grid;
+    gap: 0.55rem;
+}
+
+.tee-sheet-selected-players__empty {
+    padding: 1rem;
+    border: 1px dashed var(--color-border-brand);
+    border-radius: 14px;
+    color: var(--color-text-muted);
+    text-align: center;
+    font-size: 0.88rem;
+}
+
+.tee-sheet-selected-player {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.7rem 0.8rem;
+    border: 1px solid #dfe7e2;
+    border-radius: 14px;
+    background: #fff;
+}
+
+.tee-sheet-selected-player strong,
+.tee-sheet-selected-player span,
+.tee-sheet-member-result strong,
+.tee-sheet-member-result span {
+    display: block;
+}
+
+.tee-sheet-selected-player strong {
+    color: var(--color-text);
+}
+
+.tee-sheet-selected-player span {
+    margin-top: 0.1rem;
+    color: var(--color-text-muted);
+    font-size: 0.78rem;
+}
+
+.tee-sheet-selected-player button,
+.tee-sheet-member-result button {
+    border: 1px solid var(--color-border-brand);
+    border-radius: 10px;
+    background: #f7f9f8;
+    color: var(--color-primary);
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.tee-sheet-selected-player button {
+    min-height: 34px;
+    padding: 0 0.65rem;
+}
+
+.tee-sheet-member-search {
+    position: relative;
+}
+
+.tee-sheet-member-results {
+    position: absolute;
+    z-index: 20;
+    top: calc(100% + 0.35rem);
+    left: 0;
+    right: 0;
+    max-height: 280px;
+    overflow: auto;
+    border: 1px solid var(--color-border-brand);
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 16px 34px rgba(1, 31, 22, 0.14);
+}
+
+.tee-sheet-member-result {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.6rem;
+    align-items: center;
+    padding: 0.65rem 0.75rem;
+    border-bottom: 1px solid #edf0ee;
+}
+
+.tee-sheet-member-result:last-child {
+    border-bottom: 0;
+}
+
+.tee-sheet-member-result span {
+    margin-top: 0.08rem;
+    color: var(--color-text-muted);
+    font-size: 0.76rem;
+}
+
+.tee-sheet-member-result button {
+    min-height: 34px;
+    padding: 0 0.7rem;
+}
+
+.tee-sheet-member-results__empty {
+    padding: 0.9rem;
+    color: var(--color-text-muted);
+    text-align: center;
+    font-size: 0.84rem;
+}
+
+.tee-sheet-guest-add {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 0.65rem;
+}
+
+.tee-sheet-field textarea {
+    width: 100%;
+    padding: 0.75rem 0.85rem;
+    border: 1px solid var(--color-border-brand);
+    border-radius: 14px;
+    background: #fff;
+    color: var(--color-text);
+    font: inherit;
+    resize: vertical;
+}
+
+.tee-sheet-move-panel {
+    display: grid;
+    gap: 0.8rem;
+    margin-top: 0.25rem;
+    padding: 0.85rem;
+    border: 1px solid #d7e4dc;
+    border-radius: 14px;
+    background: #f5faf7;
+}
+
+.tee-sheet-inline-actions {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.tee-sheet-booking-actions {
+    padding-top: 0.8rem;
+    border-top: 1px solid #e7ece9;
+}
+
+@media (min-width: 761px) {
+    .tee-sheet-row {
+        grid-template-columns: 86px minmax(0, 1fr) 90px 175px;
+    }
+}
+
+@media (max-width: 860px) {
+    .tee-sheet-booking-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .tee-sheet-guest-add {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 760px) {
+    .tee-sheet-row__actions {
+        grid-column: 2 / 4;
+        justify-content: stretch;
+    }
+
+    .tee-sheet-row__actions .tee-sheet-row__action {
+        flex: 1 1 120px;
+    }
+}

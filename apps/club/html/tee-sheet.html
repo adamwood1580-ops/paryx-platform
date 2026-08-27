@@ -209,6 +209,120 @@
         </form>
     </dialog>
 
+
+    <dialog id="bookingDialog" class="tee-sheet-dialog tee-sheet-dialog--booking">
+        <form id="bookingForm" class="tee-sheet-dialog__panel" novalidate>
+            <header>
+                <div>
+                    <p class="page-heading__eyebrow">Staff booking</p>
+                    <h2 id="bookingDialogTitle">Create booking</h2>
+                    <p id="bookingDialogSubtitle" class="tee-sheet-dialog__subtitle"></p>
+                </div>
+                <button id="closeBookingDialogButton" class="tee-sheet-dialog__close" type="button" aria-label="Close">×</button>
+            </header>
+
+            <section id="bookingDialogError" class="admin-error" role="alert" hidden></section>
+
+            <input id="bookingId" type="hidden" />
+            <input id="bookingTeeTimeId" type="hidden" />
+
+            <div class="tee-sheet-booking-layout">
+                <section class="tee-sheet-booking-players">
+                    <div class="tee-sheet-booking-section-heading">
+                        <div>
+                            <h3>Players</h3>
+                            <p>Add club members and named guests.</p>
+                        </div>
+                        <strong id="bookingCapacity">0 / 4</strong>
+                    </div>
+
+                    <div id="bookingSelectedPlayers" class="tee-sheet-selected-players"></div>
+
+                    <div class="tee-sheet-member-search">
+                        <label class="tee-sheet-field">
+                            <span>Find member</span>
+                            <input
+                                id="bookingMemberSearch"
+                                type="search"
+                                autocomplete="off"
+                                placeholder="Search name, email or membership number"
+                            />
+                        </label>
+                        <div id="bookingMemberResults" class="tee-sheet-member-results" hidden></div>
+                    </div>
+
+                    <div class="tee-sheet-guest-add">
+                        <label class="tee-sheet-field">
+                            <span>Add guest</span>
+                            <input id="bookingGuestName" type="text" placeholder="Guest name" />
+                        </label>
+                        <button id="addBookingGuestButton" class="tee-sheet-button tee-sheet-button--secondary" type="button">
+                            Add guest
+                        </button>
+                    </div>
+                </section>
+
+                <section class="tee-sheet-booking-details">
+                    <h3>Booking details</h3>
+
+                    <label class="tee-sheet-field">
+                        <span>Booking type</span>
+                        <select id="bookingType">
+                            <option value="joinable">Joinable</option>
+                            <option value="private">Private</option>
+                        </select>
+                    </label>
+
+                    <label class="tee-sheet-field">
+                        <span>Contact number</span>
+                        <input id="bookingContactNumber" type="tel" placeholder="Optional" />
+                    </label>
+
+                    <label class="tee-sheet-field">
+                        <span>Notes</span>
+                        <textarea id="bookingNotes" rows="4" placeholder="Optional staff note"></textarea>
+                    </label>
+
+                    <div id="moveBookingPanel" class="tee-sheet-move-panel" hidden>
+                        <div class="tee-sheet-booking-section-heading">
+                            <div>
+                                <h3>Move booking</h3>
+                                <p>Choose another open tee time on this course.</p>
+                            </div>
+                        </div>
+
+                        <label class="tee-sheet-field">
+                            <span>Date</span>
+                            <input id="moveBookingDate" type="date" />
+                        </label>
+
+                        <label class="tee-sheet-field">
+                            <span>Available tee time</span>
+                            <select id="moveBookingTeeTime"></select>
+                        </label>
+
+                        <div class="tee-sheet-inline-actions">
+                            <button id="confirmMoveBookingButton" class="tee-sheet-button" type="button">Move booking</button>
+                            <button id="cancelMoveBookingButton" class="tee-sheet-button tee-sheet-button--secondary" type="button">Cancel</button>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <div class="tee-sheet-dialog__actions tee-sheet-booking-actions">
+                <button id="cancelBookingButton" class="tee-sheet-button tee-sheet-button--danger" type="button" hidden>
+                    Cancel booking
+                </button>
+                <button id="moveBookingButton" class="tee-sheet-button tee-sheet-button--secondary" type="button" hidden>
+                    Move booking
+                </button>
+                <button id="saveBookingButton" class="tee-sheet-button" type="submit">
+                    Create booking
+                </button>
+            </div>
+        </form>
+    </dialog>
+
     <dialog id="statusDialog" class="tee-sheet-dialog tee-sheet-dialog--small">
         <form id="statusForm" method="dialog" class="tee-sheet-dialog__panel">
             <header>
