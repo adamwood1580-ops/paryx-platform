@@ -442,6 +442,83 @@
                     throw error;
                 }
 
+                const {
+                    error:
+                        activationError
+                } =
+                    await window.supabaseClient
+                        .rpc(
+                            "activate_my_invited_memberships"
+                        );
+
+                if (
+                    activationError
+                ) {
+                    throw activationError;
+                }
+
+                const {
+                    data: {
+                        user
+                    }
+                } =
+                    await window.supabaseClient
+                        .auth
+                        .getUser();
+
+                let destination =
+                    "../../member/html/login.html?activated=1";
+
+                if (user?.id) {
+                    const {
+                        data:
+                            memberships
+                    } =
+                        await window.supabaseClient
+                            .from(
+                                "club_memberships"
+                            )
+                            .select(
+                                "role,status"
+                            )
+                            .eq(
+                                "profile_id",
+                                user.id
+                            )
+                            .eq(
+                                "status",
+                                "active"
+                            );
+
+                    const hasStaffAccess =
+                        (
+                            memberships ||
+                            []
+                        ).some(
+                            function (
+                                membership
+                            ) {
+                                return [
+                                    "starter",
+                                    "reception",
+                                    "professional",
+                                    "greenkeeper",
+                                    "manager",
+                                    "club_admin"
+                                ].includes(
+                                    membership.role
+                                );
+                            }
+                        );
+
+                    if (
+                        hasStaffAccess
+                    ) {
+                        destination =
+                            "login.html";
+                    }
+                }
+
                 await window.supabaseClient
                     .auth
                     .signOut();
@@ -454,7 +531,7 @@
                 window.setTimeout(
                     function () {
                         window.location.href =
-                            "login.html";
+                            destination;
                     },
                     900
                 );

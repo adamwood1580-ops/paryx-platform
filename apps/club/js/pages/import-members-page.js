@@ -829,9 +829,14 @@
         batchId,
         isFinalChunk
     ) {
+        /*
+         * Imported golfers are global Paryx Player accounts.
+         * Activate them in the player app rather than in the
+         * ClubHub staff workspace.
+         */
         const redirectTo =
             new URL(
-                "set-password.html",
+                "../../member/html/set-password.html",
                 window.location.href
             ).href;
 

@@ -1,0 +1,1 @@
+(function(){"use strict";const P=window.ParyxMember,t=document.getElementById('playTier'),l=document.getElementById('locked'),e=document.getElementById('enabled');P.ready.then(c=>{const access=!!c.entitlement.scorecard_access;t.textContent=access?'Tier 2':'Free';l.hidden=access;e.hidden=!access})})();
