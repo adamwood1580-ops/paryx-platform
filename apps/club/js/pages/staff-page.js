@@ -703,6 +703,32 @@
                     window.location.href
                 ).href;
 
+            if (!state.clubId) {
+                throw new Error(
+                    "The active club has not finished loading. Refresh the page and try again."
+                );
+            }
+
+            const {
+                data: sessionData,
+                error: sessionError
+            } =
+                await window.supabaseClient
+                    .auth
+                    .getSession();
+
+            if (
+                sessionError ||
+                !sessionData?.session?.access_token
+            ) {
+                throw (
+                    sessionError ||
+                    new Error(
+                        "Your ClubHub session is not ready. Sign in again and retry."
+                    )
+                );
+            }
+
             const {
                 data,
                 error
@@ -712,6 +738,10 @@
                     .invoke(
                         "admin-invite-staff",
                         {
+                            headers: {
+                                Authorization:
+                                    `Bearer ${sessionData.session.access_token}`
+                            },
                             body: {
                                 clubId:
                                     state.clubId,
@@ -725,7 +755,38 @@
                     );
 
             if (error) {
-                throw error;
+                let edgeMessage =
+                    error?.message ||
+                    "The staff invitation service could not be reached.";
+
+                try {
+                    const context =
+                        error?.context;
+
+                    if (
+                        context &&
+                        typeof context.clone ===
+                            "function"
+                    ) {
+                        const payload =
+                            await context
+                                .clone()
+                                .json();
+
+                        if (
+                            payload?.error
+                        ) {
+                            edgeMessage =
+                                payload.error;
+                        }
+                    }
+                } catch {
+                    // Fall back to the Functions client error.
+                }
+
+                throw new Error(
+                    edgeMessage
+                );
             }
 
             if (data?.error) {
