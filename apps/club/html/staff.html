@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en" class="auth-protected">
+<head>
+    <meta charset="UTF-8" />
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#064831" />
+
+    <link rel="stylesheet" href="../styles/tokens.css" />
+    <link rel="stylesheet" href="../styles/app-shell.css" />
+    <link rel="stylesheet" href="../styles/components.css" />
+    <link rel="stylesheet" href="../styles/staff-shell.css" />
+    <link rel="stylesheet" href="../styles/staff.css" />
+
+    <link rel="manifest" href="../json/manifest.json" />
+    <link rel="apple-touch-icon" href="../assets/paryx-apple-touch-icon.png" />
+    <link rel="icon" type="image/png" href="../assets/paryx-favicon.png" />
+
+    <meta name="application-name" content="Paryx" />
+
+    <title>Staff & Permissions | Paryx</title>
+
+    <script
+        src="../js/core/protected-loader.js?loader=4"
+        defer
+    ></script>
+</head>
+
+<body data-page="staff">
+    <div class="staff-shell">
+        <aside
+            class="staff-sidebar"
+            data-staff-sidebar
+        ></aside>
+
+        <div class="staff-workspace">
+            <header
+                class="staff-topbar"
+                data-staff-header
+            ></header>
+
+            <main class="app-main staff-admin-page">
+                <section class="staff-admin-intro">
+                    <div>
+                        <p class="page-heading__eyebrow">
+                            Club administration
+                        </p>
+
+                        <h1>
+                            Staff & permissions
+                        </h1>
+
+                        <p id="staffAdminClubName">
+                            Loading club…
+                        </p>
+                    </div>
+
+                    <span
+                        id="staffAdminRoleBadge"
+                        class="staff-admin-role-badge"
+                    >
+                        Checking access
+                    </span>
+                </section>
+
+                <section
+                    id="staffAdminError"
+                    class="admin-error"
+                    role="alert"
+                    hidden
+                ></section>
+
+                <section
+                    id="staffAdminSuccess"
+                    class="staff-admin-success"
+                    role="status"
+                    hidden
+                ></section>
+
+                <section class="card staff-invite-card">
+                    <div class="staff-card-heading">
+                        <div>
+                            <p class="page-heading__eyebrow">
+                                Add staff
+                            </p>
+
+                            <h2>
+                                Invite or link a staff user
+                            </h2>
+                        </div>
+
+                        <p>
+                            Existing Paryx accounts are linked immediately.
+                            New users receive a ClubHub activation email.
+                        </p>
+                    </div>
+
+                    <form
+                        id="staffInviteForm"
+                        class="staff-invite-form"
+                        novalidate
+                    >
+                        <label class="staff-field">
+                            <span>First name</span>
+                            <input
+                                id="staffInviteFirstName"
+                                type="text"
+                                maxlength="80"
+                                autocomplete="given-name"
+                                required
+                            />
+                        </label>
+
+                        <label class="staff-field">
+                            <span>Last name</span>
+                            <input
+                                id="staffInviteLastName"
+                                type="text"
+                                maxlength="80"
+                                autocomplete="family-name"
+                                required
+                            />
+                        </label>
+
+                        <label class="staff-field staff-field--wide">
+                            <span>Email</span>
+                            <input
+                                id="staffInviteEmail"
+                                type="email"
+                                maxlength="254"
+                                autocomplete="email"
+                                required
+                            />
+                        </label>
+
+                        <label class="staff-field staff-field--wide">
+                            <span>ClubHub role</span>
+
+                            <select
+                                id="staffInviteRole"
+                                required
+                            >
+                                <option value="reception">
+                                    Reception
+                                </option>
+
+                                <option value="starter">
+                                    Starter
+                                </option>
+
+                                <option value="professional">
+                                    Professional
+                                </option>
+
+                                <option value="greenkeeper">
+                                    Greenkeeper
+                                </option>
+
+                                <option
+                                    value="manager"
+                                    data-club-admin-only
+                                >
+                                    Manager
+                                </option>
+
+                                <option
+                                    value="club_admin"
+                                    data-club-admin-only
+                                >
+                                    Club Admin
+                                </option>
+                            </select>
+
+                            <small id="staffInviteRoleHint">
+                                Operational staff can use ClubHub but cannot
+                                manage staff permissions.
+                            </small>
+                        </label>
+
+                        <div class="staff-invite-actions">
+                            <button
+                                id="staffInviteSubmit"
+                                class="staff-primary-button"
+                                type="submit"
+                            >
+                                Add staff user
+                            </button>
+                        </div>
+                    </form>
+                </section>
+
+                <section class="card staff-directory-card">
+                    <div class="staff-directory-toolbar">
+                        <div>
+                            <p class="page-heading__eyebrow">
+                                ClubHub access
+                            </p>
+
+                            <h2>
+                                Current staff
+                            </h2>
+
+                            <p>
+                                <span id="staffDirectoryCount">0</span>
+                                staff users
+                            </p>
+                        </div>
+
+                        <button
+                            id="staffDirectoryRefresh"
+                            class="staff-secondary-button"
+                            type="button"
+                        >
+                            Refresh
+                        </button>
+                    </div>
+
+                    <div
+                        id="staffDirectoryList"
+                        class="staff-directory-list"
+                        aria-live="polite"
+                    >
+                        <div class="staff-empty">
+                            Loading staff…
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <script src="../js/core/config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/core/supabase.js"></script>
+    <script src="../js/core/profile.js"></script>
+    <script src="../js/core/club-context.js"></script>
+    <script src="../js/core/boot.js"></script>
+    <script src="../js/ui/staff-shell.js"></script>
+    <script src="../js/pages/staff-page.js?v=0.12.0"></script>
+</body>
+</html>

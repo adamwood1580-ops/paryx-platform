@@ -7,6 +7,12 @@
         { key: "dashboard", label: "Dashboard", href: "dashboard.html" },
         { key: "teesheet", label: "Tee Sheet", href: "tee-sheet.html" },
         { key: "members", label: "Members", href: "members.html" },
+        {
+            key: "staff",
+            label: "Staff",
+            href: "staff.html",
+            adminOnly: true
+        },
         { key: "calendar", label: "Calendar", href: "calendar.html" },
         { key: "courses", label: "Courses", href: "courses.html" },
         { key: "communications", label: "Communications", href: null },
@@ -75,6 +81,7 @@
                     <a
                         class="staff-nav__item${active ? " is-active" : ""}"
                         href="${item.href}"
+                        ${item.adminOnly ? 'data-staff-admin-only="true"' : ""}
                     >
                         ${item.label}
                     </a>
@@ -308,6 +315,25 @@
                     "staff"
                 ).replaceAll("_", " ");
         }
+
+        const canAdminister =
+            [
+                "manager",
+                "club_admin"
+            ].includes(
+                activeClub.role
+            );
+
+        document
+            .querySelectorAll(
+                "[data-staff-admin-only]"
+            )
+            .forEach(
+                function (item) {
+                    item.hidden =
+                        !canAdminister;
+                }
+            );
     }
 
     async function hydratePlatformConsoleLink() {
