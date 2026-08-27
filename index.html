@@ -1,29 +1,269 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+    <meta charset="UTF-8" />
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#064831" />
     <title>Paryx</title>
 
-    <meta
-        http-equiv="refresh"
-        content="0; url=apps/club/html/login.html"
-    >
+    <style>
+        :root {
+            --paryx-green: #064831;
+            --paryx-green-dark: #022d1d;
+            --paryx-green-soft: #e8f1ec;
+            --paryx-gold: #e5c45f;
+            --paryx-bg: #f4f6f3;
+            --paryx-card: #ffffff;
+            --paryx-text: #14251f;
+            --paryx-muted: #68736e;
+            --paryx-border: #dce3dd;
+        }
 
-    <script>
-        window.location.replace(
-            "apps/club/html/login.html"
-        );
-    </script>
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            min-height: 100%;
+        }
+
+        body {
+            margin: 0;
+            background:
+                radial-gradient(
+                    circle at 50% 0,
+                    #0c6046 0,
+                    var(--paryx-green) 30%,
+                    var(--paryx-green-dark) 100%
+                );
+            color: var(--paryx-text);
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Roboto,
+                Helvetica,
+                Arial,
+                sans-serif;
+        }
+
+        .paryx-home {
+            display: grid;
+            place-items: center;
+            min-height: 100vh;
+            padding:
+                max(24px, env(safe-area-inset-top))
+                18px
+                max(24px, env(safe-area-inset-bottom));
+        }
+
+        .paryx-home__panel {
+            width: min(100%, 460px);
+            padding: 24px 18px 18px;
+            border-radius: 28px;
+            background: var(--paryx-card);
+            box-shadow:
+                0 28px 80px
+                rgba(0, 0, 0, 0.22);
+        }
+
+        .paryx-home__logo {
+            display: block;
+            width: min(250px, 75%);
+            margin: 0 auto 8px;
+        }
+
+        .paryx-home__intro {
+            margin: 0 0 22px;
+            color: var(--paryx-muted);
+            text-align: center;
+            font-size: 0.9rem;
+            line-height: 1.45;
+        }
+
+        .paryx-home__options {
+            display: grid;
+            gap: 11px;
+        }
+
+        .paryx-home__card {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            align-items: center;
+            gap: 14px;
+            min-height: 88px;
+            padding: 15px 16px;
+            border: 1px solid var(--paryx-border);
+            border-radius: 18px;
+            background: #fff;
+            color: inherit;
+            text-decoration: none;
+            transition:
+                transform 0.15s ease,
+                box-shadow 0.15s ease,
+                border-color 0.15s ease;
+        }
+
+        .paryx-home__card:hover,
+        .paryx-home__card:focus-visible {
+            transform: translateY(-1px);
+            border-color: rgba(6, 72, 49, 0.35);
+            box-shadow:
+                0 10px 26px
+                rgba(20, 50, 38, 0.08);
+            outline: none;
+        }
+
+        .paryx-home__card--player {
+            border-color: rgba(6, 72, 49, 0.2);
+            background:
+                linear-gradient(
+                    145deg,
+                    #ffffff 0%,
+                    #edf5f0 100%
+                );
+        }
+
+        .paryx-home__label {
+            display: block;
+            margin: 0;
+            color: var(--paryx-green-dark);
+            font-size: 1.04rem;
+            font-weight: 850;
+            letter-spacing: -0.02em;
+        }
+
+        .paryx-home__meta {
+            display: block;
+            margin-top: 4px;
+            color: var(--paryx-muted);
+            font-size: 0.79rem;
+            line-height: 1.35;
+        }
+
+        .paryx-home__arrow {
+            display: grid;
+            place-items: center;
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            background: var(--paryx-green-soft);
+            color: var(--paryx-green);
+            font-size: 1.15rem;
+            font-weight: 900;
+        }
+
+        .paryx-home__section {
+            margin-top: 18px;
+            padding-top: 16px;
+            border-top: 1px solid #e8ece9;
+        }
+
+        .paryx-home__section-title {
+            margin: 0 0 10px;
+            color: var(--paryx-muted);
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .paryx-home__console {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            min-height: 48px;
+            padding: 0 4px;
+            color: var(--paryx-muted);
+            font-size: 0.78rem;
+            text-decoration: none;
+        }
+
+        .paryx-home__console strong {
+            color: var(--paryx-green-dark);
+            font-size: 0.82rem;
+        }
+
+        .paryx-home__footer {
+            margin: 18px 0 0;
+            color: #88918d;
+            text-align: center;
+            font-size: 0.7rem;
+        }
+
+        @media (min-width: 720px) {
+            .paryx-home__panel {
+                padding: 30px 24px 20px;
+            }
+        }
+    </style>
 </head>
 
 <body>
-    <p>
-        Opening Paryx...
-        <a href="apps/club/html/login.html">
-            Continue
-        </a>
-    </p>
+    <main class="paryx-home">
+        <section class="paryx-home__panel" aria-labelledby="paryx-home-heading">
+            <img
+                class="paryx-home__logo"
+                src="apps/member/assets/branding/paryx-logo.png"
+                alt="Paryx"
+            />
+
+            <p id="paryx-home-heading" class="paryx-home__intro">
+                Choose how you want to access Paryx.
+            </p>
+
+            <div class="paryx-home__options">
+                <a
+                    class="paryx-home__card paryx-home__card--player"
+                    href="apps/member/html/login.html"
+                >
+                    <span>
+                        <strong class="paryx-home__label">Player</strong>
+                        <span class="paryx-home__meta">
+                            Book tee times, access your clubs and use Paryx Player.
+                        </span>
+                    </span>
+                    <span class="paryx-home__arrow" aria-hidden="true">›</span>
+                </a>
+
+                <a
+                    class="paryx-home__card"
+                    href="apps/club/html/login.html"
+                >
+                    <span>
+                        <strong class="paryx-home__label">ClubHub</strong>
+                        <span class="paryx-home__meta">
+                            Club staff, bookings, members, courses and administration.
+                        </span>
+                    </span>
+                    <span class="paryx-home__arrow" aria-hidden="true">›</span>
+                </a>
+            </div>
+
+            <div class="paryx-home__section">
+                <p class="paryx-home__section-title">Paryx internal</p>
+
+                <a
+                    class="paryx-home__console"
+                    href="apps/console/html/login.html"
+                >
+                    <span>
+                        <strong>Console</strong><br />
+                        Platform administration
+                    </span>
+                    <span aria-hidden="true">›</span>
+                </a>
+            </div>
+
+            <p class="paryx-home__footer">
+                One Paryx account can be used across participating clubs.
+            </p>
+        </section>
+    </main>
 </body>
 </html>
