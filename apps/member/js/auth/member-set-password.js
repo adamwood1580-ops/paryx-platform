@@ -26,6 +26,16 @@
             "setPasswordMessage"
         );
 
+    const eyebrow =
+        document.getElementById(
+            "setPasswordEyebrow"
+        );
+
+    const subtitle =
+        document.getElementById(
+            "setPasswordSubtitle"
+        );
+
     if (
         !form ||
         !newPassword ||
@@ -36,11 +46,21 @@
         return;
     }
 
-    let inviteReady =
+    let sessionReady =
         false;
 
     let saving =
         false;
+
+    let flowType =
+        "invite";
+
+    function isRecovery() {
+        return (
+            flowType ===
+            "recovery"
+        );
+    }
 
     function showMessage(
         text,
@@ -64,14 +84,44 @@
             true;
     }
 
+    function updateCopy() {
+        document.title =
+            isRecovery()
+                ? "Reset Paryx Password"
+                : "Activate Paryx Account";
+
+        if (eyebrow) {
+            eyebrow.textContent =
+                isRecovery()
+                    ? "Password reset"
+                    : "Club invitation";
+        }
+
+        if (subtitle) {
+            subtitle.textContent =
+                isRecovery()
+                    ? "Choose a new password for your Paryx account."
+                    : "Your club has already created your Paryx account. Choose a password to activate it.";
+        }
+    }
+
     function updateButton() {
         submitButton.disabled =
-            !inviteReady ||
+            !sessionReady ||
             saving;
 
+        if (saving) {
+            submitButton.textContent =
+                isRecovery()
+                    ? "Saving…"
+                    : "Activating…";
+
+            return;
+        }
+
         submitButton.textContent =
-            saving
-                ? "Activating…"
+            isRecovery()
+                ? "Save new password"
                 : "Activate Paryx account";
     }
 
@@ -140,10 +190,42 @@
         );
     }
 
-    async function prepareInvite() {
-        inviteReady =
+    function detectFlowType() {
+        const query =
+            new URLSearchParams(
+                window.location.search
+            );
+
+        const hash =
+            hashParameters();
+
+        const suppliedType =
+            String(
+                query.get("type") ||
+                hash.get("type") ||
+                ""
+            ).toLowerCase();
+
+        if (
+            suppliedType ===
+            "recovery"
+        ) {
+            flowType =
+                "recovery";
+        } else {
+            flowType =
+                "invite";
+        }
+
+        updateCopy();
+        updateButton();
+    }
+
+    async function prepareSession() {
+        sessionReady =
             false;
 
+        detectFlowType();
         updateButton();
 
         const suppliedError =
@@ -164,6 +246,15 @@
             return;
         }
 
+        if (!window.supabaseClient) {
+            showMessage(
+                "The Paryx account service is unavailable. Refresh and try again.",
+                "error"
+            );
+
+            return;
+        }
+
         const query =
             new URLSearchParams(
                 window.location.search
@@ -174,16 +265,27 @@
                 "token_hash"
             );
 
-        const type =
-            query.get(
-                "type"
-            );
+        const suppliedType =
+            String(
+                query.get("type") ||
+                ""
+            ).toLowerCase();
 
         if (
             tokenHash &&
-            type === "invite"
+            (
+                suppliedType ===
+                    "invite" ||
+                suppliedType ===
+                    "recovery"
+            )
         ) {
             try {
+                flowType =
+                    suppliedType;
+
+                updateCopy();
+
                 const {
                     data,
                     error
@@ -195,7 +297,7 @@
                             token_hash:
                                 tokenHash,
                             type:
-                                "invite"
+                                suppliedType
                         });
 
                 if (
@@ -205,7 +307,7 @@
                     throw (
                         error ||
                         new Error(
-                            "No invitation session was created."
+                            "No authenticated session was created."
                         )
                     );
                 }
@@ -213,7 +315,7 @@
                 clearAuthParameters();
                 clearMessage();
 
-                inviteReady =
+                sessionReady =
                     true;
 
                 updateButton();
@@ -222,7 +324,11 @@
             } catch (error) {
                 showMessage(
                     error?.message ||
-                    "This invitation is invalid or has expired. Ask the club to send another invitation.",
+                    (
+                        isRecovery()
+                            ? "This password reset link is invalid or has expired. Request another reset email."
+                            : "This invitation is invalid or has expired. Ask the club to send another invitation."
+                    ),
                     "error"
                 );
 
@@ -230,8 +336,28 @@
             }
         }
 
+        /*
+         * Backward compatibility with older Supabase links
+         * that return access/refresh tokens in the URL hash.
+         */
         const hash =
             hashParameters();
+
+        const hashType =
+            String(
+                hash.get("type") ||
+                ""
+            ).toLowerCase();
+
+        if (
+            hashType ===
+            "recovery"
+        ) {
+            flowType =
+                "recovery";
+
+            updateCopy();
+        }
 
         const accessToken =
             hash.get(
@@ -269,7 +395,7 @@
                     throw (
                         error ||
                         new Error(
-                            "No invitation session was created."
+                            "No authenticated session was created."
                         )
                     );
                 }
@@ -277,7 +403,7 @@
                 clearAuthParameters();
                 clearMessage();
 
-                inviteReady =
+                sessionReady =
                     true;
 
                 updateButton();
@@ -286,7 +412,7 @@
             } catch (error) {
                 showMessage(
                     error?.message ||
-                    "This invitation is invalid or has expired.",
+                    "This account link is invalid or has expired.",
                     "error"
                 );
 
@@ -311,18 +437,20 @@
                 throw (
                     error ||
                     new Error(
-                        "No invitation session is available."
+                        "No account session is available."
                     )
                 );
             }
 
-            inviteReady =
+            sessionReady =
                 true;
 
             updateButton();
         } catch (error) {
             showMessage(
-                "This invitation could not be verified. Use the newest email from your club or ask them to send another invitation.",
+                isRecovery()
+                    ? "This password reset could not be verified. Request a new reset email."
+                    : "This invitation could not be verified. Use the newest email from your club or ask them to send another invitation.",
                 "error"
             );
         }
@@ -334,9 +462,11 @@
             event.preventDefault();
             clearMessage();
 
-            if (!inviteReady) {
+            if (!sessionReady) {
                 showMessage(
-                    "Your club invitation has not been verified yet.",
+                    isRecovery()
+                        ? "Your password reset has not been verified yet."
+                        : "Your club invitation has not been verified yet.",
                     "error"
                 );
 
@@ -393,20 +523,24 @@
                     throw error;
                 }
 
-                const {
-                    error:
-                        activationError
-                } =
-                    await window
-                        .supabaseClient
-                        .rpc(
-                            "activate_my_invited_memberships"
-                        );
-
                 if (
-                    activationError
+                    !isRecovery()
                 ) {
-                    throw activationError;
+                    const {
+                        error:
+                            activationError
+                    } =
+                        await window
+                            .supabaseClient
+                            .rpc(
+                                "activate_my_invited_memberships"
+                            );
+
+                    if (
+                        activationError
+                    ) {
+                        throw activationError;
+                    }
                 }
 
                 await window
@@ -415,7 +549,9 @@
                     .signOut();
 
                 showMessage(
-                    "Your Paryx account is active. Opening sign in…",
+                    isRecovery()
+                        ? "Password updated. Opening sign in…"
+                        : "Your Paryx account is active. Opening sign in…",
                     "success"
                 );
 
@@ -423,7 +559,9 @@
                     function () {
                         window.location
                             .replace(
-                                "login.html?activated=1"
+                                isRecovery()
+                                    ? "login.html?password_updated=1"
+                                    : "login.html?activated=1"
                             );
                     },
                     700
@@ -431,7 +569,11 @@
             } catch (error) {
                 showMessage(
                     error?.message ||
-                    "We could not activate your Paryx account. Ask the club to resend your invitation.",
+                    (
+                        isRecovery()
+                            ? "We could not update your password. Request a new reset email."
+                            : "We could not activate your Paryx account. Ask the club to resend your invitation."
+                    ),
                     "error"
                 );
             } finally {
@@ -443,5 +585,5 @@
         }
     );
 
-    prepareInvite();
+    prepareSession();
 })();

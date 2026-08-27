@@ -117,3 +117,31 @@ body {
     color: var(--color-text-muted);
     font-size: .78rem;
 }
+
+
+/* =========================================================
+   UNIFIED PARYX AUTH
+   ========================================================= */
+
+.console-login-secondary-action {
+    min-height: auto !important;
+    padding: 0.15rem !important;
+    border: 0 !important;
+    background: transparent !important;
+    color: var(--color-primary) !important;
+    font-size: .78rem !important;
+    font-weight: 700 !important;
+    text-decoration: underline;
+    text-underline-offset: .15rem;
+}
+
+.console-login-secondary-action:hover,
+.console-login-secondary-action:focus-visible {
+    opacity: .78;
+}
+
+.console-login-message[data-type="success"] {
+    color: #17673D;
+    background: #EDF8F1;
+    border-color: #B9DEC7;
+}

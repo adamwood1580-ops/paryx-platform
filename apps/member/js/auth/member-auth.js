@@ -52,6 +52,11 @@
             "message"
         );
 
+    const forgotPassword =
+        document.getElementById(
+            "forgotPassword"
+        );
+
     const pageParameters =
         new URLSearchParams(
             window.location.search
@@ -104,6 +109,11 @@
                 ? "Create free account"
                 : "Sign in";
 
+        if (forgotPassword) {
+            forgotPassword.hidden =
+                signup;
+        }
+
         tabs.forEach(
             function (button) {
                 button.classList.toggle(
@@ -144,6 +154,68 @@
             );
         }
     );
+
+
+    if (forgotPassword) {
+        forgotPassword.addEventListener(
+            "click",
+            async function () {
+                clearMessage();
+
+                if (
+                    !email.validity.valid
+                ) {
+                    showMessage(
+                        "Enter your email address first.",
+                        "error"
+                    );
+
+                    email.focus();
+                    return;
+                }
+
+                forgotPassword.disabled =
+                    true;
+
+                try {
+                    const {
+                        error
+                    } =
+                        await window
+                            .supabaseClient
+                            .auth
+                            .resetPasswordForEmail(
+                                email.value.trim(),
+                                {
+                                    redirectTo:
+                                        new URL(
+                                            "set-password.html",
+                                            window.location.href
+                                        ).href
+                                }
+                            );
+
+                    if (error) {
+                        throw error;
+                    }
+
+                    showMessage(
+                        "Password reset email sent. Open the newest email from Paryx.",
+                        "success"
+                    );
+                } catch (error) {
+                    showMessage(
+                        error?.message ||
+                        "Could not send the password reset email.",
+                        "error"
+                    );
+                } finally {
+                    forgotPassword.disabled =
+                        false;
+                }
+            }
+        );
+    }
 
     form.addEventListener(
         "submit",
@@ -215,7 +287,7 @@
                                 options: {
                                     emailRedirectTo:
                                         new URL(
-                                            "login.html?confirmed=1",
+                                            "confirm-email.html",
                                             window.location.href
                                         ).href,
 
@@ -352,6 +424,15 @@
     ) {
         showMessage(
             "Your email is confirmed. Sign in to Paryx.",
+            "success"
+        );
+    } else if (
+        pageParameters.get(
+            "password_updated"
+        ) === "1"
+    ) {
+        showMessage(
+            "Your password has been updated. Sign in to Paryx.",
             "success"
         );
     }

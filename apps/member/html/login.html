@@ -2,4 +2,12 @@
 <div class="notice" style="margin-bottom:16px">
 <strong>Already invited by your club?</strong><br>
 Use the invitation email first to set your password. Do not create a second Paryx account.
-</div><div class="auth-tabs"><button class="active" type="button" data-mode="signin">Sign in</button><button type="button" data-mode="signup">Create account</button></div><form id="authForm" class="stack" novalidate><div id="nameFields" class="stack" hidden><label class="field"><span>First name</span><input id="firstName" autocomplete="given-name"></label><label class="field"><span>Last name</span><input id="lastName" autocomplete="family-name"></label></div><label class="field"><span>Email address</span><input id="email" type="email" autocomplete="email" required></label><label class="field"><span>Password</span><input id="password" type="password" autocomplete="current-password" minlength="6" required></label><button id="submit" class="button full" type="submit">Sign in</button><p id="message" class="notice" role="status" hidden></p></form></main><script src="../js/core/config.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="../js/core/supabase.js"></script><script src="../js/auth/member-auth.js"></script></body></html>
+</div><div class="auth-tabs"><button class="active" type="button" data-mode="signin">Sign in</button><button type="button" data-mode="signup">Create account</button></div><form id="authForm" class="stack" novalidate><div id="nameFields" class="stack" hidden><label class="field"><span>First name</span><input id="firstName" autocomplete="given-name"></label><label class="field"><span>Last name</span><input id="lastName" autocomplete="family-name"></label></div><label class="field"><span>Email address</span><input id="email" type="email" autocomplete="email" required></label><label class="field"><span>Password</span><input id="password" type="password" autocomplete="current-password" minlength="6" required></label><button id="submit" class="button full" type="submit">Sign in</button>
+<button
+    id="forgotPassword"
+    class="link-btn"
+    type="button"
+>
+    Forgot password?
+</button>
+<p id="message" class="notice" role="status" hidden></p></form></main><script src="../js/core/config.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="../js/core/supabase.js"></script><script src="../js/auth/member-auth.js?v=0.13.1"></script></body></html>

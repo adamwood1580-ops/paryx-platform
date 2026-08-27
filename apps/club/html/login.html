@@ -221,12 +221,20 @@
                  ============================================= -->
 
             <footer class="auth-footer">
-                <a
+                <button
+                    id="clubForgotPassword"
                     class="auth-link auth-link--password"
-                    href="#"
+                    type="button"
+                    style="
+                        border:0;
+                        padding:0;
+                        background:none;
+                        font:inherit;
+                        cursor:pointer;
+                    "
                 >
-                    Password reset coming soon
-                </a>
+                    Forgot password?
+                </button>
 
                 <p class="auth-club-contact">
                     Need access?
@@ -236,18 +244,6 @@
                     </a>
                 </p>
 
-                <div
-                    class="auth-access-switch"
-                    aria-label="Alternative Paryx access"
-                >
-                    <span>Paryx administrator?</span>
-
-                    <a
-                        href="../../console/html/login.html"
-                    >
-                        Console access
-                    </a>
-                </div>
             </footer>
         </section>
     </main>
@@ -258,6 +254,6 @@
 
     <script src="../js/core/supabase.js"></script>
 
-    <script src="../js/auth/login.js?login=1"></script>
+    <script src="../js/auth/login.js?auth=0.11.1"></script>
 </body>
 </html>

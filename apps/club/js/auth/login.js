@@ -28,6 +28,11 @@
     const message =
         document.getElementById("loginMessage");
 
+    const forgotPassword =
+        document.getElementById(
+            "clubForgotPassword"
+        );
+
     if (
         !form ||
         !emailInput ||
@@ -208,6 +213,24 @@
             "Your account does not have access to the Paryx staff workspace.",
             "error"
         );
+    } else if (
+        pageParameters.get(
+            "password_updated"
+        ) === "1"
+    ) {
+        showMessage(
+            "Your Paryx password has been updated. Sign in to ClubHub.",
+            "success"
+        );
+    } else if (
+        pageParameters.get(
+            "activated"
+        ) === "1"
+    ) {
+        showMessage(
+            "Your Paryx account is active. Sign in to ClubHub.",
+            "success"
+        );
     } else {
         clearMessage();
     }
@@ -243,6 +266,97 @@
             );
         }
     );
+
+    /* =========================================================
+       PASSWORD RECOVERY
+       ========================================================= */
+
+    if (forgotPassword) {
+        forgotPassword.addEventListener(
+            "click",
+            async function () {
+                clearMessage();
+
+                const email =
+                    emailInput.value.trim();
+
+                if (!email) {
+                    showMessage(
+                        "Enter your email address first.",
+                        "error"
+                    );
+
+                    emailInput.focus();
+                    return;
+                }
+
+                if (
+                    !emailInput.validity.valid
+                ) {
+                    showMessage(
+                        "Enter a valid email address.",
+                        "error"
+                    );
+
+                    emailInput.focus();
+                    return;
+                }
+
+                if (!window.supabaseClient) {
+                    showMessage(
+                        "The password reset service is unavailable. Refresh and try again.",
+                        "error"
+                    );
+
+                    return;
+                }
+
+                forgotPassword.disabled =
+                    true;
+
+                try {
+                    const {
+                        error
+                    } =
+                        await window.supabaseClient
+                            .auth
+                            .resetPasswordForEmail(
+                                email,
+                                {
+                                    redirectTo:
+                                        new URL(
+                                            "set-password.html",
+                                            window.location.href
+                                        ).href
+                                }
+                            );
+
+                    if (error) {
+                        throw error;
+                    }
+
+                    showMessage(
+                        "Password reset email sent. Open the newest email from Paryx.",
+                        "success"
+                    );
+                } catch (error) {
+                    console.error(
+                        "ClubHub password reset error:",
+                        error
+                    );
+
+                    showMessage(
+                        error?.message ||
+                        "We could not send the password reset email.",
+                        "error"
+                    );
+                } finally {
+                    forgotPassword.disabled =
+                        false;
+                }
+            }
+        );
+    }
 
     /* =========================================================
        SUBMISSION
