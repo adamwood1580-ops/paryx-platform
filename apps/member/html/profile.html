@@ -1,1 +1,188 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#064831"><title>Profile | Paryx</title><link rel="stylesheet" href="../styles/member.css"><link rel="manifest" href="../json/manifest.json"></head><body data-page="profile"><main class="member-app"><header class="topbar"><div class="brand"><img src="../assets/branding/paryx-mark.png" alt=""><strong>Profile</strong></div></header><section class="hero"><p class="eyebrow">Paryx account</p><h1 id="profileName" class="title">Player</h1><p class="subtitle">One player account across every Paryx club.</p></section><section class="section"><div class="card"><div class="profile-row"><span>Email</span><strong id="profileEmail">—</strong></div><div class="profile-row"><span>Paryx tier</span><strong id="profileTier">Free</strong></div><div class="profile-row"><span>Scorecard access</span><strong id="profileScorecard">Not active</strong></div></div></section><section class="section"><div class="section-head"><h2>Club memberships</h2></div><div id="profileClubs" class="club-list"></div></section><section class="section"><button id="signOut" class="button danger full" type="button">Sign out</button></section></main><div data-member-shell></div><script src="../js/core/config.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="../js/core/supabase.js"></script><script src="../js/core/member-core.js"></script><script src="../js/core/member-shell.js"></script><script src="../js/pages/profile-page.js"></script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width,initial-scale=1,viewport-fit=cover"
+    >
+    <meta name="theme-color" content="#064831">
+    <title>Profile | Paryx</title>
+
+    <link
+        rel="stylesheet"
+        href="../styles/member.css"
+    >
+    <link
+        rel="manifest"
+        href="../json/manifest.json"
+    >
+</head>
+
+<body data-page="profile">
+    <main class="member-app">
+        <header class="topbar">
+            <div class="brand">
+                <img
+                    src="../assets/branding/paryx-mark.png"
+                    alt=""
+                >
+                <strong>Profile</strong>
+            </div>
+
+            <span
+                id="profileTierBadge"
+                class="pill"
+            >
+                Free
+            </span>
+        </header>
+
+        <section class="hero profile-hero">
+            <div
+                id="profileInitials"
+                class="profile-avatar"
+                aria-hidden="true"
+            >
+                P
+            </div>
+
+            <div class="profile-hero__content">
+                <p class="eyebrow">
+                    Paryx account
+                </p>
+
+                <h1
+                    id="profileName"
+                    class="title"
+                >
+                    Player
+                </h1>
+
+                <p class="subtitle">
+                    One global account across every Paryx club.
+                </p>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-head">
+                <h2>Account</h2>
+            </div>
+
+            <div class="card profile-details-card">
+                <div class="profile-detail-row">
+                    <span>Email</span>
+
+                    <strong id="profileEmail">
+                        —
+                    </strong>
+                </div>
+
+                <div class="profile-detail-row">
+                    <span>Email status</span>
+
+                    <strong id="profileEmailStatus">
+                        —
+                    </strong>
+                </div>
+
+                <div
+                    id="profilePhoneRow"
+                    class="profile-detail-row"
+                    hidden
+                >
+                    <span>Phone</span>
+
+                    <strong id="profilePhone">
+                        —
+                    </strong>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-head">
+                <h2>Paryx access</h2>
+            </div>
+
+            <div class="card profile-access-card">
+                <div class="profile-access-grid">
+                    <div>
+                        <span>Paryx tier</span>
+
+                        <strong id="profileTier">
+                            Free
+                        </strong>
+                    </div>
+
+                    <div>
+                        <span>Scorecard access</span>
+
+                        <strong id="profileScorecard">
+                            Not active
+                        </strong>
+                    </div>
+                </div>
+
+                <div
+                    id="profileAccessExpiry"
+                    class="profile-access-expiry"
+                    hidden
+                >
+                    <span>Access valid until</span>
+
+                    <strong id="profileAccessExpiryValue">
+                        —
+                    </strong>
+                </div>
+
+                <p class="profile-access-note">
+                    Club membership and Paryx scorecard access
+                    are separate. A club can link you as a
+                    member without changing your Paryx tier.
+                </p>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-head">
+                <div>
+                    <h2>Club memberships</h2>
+
+                    <p
+                        id="profileClubCount"
+                        class="profile-section-meta"
+                    >
+                        0 linked clubs
+                    </p>
+                </div>
+            </div>
+
+            <div
+                id="profileClubs"
+                class="club-list profile-club-list"
+            ></div>
+        </section>
+
+        <section class="section profile-signout-section">
+            <button
+                id="signOut"
+                class="button danger full"
+                type="button"
+            >
+                Sign out
+            </button>
+        </section>
+    </main>
+
+    <div data-member-shell></div>
+
+    <script src="../js/core/config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/core/supabase.js"></script>
+    <script src="../js/core/member-core.js"></script>
+    <script src="../js/core/member-shell.js"></script>
+    <script src="../js/pages/profile-page.js?v=0.14.0"></script>
+</body>
+</html>
