@@ -37,6 +37,8 @@
         search: "",
         status: "all",
         members: [],
+        accessRequests: [],
+        accessLoading: false,
         currentUserId: null,
         clubId: null,
         adminRole: null,
@@ -67,6 +69,61 @@
 
         elements.loadMore =
             document.getElementById("loadMoreMembersBtn");
+
+        elements.accessCount =
+            document.getElementById(
+                "memberAccessRequestCount"
+            );
+
+        elements.accessRefresh =
+            document.getElementById(
+                "memberAccessRefreshBtn"
+            );
+
+        elements.accessList =
+            document.getElementById(
+                "memberAccessRequestList"
+            );
+
+        elements.accessDialog =
+            document.getElementById(
+                "memberAccessApprovalDialog"
+            );
+
+        elements.accessApprovalForm =
+            document.getElementById(
+                "memberAccessApprovalForm"
+            );
+
+        elements.accessApprovalIdentity =
+            document.getElementById(
+                "memberAccessApprovalIdentity"
+            );
+
+        elements.accessApprovalRequestId =
+            document.getElementById(
+                "memberAccessApprovalRequestId"
+            );
+
+        elements.accessApprovalMembershipNumber =
+            document.getElementById(
+                "memberAccessApprovalMembershipNumber"
+            );
+
+        elements.accessApprovalClose =
+            document.getElementById(
+                "memberAccessApprovalClose"
+            );
+
+        elements.accessApprovalCancel =
+            document.getElementById(
+                "memberAccessApprovalCancel"
+            );
+
+        elements.accessApprovalSubmit =
+            document.getElementById(
+                "memberAccessApprovalSubmit"
+            );
     }
 
     function getClient() {
@@ -431,6 +488,405 @@
             });
     }
 
+
+    function formatRequestDate(value) {
+        if (!value) {
+            return "—";
+        }
+
+        const date =
+            new Date(value);
+
+        if (
+            Number.isNaN(
+                date.getTime()
+            )
+        ) {
+            return String(value);
+        }
+
+        return new Intl.DateTimeFormat(
+            "en-GB",
+            {
+                day: "numeric",
+                month: "short",
+                year: "numeric"
+            }
+        ).format(date);
+    }
+
+    function accessRequestName(request) {
+        return (
+            String(
+                request.display_name ||
+                ""
+            ).trim() ||
+            String(
+                request.email ||
+                ""
+            ).trim() ||
+            "Paryx player"
+        );
+    }
+
+    function renderAccessRequests() {
+        if (
+            !elements.accessList ||
+            !elements.accessCount
+        ) {
+            return;
+        }
+
+        elements.accessCount.textContent =
+            String(
+                state.accessRequests.length
+            );
+
+        if (!state.accessRequests.length) {
+            elements.accessList.innerHTML = `
+                <div class="admin-member-empty">
+                    No pending member access requests.
+                </div>
+            `;
+
+            return;
+        }
+
+        elements.accessList.innerHTML =
+            state.accessRequests
+                .map(function (request) {
+                    const requestName =
+                        accessRequestName(
+                            request
+                        );
+
+                    const membershipNumber =
+                        String(
+                            request
+                                .requested_membership_number ||
+                            ""
+                        ).trim();
+
+                    const message =
+                        String(
+                            request.message ||
+                            ""
+                        ).trim();
+
+                    return `
+                        <article
+                            class="admin-access-request"
+                            data-access-request-id="${escapeHtml(request.request_id)}"
+                        >
+                            <div class="admin-access-request__top">
+                                <div>
+                                    <h3 class="admin-access-request__name">
+                                        ${escapeHtml(requestName)}
+                                    </h3>
+
+                                    <span class="admin-access-request__email">
+                                        ${escapeHtml(request.email || "No email")}
+                                    </span>
+                                </div>
+
+                                <span class="admin-access-request__pending">
+                                    Pending
+                                </span>
+                            </div>
+
+                            <div class="admin-access-request__details">
+                                <div class="admin-access-request__detail">
+                                    <span>Membership no.</span>
+                                    <strong>
+                                        ${escapeHtml(membershipNumber || "Not supplied")}
+                                    </strong>
+                                </div>
+
+                                <div class="admin-access-request__detail">
+                                    <span>Requested</span>
+                                    <strong>
+                                        ${escapeHtml(formatRequestDate(request.created_at))}
+                                    </strong>
+                                </div>
+                            </div>
+
+                            ${
+                                message
+                                    ? `
+                                        <p class="admin-access-request__message">
+                                            ${escapeHtml(message)}
+                                        </p>
+                                    `
+                                    : ""
+                            }
+
+                            <div class="admin-access-request__actions">
+                                <button
+                                    class="admin-access-request__reject"
+                                    type="button"
+                                    data-access-reject="${escapeHtml(request.request_id)}"
+                                    data-access-name="${escapeHtml(requestName)}"
+                                >
+                                    Reject
+                                </button>
+
+                                <button
+                                    class="admin-access-request__approve"
+                                    type="button"
+                                    data-access-approve="${escapeHtml(request.request_id)}"
+                                >
+                                    Approve
+                                </button>
+                            </div>
+                        </article>
+                    `;
+                })
+                .join("");
+    }
+
+    async function loadAccessRequests() {
+        if (
+            state.accessLoading ||
+            !state.clubId
+        ) {
+            return;
+        }
+
+        state.accessLoading =
+            true;
+
+        if (elements.accessRefresh) {
+            elements.accessRefresh.disabled =
+                true;
+        }
+
+        if (elements.accessList) {
+            elements.accessList.innerHTML = `
+                <div class="admin-member-loading">
+                    Loading access requests...
+                </div>
+            `;
+        }
+
+        try {
+            const client =
+                getClient();
+
+            const {
+                data,
+                error
+            } =
+                await client.rpc(
+                    "admin_get_member_access_requests",
+                    {
+                        p_club_id:
+                            state.clubId
+                    }
+                );
+
+            if (error) {
+                throw error;
+            }
+
+            state.accessRequests =
+                (
+                    Array.isArray(data)
+                        ? data
+                        : []
+                ).filter(
+                    function (request) {
+                        return (
+                            String(
+                                request.request_status ||
+                                ""
+                            ).toLowerCase() ===
+                            "pending"
+                        );
+                    }
+                );
+
+            renderAccessRequests();
+        } catch (error) {
+            showError(error);
+
+            if (elements.accessList) {
+                elements.accessList.innerHTML = `
+                    <div class="admin-member-empty">
+                        Member access requests could not be loaded.
+                    </div>
+                `;
+            }
+
+            if (elements.accessCount) {
+                elements.accessCount.textContent =
+                    "!";
+            }
+        } finally {
+            state.accessLoading =
+                false;
+
+            if (elements.accessRefresh) {
+                elements.accessRefresh.disabled =
+                    false;
+            }
+        }
+    }
+
+    function openAccessApproval(requestId) {
+        const request =
+            state.accessRequests.find(
+                function (item) {
+                    return (
+                        item.request_id ===
+                        requestId
+                    );
+                }
+            );
+
+        if (
+            !request ||
+            !elements.accessDialog
+        ) {
+            return;
+        }
+
+        elements.accessApprovalRequestId.value =
+            request.request_id;
+
+        elements.accessApprovalIdentity.textContent =
+            [
+                accessRequestName(
+                    request
+                ),
+                request.email
+            ]
+                .filter(Boolean)
+                .join(" · ");
+
+        elements.accessApprovalMembershipNumber.value =
+            String(
+                request
+                    .requested_membership_number ||
+                ""
+            ).trim();
+
+        elements.accessDialog.showModal();
+
+        window.setTimeout(
+            function () {
+                elements
+                    .accessApprovalMembershipNumber
+                    ?.focus();
+            },
+            0
+        );
+    }
+
+    async function resolveAccessRequest(
+        requestId,
+        approve,
+        membershipNumber
+    ) {
+        const client =
+            getClient();
+
+        const {
+            error
+        } =
+            await client.rpc(
+                "admin_resolve_member_access_request",
+                {
+                    p_club_id:
+                        state.clubId,
+                    p_request_id:
+                        requestId,
+                    p_approve:
+                        Boolean(approve),
+                    p_membership_number:
+                        membershipNumber ||
+                        null
+                }
+            );
+
+        if (error) {
+            throw error;
+        }
+    }
+
+    async function rejectAccessRequest(
+        requestId,
+        requestName
+    ) {
+        const confirmed =
+            window.confirm(
+                `Reject the member access request from ${requestName || "this player"}?`
+            );
+
+        if (!confirmed) {
+            return;
+        }
+
+        clearError();
+
+        try {
+            await resolveAccessRequest(
+                requestId,
+                false,
+                null
+            );
+
+            await loadAccessRequests();
+        } catch (error) {
+            showError(error);
+        }
+    }
+
+    async function submitAccessApproval(
+        event
+    ) {
+        event.preventDefault();
+
+        const requestId =
+            elements
+                .accessApprovalRequestId
+                .value;
+
+        if (!requestId) {
+            return;
+        }
+
+        clearError();
+
+        elements.accessApprovalSubmit.disabled =
+            true;
+
+        try {
+            await resolveAccessRequest(
+                requestId,
+                true,
+                elements
+                    .accessApprovalMembershipNumber
+                    .value
+                    .trim() ||
+                    null
+            );
+
+            elements.accessDialog.close();
+
+            await Promise.all([
+                loadAccessRequests(),
+                loadMembers({
+                    reset: true
+                })
+            ]);
+        } catch (error) {
+            showError(error);
+        } finally {
+            elements.accessApprovalSubmit.disabled =
+                false;
+        }
+    }
+
     async function loadMembers(options = {}) {
         if (state.loading) {
             return;
@@ -631,6 +1087,72 @@
     }
 
     function bindControls() {
+        elements.accessRefresh
+            ?.addEventListener(
+                "click",
+                loadAccessRequests
+            );
+
+        elements.accessList
+            ?.addEventListener(
+                "click",
+                function (event) {
+                    const approveButton =
+                        event.target.closest(
+                            "[data-access-approve]"
+                        );
+
+                    if (approveButton) {
+                        openAccessApproval(
+                            approveButton
+                                .dataset
+                                .accessApprove
+                        );
+
+                        return;
+                    }
+
+                    const rejectButton =
+                        event.target.closest(
+                            "[data-access-reject]"
+                        );
+
+                    if (rejectButton) {
+                        rejectAccessRequest(
+                            rejectButton
+                                .dataset
+                                .accessReject,
+                            rejectButton
+                                .dataset
+                                .accessName
+                        );
+                    }
+                }
+            );
+
+        elements.accessApprovalForm
+            ?.addEventListener(
+                "submit",
+                submitAccessApproval
+            );
+
+        [
+            elements.accessApprovalClose,
+            elements.accessApprovalCancel
+        ].forEach(
+            function (button) {
+                button
+                    ?.addEventListener(
+                        "click",
+                        function () {
+                            elements
+                                .accessDialog
+                                ?.close();
+                        }
+                    );
+            }
+        );
+
         elements.search.addEventListener(
             "input",
             function () {
@@ -753,9 +1275,13 @@
                 null;
 
             await loadAdminContext();
-            await loadMembers({
-                reset: true
-            });
+
+            await Promise.all([
+                loadMembers({
+                    reset: true
+                }),
+                loadAccessRequests()
+            ]);
         } catch (error) {
             const message =
                 getReadableError(error)

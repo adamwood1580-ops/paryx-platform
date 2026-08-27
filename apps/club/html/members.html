@@ -56,6 +56,45 @@
                 hidden
             ></section>
 
+            <section class="card admin-access-requests">
+                <div class="admin-access-requests__header">
+                    <div>
+                        <div class="admin-access-requests__title-row">
+                            <h2>Member access requests</h2>
+                            <span
+                                id="memberAccessRequestCount"
+                                class="admin-access-request-count"
+                            >
+                                --
+                            </span>
+                        </div>
+
+                        <p>
+                            Paryx players asking to link their account
+                            to this club membership.
+                        </p>
+                    </div>
+
+                    <button
+                        id="memberAccessRefreshBtn"
+                        class="admin-secondary-button"
+                        type="button"
+                    >
+                        Refresh
+                    </button>
+                </div>
+
+                <div
+                    id="memberAccessRequestList"
+                    class="admin-access-request-list"
+                    aria-live="polite"
+                >
+                    <div class="admin-member-loading">
+                        Loading access requests...
+                    </div>
+                </div>
+            </section>
+
             <section class="card admin-member-toolbar">
                 <label class="admin-member-search">
                     <span class="admin-member-field-label">
@@ -128,6 +167,87 @@
             >
                 Load more members
             </button>
+
+            <dialog
+                id="memberAccessApprovalDialog"
+                class="admin-access-dialog"
+            >
+                <form
+                    id="memberAccessApprovalForm"
+                    class="admin-access-dialog__panel"
+                    novalidate
+                >
+                    <header class="admin-access-dialog__header">
+                        <div>
+                            <p class="page-heading__eyebrow">
+                                Member access
+                            </p>
+
+                            <h2>
+                                Approve player
+                            </h2>
+
+                            <p id="memberAccessApprovalIdentity">
+                                Player
+                            </p>
+                        </div>
+
+                        <button
+                            id="memberAccessApprovalClose"
+                            class="admin-access-dialog__close"
+                            type="button"
+                            aria-label="Close"
+                        >
+                            ×
+                        </button>
+                    </header>
+
+                    <input
+                        id="memberAccessApprovalRequestId"
+                        type="hidden"
+                    />
+
+                    <label class="admin-access-dialog__field">
+                        <span>Membership number</span>
+
+                        <input
+                            id="memberAccessApprovalMembershipNumber"
+                            type="text"
+                            autocomplete="off"
+                            placeholder="Optional"
+                        />
+
+                        <small>
+                            Confirm or correct the player's club
+                            membership number before approval.
+                        </small>
+                    </label>
+
+                    <div class="admin-access-dialog__notice">
+                        Approving links the player's existing global
+                        Paryx account to this club as a member. It does
+                        not create another Paryx login.
+                    </div>
+
+                    <div class="admin-access-dialog__actions">
+                        <button
+                            id="memberAccessApprovalCancel"
+                            class="admin-secondary-button"
+                            type="button"
+                        >
+                            Cancel
+                        </button>
+
+                        <button
+                            id="memberAccessApprovalSubmit"
+                            class="admin-primary-action"
+                            type="submit"
+                        >
+                            Approve member
+                        </button>
+                    </div>
+                </form>
+            </dialog>
         </main>
         </div>
     </div>
