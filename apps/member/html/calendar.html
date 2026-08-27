@@ -1,1 +1,168 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#064831"><title>Calendar | Paryx</title><link rel="stylesheet" href="../styles/member.css"><link rel="manifest" href="../json/manifest.json"></head><body data-page="calendar"><main class="member-app"><header class="topbar"><div class="brand"><img src="../assets/branding/paryx-mark.png" alt=""><strong>Calendar</strong></div></header><section class="hero"><p class="eyebrow">Member access</p><h1 class="title">Club calendar</h1><p class="subtitle">Published events from clubs linked to your membership.</p></section><section class="section"><label class="field"><span>Member club</span><select id="calendarClub"></select></label></section><section class="section"><div id="filters" class="segments"><button class="active" type="button" data-section="all">All</button><button type="button" data-section="club">Club</button><button type="button" data-section="mens">Men</button><button type="button" data-section="seniors">Seniors</button><button type="button" data-section="ladies">Ladies</button></div></section><section class="section"><div id="events" class="card"></div></section></main><div data-member-shell></div><script src="../js/core/config.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="../js/core/supabase.js"></script><script src="../js/core/member-core.js"></script><script src="../js/core/member-shell.js"></script><script src="../js/pages/calendar-page.js"></script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width,initial-scale=1,viewport-fit=cover"
+    >
+    <meta name="theme-color" content="#064831">
+    <title>Calendar | Paryx</title>
+
+    <link
+        rel="stylesheet"
+        href="../styles/member.css"
+    >
+    <link
+        rel="manifest"
+        href="../json/manifest.json"
+    >
+</head>
+
+<body data-page="calendar">
+    <main class="member-app">
+        <header class="topbar">
+            <div class="brand">
+                <img
+                    src="../assets/branding/paryx-mark.png"
+                    alt=""
+                >
+                <strong>Calendar</strong>
+            </div>
+        </header>
+
+        <section class="hero">
+            <p class="eyebrow">
+                Member access
+            </p>
+
+            <h1 class="title">
+                Club calendar
+            </h1>
+
+            <p class="subtitle">
+                Published events from clubs linked to your
+                Paryx membership.
+            </p>
+        </section>
+
+        <section
+            id="calendarNoMembership"
+            class="section"
+            hidden
+        >
+            <div class="empty">
+                Club calendars unlock when a club links your
+                Paryx account as a member. You can request
+                member access from Book.
+            </div>
+        </section>
+
+        <div id="calendarMemberContent">
+            <section class="section calendar-club-control">
+                <label class="field">
+                    <span>Member club</span>
+
+                    <select
+                        id="calendarClub"
+                        aria-label="Member club"
+                    ></select>
+                </label>
+            </section>
+
+            <section class="section calendar-month-toolbar">
+                <button
+                    id="calendarPreviousMonth"
+                    class="calendar-month-button"
+                    type="button"
+                    aria-label="Previous month"
+                >
+                    ‹
+                </button>
+
+                <div class="calendar-month-heading">
+                    <span>Fixtures</span>
+                    <strong id="calendarMonthLabel">
+                        Month
+                    </strong>
+                </div>
+
+                <button
+                    id="calendarNextMonth"
+                    class="calendar-month-button"
+                    type="button"
+                    aria-label="Next month"
+                >
+                    ›
+                </button>
+            </section>
+
+            <section class="section calendar-filter-section">
+                <div
+                    id="filters"
+                    class="segments"
+                    aria-label="Calendar section filter"
+                >
+                    <button
+                        class="active"
+                        type="button"
+                        data-section="all"
+                    >
+                        All
+                    </button>
+
+                    <button
+                        type="button"
+                        data-section="club"
+                    >
+                        Club
+                    </button>
+
+                    <button
+                        type="button"
+                        data-section="mens"
+                    >
+                        Men
+                    </button>
+
+                    <button
+                        type="button"
+                        data-section="seniors"
+                    >
+                        Seniors
+                    </button>
+
+                    <button
+                        type="button"
+                        data-section="ladies"
+                    >
+                        Ladies
+                    </button>
+                </div>
+            </section>
+
+            <section class="section">
+                <div
+                    id="calendarStatus"
+                    class="calendar-status"
+                    aria-live="polite"
+                ></div>
+
+                <div
+                    id="events"
+                    class="card calendar-events-card"
+                ></div>
+            </section>
+        </div>
+    </main>
+
+    <div data-member-shell></div>
+
+    <script src="../js/core/config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/core/supabase.js"></script>
+    <script src="../js/core/member-core.js"></script>
+    <script src="../js/core/member-shell.js"></script>
+    <script src="../js/pages/calendar-page.js"></script>
+</body>
+</html>
