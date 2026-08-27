@@ -162,3 +162,146 @@
         justify-self: start;
     }
 }
+
+
+/* =========================================================
+   PLAYER PLAY — ENTITLEMENT GATE
+   ========================================================= */
+
+.play-access-card {
+    margin-top: 18px;
+    text-align: left;
+}
+
+.play-access-card h2 {
+    margin: 4px 0 7px;
+    color: var(--green-dark);
+    font-size: 1.22rem;
+    line-height: 1.25;
+}
+
+.play-access-icon {
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    margin-bottom: 13px;
+    border-radius: 15px;
+    background: var(--green-soft);
+    color: var(--green);
+    font-size: 1.15rem;
+    font-weight: 900;
+}
+
+.play-access-icon--locked {
+    background: #f5f1e5;
+    color: #7a631f;
+    font-size: 1rem;
+}
+
+.play-access-icon--active {
+    background: #e2f2e7;
+    color: #17673d;
+}
+
+.play-access-summary {
+    display: grid;
+    grid-template-columns: repeat(
+        2,
+        minmax(0, 1fr)
+    );
+    gap: 9px;
+    margin-top: 16px;
+}
+
+.play-access-summary > div {
+    min-width: 0;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: rgba(
+        255,
+        255,
+        255,
+        0.76
+    );
+}
+
+.play-access-summary span,
+.play-access-summary strong {
+    display: block;
+}
+
+.play-access-summary span {
+    color: var(--muted);
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.play-access-summary strong {
+    margin-top: 4px;
+    color: var(--green-dark);
+    font-size: 0.82rem;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+.play-access-actions {
+    display: grid;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.play-access-footnote {
+    margin: 12px 0 0;
+    color: var(--muted);
+    font-size: 0.7rem;
+    line-height: 1.45;
+    text-align: center;
+}
+
+.play-access-ready {
+    margin: 16px 0;
+    padding: 13px;
+    border-radius: 14px;
+    background: rgba(
+        255,
+        255,
+        255,
+        0.76
+    );
+}
+
+.play-access-ready span,
+.play-access-ready strong {
+    display: block;
+}
+
+.play-access-ready span {
+    color: var(--muted);
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.play-access-ready strong {
+    margin-top: 3px;
+    color: var(--green-dark);
+    font-size: 0.95rem;
+}
+
+.play-access-ready p {
+    margin: 5px 0 0;
+    color: var(--muted);
+    font-size: 0.75rem;
+    line-height: 1.45;
+}
+
+@media (max-width: 360px) {
+    .play-access-summary {
+        grid-template-columns: 1fr;
+    }
+}

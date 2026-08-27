@@ -1,1 +1,224 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#064831"><title>Play | Paryx</title><link rel="stylesheet" href="../styles/member.css"><link rel="manifest" href="../json/manifest.json"></head><body data-page="play"><main class="member-app"><header class="topbar"><div class="brand"><img src="../assets/branding/paryx-mark.png" alt=""><strong>Play</strong></div><span id="playTier" class="pill">Free</span></header><section class="hero"><p class="eyebrow">Paryx scoring</p><h1 class="title">Play</h1><p class="subtitle">Scorecards and scoring travel with your Paryx account.</p></section><section id="locked" class="card locked"><p class="kicker">Tier 2</p><h3>Scorecard access</h3><p class="meta">Scorecards and scoring are available with Paryx Tier 2 or a temporary scorecard pass.</p><div class="stack" style="margin-top:14px"><button class="button full" disabled>Upgrade options coming later</button><button class="button secondary full" disabled>Temporary pass coming later</button></div></section><section id="enabled" class="card accent" hidden><p class="kicker">Scorecard access active</p><h3>Start a round</h3><p class="meta">The scoring engines will be ported here after the member platform foundation is complete.</p><button class="button full" style="margin-top:14px" disabled>Scorecard coming next</button></section></main><div data-member-shell></div><script src="../js/core/config.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="../js/core/supabase.js"></script><script src="../js/core/member-core.js"></script><script src="../js/core/member-shell.js"></script><script src="../js/pages/play-page.js"></script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width,initial-scale=1,viewport-fit=cover"
+    >
+    <meta name="theme-color" content="#064831">
+    <title>Play | Paryx</title>
+
+    <link
+        rel="stylesheet"
+        href="../styles/member.css"
+    >
+    <link
+        rel="manifest"
+        href="../json/manifest.json"
+    >
+</head>
+
+<body data-page="play">
+    <main class="member-app">
+        <header class="topbar">
+            <div class="brand">
+                <img
+                    src="../assets/branding/paryx-mark.png"
+                    alt=""
+                >
+                <strong>Play</strong>
+            </div>
+
+            <span
+                id="playTier"
+                class="pill"
+            >
+                Loading
+            </span>
+        </header>
+
+        <section class="hero">
+            <p class="eyebrow">
+                Paryx scoring
+            </p>
+
+            <h1 class="title">
+                Play
+            </h1>
+
+            <p class="subtitle">
+                Scorecards and scoring travel with your
+                Paryx account, not with one individual club.
+            </p>
+        </section>
+
+        <section
+            id="playLoading"
+            class="card play-access-card"
+        >
+            <div class="play-access-icon" aria-hidden="true">
+                …
+            </div>
+
+            <p class="kicker">
+                Checking access
+            </p>
+
+            <h2>
+                Loading Play
+            </h2>
+
+            <p class="meta">
+                Checking your Paryx scorecard entitlement.
+            </p>
+        </section>
+
+        <section
+            id="playLocked"
+            class="card play-access-card"
+            hidden
+        >
+            <div
+                class="play-access-icon play-access-icon--locked"
+                aria-hidden="true"
+            >
+                🔒
+            </div>
+
+            <p class="kicker">
+                Scorecard access
+            </p>
+
+            <h2>
+                Play is locked
+            </h2>
+
+            <p class="meta">
+                Scorecards and scoring require Paryx Tier 2
+                or an active temporary scorecard pass.
+            </p>
+
+            <div class="play-access-summary">
+                <div>
+                    <span>Current Paryx tier</span>
+                    <strong id="playLockedTier">
+                        Free
+                    </strong>
+                </div>
+
+                <div>
+                    <span>Club membership</span>
+                    <strong>
+                        Separate from Play
+                    </strong>
+                </div>
+            </div>
+
+            <div class="play-access-actions">
+                <button
+                    class="button full"
+                    type="button"
+                    disabled
+                >
+                    Tier 2 upgrade coming later
+                </button>
+
+                <button
+                    class="button secondary full"
+                    type="button"
+                    disabled
+                >
+                    Temporary pass coming later
+                </button>
+            </div>
+
+            <p class="play-access-footnote">
+                Being a member of a Paryx club does not
+                automatically unlock scoring.
+            </p>
+        </section>
+
+        <section
+            id="playEnabled"
+            class="card accent play-access-card"
+            hidden
+        >
+            <div
+                class="play-access-icon play-access-icon--active"
+                aria-hidden="true"
+            >
+                ✓
+            </div>
+
+            <p class="kicker">
+                Scorecard access active
+            </p>
+
+            <h2 id="playEnabledTitle">
+                Play unlocked
+            </h2>
+
+            <p
+                id="playEnabledDescription"
+                class="meta"
+            >
+                Your Paryx scorecard entitlement is active.
+            </p>
+
+            <div class="play-access-summary">
+                <div>
+                    <span>Access type</span>
+                    <strong id="playAccessType">
+                        Active
+                    </strong>
+                </div>
+
+                <div>
+                    <span>Valid until</span>
+                    <strong id="playAccessUntil">
+                        Active
+                    </strong>
+                </div>
+            </div>
+
+            <div class="play-access-ready">
+                <span>Next platform stage</span>
+
+                <strong>
+                    Scorecard engines
+                </strong>
+
+                <p>
+                    The scoring engines will be connected here
+                    after the Player platform baseline is complete.
+                </p>
+            </div>
+
+            <button
+                class="button full"
+                type="button"
+                disabled
+            >
+                Start round — coming next
+            </button>
+        </section>
+
+        <section
+            id="playError"
+            class="notice error"
+            role="alert"
+            hidden
+        ></section>
+    </main>
+
+    <div data-member-shell></div>
+
+    <script src="../js/core/config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/core/supabase.js"></script>
+    <script src="../js/core/member-core.js"></script>
+    <script src="../js/core/member-shell.js"></script>
+    <script src="../js/pages/play-page.js"></script>
+</body>
+</html>
