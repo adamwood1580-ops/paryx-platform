@@ -38,7 +38,7 @@
 <div id="clubError" class="console-error" hidden></div>
 <div id="clubSuccess" class="console-success" hidden></div>
 
-<section class="console-panel">
+<section id="createClubPanel" class="console-panel">
     <div class="console-panel__header">
         <h2>Create club</h2>
     </div>
@@ -110,6 +110,226 @@
         </table>
     </div>
 </section>
+
+
+<dialog
+    id="clubDetailDialog"
+    class="console-dialog console-club-dialog"
+>
+    <form
+        id="clubDetailForm"
+        class="console-dialog__panel"
+        novalidate
+    >
+        <header class="console-dialog__header">
+            <div>
+                <p class="console-eyebrow">
+                    Paryx tenant
+                </p>
+
+                <h2 id="clubDetailTitle">
+                    Club
+                </h2>
+
+                <p id="clubDetailSubtitle">
+                    Platform overview
+                </p>
+            </div>
+
+            <button
+                id="clubDetailClose"
+                class="console-dialog__close"
+                type="button"
+                aria-label="Close"
+            >
+                ×
+            </button>
+        </header>
+
+        <input
+            id="clubDetailId"
+            type="hidden"
+        />
+
+        <div class="console-club-status-line">
+            <span
+                id="clubDetailStatus"
+                class="status-pill"
+            >
+                —
+            </span>
+
+            <span id="clubDetailCreated">
+                —
+            </span>
+        </div>
+
+        <section class="console-account-section">
+            <div class="console-panel__header">
+                <div>
+                    <h2>Club details</h2>
+                    <small>
+                        Name and timezone can be corrected by a Platform
+                        Admin or Owner. Slug remains stable after creation.
+                    </small>
+                </div>
+            </div>
+
+            <div class="console-field-grid">
+                <div class="console-field">
+                    <label for="clubDetailName">
+                        Club name
+                    </label>
+
+                    <input
+                        id="clubDetailName"
+                        type="text"
+                        maxlength="180"
+                        required
+                    />
+                </div>
+
+                <div class="console-field">
+                    <label for="clubDetailSlug">
+                        Slug
+                    </label>
+
+                    <input
+                        id="clubDetailSlug"
+                        type="text"
+                        readonly
+                    />
+                </div>
+
+                <div class="console-field">
+                    <label for="clubDetailTimezone">
+                        Timezone
+                    </label>
+
+                    <input
+                        id="clubDetailTimezone"
+                        type="text"
+                        maxlength="100"
+                        required
+                    />
+                </div>
+            </div>
+
+            <div
+                id="clubDetailReadOnlyNote"
+                class="console-account-note"
+                hidden
+            >
+                Platform Support can inspect club details but cannot
+                change tenant configuration.
+            </div>
+        </section>
+
+        <section class="console-account-section">
+            <div class="console-panel__header">
+                <div>
+                    <h2>Operational overview</h2>
+                    <small>
+                        Live platform figures for this club.
+                    </small>
+                </div>
+            </div>
+
+            <div class="console-club-metric-grid">
+                <div>
+                    <span>Members</span>
+                    <strong id="clubMetricMembers">0</strong>
+                </div>
+
+                <div>
+                    <span>Staff</span>
+                    <strong id="clubMetricStaff">0</strong>
+                </div>
+
+                <div>
+                    <span>Courses</span>
+                    <strong id="clubMetricCourses">0</strong>
+                </div>
+
+                <div>
+                    <span>Upcoming events</span>
+                    <strong id="clubMetricEvents">0</strong>
+                </div>
+
+                <div>
+                    <span>Today's tee times</span>
+                    <strong id="clubMetricTeeTimes">0</strong>
+                </div>
+
+                <div>
+                    <span>Today's bookings</span>
+                    <strong id="clubMetricBookings">0</strong>
+                </div>
+
+                <div>
+                    <span>Players booked today</span>
+                    <strong id="clubMetricPlayers">0</strong>
+                </div>
+
+                <div>
+                    <span>Bookings · next 30 days</span>
+                    <strong id="clubMetricBookings30">0</strong>
+                </div>
+
+                <div>
+                    <span>Renewals due · 90 days</span>
+                    <strong id="clubMetricRenewals">0</strong>
+                </div>
+
+                <div>
+                    <span>Pending access requests</span>
+                    <strong id="clubMetricAccessRequests">0</strong>
+                </div>
+            </div>
+        </section>
+
+        <section class="console-account-section">
+            <div class="console-panel__header">
+                <div>
+                    <h2>Primary club contact</h2>
+                    <small>
+                        First active Club Admin currently linked to this tenant.
+                    </small>
+                </div>
+            </div>
+
+            <div class="console-club-contact">
+                <div>
+                    <span>Name</span>
+                    <strong id="clubDetailAdminName">Not assigned</strong>
+                </div>
+
+                <div>
+                    <span>Email</span>
+                    <strong id="clubDetailAdminEmail">—</strong>
+                </div>
+            </div>
+        </section>
+
+        <div class="console-club-dialog__actions">
+            <button
+                id="clubDetailCancel"
+                class="console-button console-button--secondary"
+                type="button"
+            >
+                Close
+            </button>
+
+            <button
+                id="clubDetailSave"
+                class="console-button"
+                type="submit"
+            >
+                Save club details
+            </button>
+        </div>
+    </form>
+</dialog>
 
             </main>
         </div>
