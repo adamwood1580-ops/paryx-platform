@@ -121,6 +121,8 @@
         bookingType: document.getElementById("bookingType"),
         bookingContactNumber: document.getElementById("bookingContactNumber"),
         bookingNotes: document.getElementById("bookingNotes"),
+        bookingOperationalStatus: document.getElementById("bookingOperationalStatus"),
+        checkInBooking: document.getElementById("checkInBookingButton"),
         closeBookingDialog: document.getElementById("closeBookingDialogButton"),
         saveBooking: document.getElementById("saveBookingButton"),
         cancelBooking: document.getElementById("cancelBookingButton"),
