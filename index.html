@@ -78,6 +78,8 @@
             cursor: default;
             user-select: none;
             -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            touch-action: manipulation;
         }
 
         .paryx-home__logo:focus-visible {
@@ -277,72 +279,200 @@
             const CONSOLE_URL =
                 "apps/console/html/login.html";
 
-            const CLICK_WINDOW_MS =
-                900;
+            const HOLD_MS =
+                1600;
 
-            let clickCount =
-                0;
+            const MOVE_TOLERANCE_PX =
+                18;
 
-            let resetTimer =
+            let holdTimer =
                 null;
 
-            function resetClicks() {
-                clickCount =
-                    0;
+            let startX =
+                null;
 
-                if (resetTimer) {
+            let startY =
+                null;
+
+            let activated =
+                false;
+
+            function clearHold() {
+                if (holdTimer) {
                     window.clearTimeout(
-                        resetTimer
+                        holdTimer
                     );
-                    resetTimer =
+
+                    holdTimer =
                         null;
                 }
+
+                startX =
+                    null;
+
+                startY =
+                    null;
             }
 
-            function registerHiddenConsoleClick() {
-                clickCount +=
-                    1;
-
-                if (resetTimer) {
-                    window.clearTimeout(
-                        resetTimer
-                    );
-                }
-
-                if (clickCount >= 3) {
-                    resetClicks();
-
-                    window.location.href =
-                        CONSOLE_URL;
-
+            function openConsole() {
+                if (activated) {
                     return;
                 }
 
-                resetTimer =
+                activated =
+                    true;
+
+                clearHold();
+
+                if (
+                    navigator.vibrate
+                ) {
+                    navigator.vibrate(
+                        35
+                    );
+                }
+
+                window.location.href =
+                    CONSOLE_URL;
+            }
+
+            function startHold(event) {
+                if (
+                    event.pointerType ===
+                        "mouse" &&
+                    event.button !== 0
+                ) {
+                    return;
+                }
+
+                activated =
+                    false;
+
+                startX =
+                    event.clientX;
+
+                startY =
+                    event.clientY;
+
+                clearHold();
+
+                startX =
+                    event.clientX;
+
+                startY =
+                    event.clientY;
+
+                holdTimer =
                     window.setTimeout(
-                        resetClicks,
-                        CLICK_WINDOW_MS
+                        openConsole,
+                        HOLD_MS
                     );
             }
 
+            function cancelIfMoved(
+                event
+            ) {
+                if (
+                    startX === null ||
+                    startY === null
+                ) {
+                    return;
+                }
+
+                const movedX =
+                    Math.abs(
+                        event.clientX -
+                        startX
+                    );
+
+                const movedY =
+                    Math.abs(
+                        event.clientY -
+                        startY
+                    );
+
+                if (
+                    movedX >
+                        MOVE_TOLERANCE_PX ||
+                    movedY >
+                        MOVE_TOLERANCE_PX
+                ) {
+                    clearHold();
+                }
+            }
+
             logo.addEventListener(
-                "click",
-                registerHiddenConsoleClick
+                "pointerdown",
+                startHold
+            );
+
+            logo.addEventListener(
+                "pointermove",
+                cancelIfMoved
+            );
+
+            [
+                "pointerup",
+                "pointercancel",
+                "pointerleave"
+            ].forEach(
+                function (eventName) {
+                    logo.addEventListener(
+                        eventName,
+                        clearHold
+                    );
+                }
+            );
+
+            logo.addEventListener(
+                "contextmenu",
+                function (event) {
+                    event.preventDefault();
+                }
             );
 
             /*
-             * Keyboard equivalent for accessibility:
-             * three Enter/Space activations within the same window.
+             * Keyboard equivalent:
+             * hold Enter or Space on the logo.
              */
             logo.addEventListener(
                 "keydown",
                 function (event) {
                     if (
-                        event.key === "Enter" ||
-                        event.key === " "
+                        event.repeat ||
+                        !(
+                            event.key ===
+                                "Enter" ||
+                            event.key ===
+                                " "
+                        )
+                    ) {
+                        return;
+                    }
+
+                    event.preventDefault();
+
+                    clearHold();
+
+                    holdTimer =
+                        window.setTimeout(
+                            openConsole,
+                            HOLD_MS
+                        );
+                }
+            );
+
+            logo.addEventListener(
+                "keyup",
+                function (event) {
+                    if (
+                        event.key ===
+                            "Enter" ||
+                        event.key ===
+                            " "
                     ) {
                         event.preventDefault();
-                        registerHiddenConsoleClick();
+                        clearHold();
                     }
                 }
             );
