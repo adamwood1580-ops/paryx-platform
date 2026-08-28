@@ -13,8 +13,13 @@
             href: "clubs.html"
         },
         {
+            key: "accounts",
+            label: "Player Accounts",
+            href: "accounts.html"
+        },
+        {
             key: "platformusers",
-            label: "Platform Users",
+            label: "Console Users",
             href: "platform-users.html"
         },
         {

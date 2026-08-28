@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en" class="console-protected">
+<head>
+    <meta charset="UTF-8" />
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#022D1D" />
+
+    <title>Player Accounts | Paryx Console</title>
+
+    <link rel="stylesheet" href="../../club/styles/tokens.css" />
+    <link rel="stylesheet" href="../styles/console.css" />
+
+    <link rel="apple-touch-icon" href="../../club/assets/paryx-apple-touch-icon.png" />
+    <link rel="icon" type="image/png" href="../../club/assets/paryx-favicon.png" />
+
+    <script src="../js/core/console-loader.js?loader=2" defer></script>
+</head>
+
+<body data-page="accounts">
+    <div class="console-shell">
+        <aside
+            class="console-sidebar"
+            data-console-sidebar
+        ></aside>
+
+        <div class="console-workspace">
+            <header
+                class="console-topbar"
+                data-console-topbar
+            ></header>
+
+            <main class="console-main">
+                <section class="console-page-header">
+                    <div>
+                        <p class="console-eyebrow">
+                            Global Paryx accounts
+                        </p>
+
+                        <h1 class="console-title">
+                            Player Accounts
+                        </h1>
+
+                        <p class="console-subtitle">
+                            Search a Paryx identity, inspect its club links
+                            and manage Player scoring entitlements.
+                        </p>
+                    </div>
+
+                    <span class="console-badge">
+                        Support
+                    </span>
+                </section>
+
+                <div
+                    id="accountError"
+                    class="console-error"
+                    hidden
+                ></div>
+
+                <div
+                    id="accountSuccess"
+                    class="console-success"
+                    hidden
+                ></div>
+
+                <section class="console-panel">
+                    <div class="console-panel__header console-account-toolbar">
+                        <div>
+                            <h2>Account directory</h2>
+
+                            <small id="accountResultCount">
+                                Loading…
+                            </small>
+                        </div>
+
+                        <div class="console-account-toolbar__actions">
+                            <input
+                                id="accountSearch"
+                                class="console-field console-search"
+                                type="search"
+                                placeholder="Name, email or membership number"
+                                aria-label="Search Paryx accounts"
+                                autocomplete="off"
+                            />
+
+                            <button
+                                id="accountRefresh"
+                                class="console-button console-button--secondary"
+                                type="button"
+                            >
+                                Refresh
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="console-table-wrap">
+                        <table class="console-table">
+                            <thead>
+                                <tr>
+                                    <th>Player</th>
+                                    <th>Paryx access</th>
+                                    <th>Member clubs</th>
+                                    <th>Visitor clubs</th>
+                                    <th>Last sign-in</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="accountTableBody">
+                                <tr>
+                                    <td colspan="6">
+                                        <div class="console-empty">
+                                            Loading Paryx accounts…
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <button
+                        id="accountLoadMore"
+                        class="console-button console-button--secondary console-load-more"
+                        type="button"
+                        hidden
+                    >
+                        Load more
+                    </button>
+                </section>
+
+                <dialog
+                    id="accountDialog"
+                    class="console-dialog"
+                >
+                    <div class="console-dialog__panel">
+                        <header class="console-dialog__header">
+                            <div>
+                                <p class="console-eyebrow">
+                                    Global account
+                                </p>
+
+                                <h2 id="accountDialogName">
+                                    Player
+                                </h2>
+
+                                <p id="accountDialogEmail">
+                                    —
+                                </p>
+                            </div>
+
+                            <button
+                                id="accountDialogClose"
+                                class="console-dialog__close"
+                                type="button"
+                                aria-label="Close"
+                            >
+                                ×
+                            </button>
+                        </header>
+
+                        <div class="console-account-summary">
+                            <div>
+                                <span>Account ID</span>
+                                <strong id="accountDialogId">—</strong>
+                            </div>
+
+                            <div>
+                                <span>Member clubs</span>
+                                <strong id="accountDialogMemberClubs">0</strong>
+                            </div>
+
+                            <div>
+                                <span>Visitor clubs</span>
+                                <strong id="accountDialogVisitorClubs">0</strong>
+                            </div>
+
+                            <div>
+                                <span>Console access</span>
+                                <strong id="accountDialogConsoleAccess">None</strong>
+                            </div>
+                        </div>
+
+                        <section class="console-account-section">
+                            <div class="console-panel__header">
+                                <div>
+                                    <h2>Player entitlement</h2>
+                                    <small>
+                                        Club membership does not unlock Play.
+                                    </small>
+                                </div>
+                            </div>
+
+                            <div
+                                id="accountReadOnlyNote"
+                                class="console-account-note"
+                                hidden
+                            >
+                                Platform Support can inspect entitlements.
+                                Platform Admin or Owner access is required to
+                                change them.
+                            </div>
+
+                            <form
+                                id="accountEntitlementForm"
+                                class="console-account-entitlement-form"
+                            >
+                                <input
+                                    id="accountEntitlementUserId"
+                                    type="hidden"
+                                />
+
+                                <div class="console-field-grid">
+                                    <div class="console-field">
+                                        <label for="accountPlan">
+                                            Plan
+                                        </label>
+
+                                        <select id="accountPlan">
+                                            <option value="free">
+                                                Free
+                                            </option>
+
+                                            <option value="tier2">
+                                                Tier 2
+                                            </option>
+                                        </select>
+                                    </div>
+
+                                    <div class="console-field">
+                                        <label for="accountTier2Until">
+                                            Tier 2 until
+                                        </label>
+
+                                        <input
+                                            id="accountTier2Until"
+                                            type="datetime-local"
+                                        />
+                                    </div>
+
+                                    <div class="console-field">
+                                        <label for="accountPassUntil">
+                                            Scorecard pass until
+                                        </label>
+
+                                        <input
+                                            id="accountPassUntil"
+                                            type="datetime-local"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div class="console-account-quick-actions">
+                                    <button
+                                        id="grantTier2ThirtyDays"
+                                        class="console-button console-button--secondary"
+                                        type="button"
+                                    >
+                                        Tier 2 · 30 days
+                                    </button>
+
+                                    <button
+                                        id="grantOneDayPass"
+                                        class="console-button console-button--secondary"
+                                        type="button"
+                                    >
+                                        Pass · 24 hours
+                                    </button>
+
+                                    <button
+                                        id="resetFreeAccess"
+                                        class="console-button console-button--secondary"
+                                        type="button"
+                                    >
+                                        Reset to Free
+                                    </button>
+
+                                    <button
+                                        id="saveEntitlement"
+                                        class="console-button"
+                                        type="submit"
+                                    >
+                                        Save entitlement
+                                    </button>
+                                </div>
+                            </form>
+                        </section>
+
+                        <section class="console-account-section">
+                            <div class="console-panel__header">
+                                <div>
+                                    <h2>Club relationships</h2>
+                                    <small>
+                                        Genuine memberships and visitor links
+                                        held by this same Paryx identity.
+                                    </small>
+                                </div>
+                            </div>
+
+                            <div
+                                id="accountClubList"
+                                class="console-account-clubs"
+                            >
+                                <div class="console-empty">
+                                    Loading club relationships…
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </dialog>
+            </main>
+        </div>
+    </div>
+</body>
+</html>

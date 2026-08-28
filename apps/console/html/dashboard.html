@@ -12,7 +12,7 @@
     <link rel="apple-touch-icon" href="../../club/assets/paryx-apple-touch-icon.png" />
     <link rel="icon" type="image/png" href="../../club/assets/paryx-favicon.png" />
 
-    <script src="../js/core/console-loader.js?loader=1" defer></script>
+    <script src="../js/core/console-loader.js?loader=2" defer></script>
 </head>
 <body data-page="dashboard">
     <div class="console-shell">
@@ -49,22 +49,32 @@
     </article>
 
     <article class="console-stat-card">
-        <span>Auth users</span>
-        <strong id="totalUsers">--</strong>
+        <span>Player accounts</span>
+        <strong id="totalPlayers">--</strong>
     </article>
 
     <article class="console-stat-card">
-        <span>Active memberships</span>
+        <span>Linked memberships</span>
         <strong id="activeMemberships">--</strong>
     </article>
 
     <article class="console-stat-card">
-        <span>Courses</span>
-        <strong id="totalCourses">--</strong>
+        <span>Today's bookings</span>
+        <strong id="todayBookings">--</strong>
     </article>
 
     <article class="console-stat-card">
-        <span>Platform users</span>
+        <span>Active Tier 2</span>
+        <strong id="activeTier2">--</strong>
+    </article>
+
+    <article class="console-stat-card">
+        <span>Active passes</span>
+        <strong id="activePasses">--</strong>
+    </article>
+
+    <article class="console-stat-card">
+        <span>Console users</span>
         <strong id="platformUsers">--</strong>
     </article>
 </section>
@@ -76,7 +86,8 @@
 
     <div class="console-actions">
         <a class="console-button" href="clubs.html">Manage clubs</a>
-        <a class="console-button console-button--secondary" href="platform-users.html">Platform users</a>
+        <a class="console-button console-button--secondary" href="accounts.html">Player accounts</a>
+        <a class="console-button console-button--secondary" href="platform-users.html">Console users</a>
         <a class="console-button console-button--secondary" href="audit.html">View audit</a>
     </div>
 </section>

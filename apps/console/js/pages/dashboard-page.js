@@ -5,15 +5,26 @@
         error: "consoleError",
         totalClubs: "totalClubs",
         activeClubs: "activeClubs",
-        totalUsers: "totalUsers",
+        totalPlayers: "totalPlayers",
         activeMemberships: "activeMemberships",
-        totalCourses: "totalCourses",
+        todayBookings: "todayBookings",
+        activeTier2: "activeTier2",
+        activePasses: "activePasses",
         platformUsers: "platformUsers",
         recentAudit: "recentAudit"
     };
 
     function element(id) {
         return document.getElementById(id);
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
     }
 
     function showError(error) {
@@ -40,15 +51,24 @@
             return "—";
         }
 
+        const date =
+            new Date(value);
+
+        if (
+            Number.isNaN(
+                date.getTime()
+            )
+        ) {
+            return "—";
+        }
+
         return new Intl.DateTimeFormat(
             "en-GB",
             {
                 dateStyle: "medium",
                 timeStyle: "short"
             }
-        ).format(
-            new Date(value)
-        );
+        ).format(date);
     }
 
     async function load() {
@@ -92,14 +112,20 @@
             element(ids.activeClubs).textContent =
                 overview?.active_clubs ?? 0;
 
-            element(ids.totalUsers).textContent =
-                overview?.total_auth_users ?? 0;
+            element(ids.totalPlayers).textContent =
+                overview?.total_player_accounts ?? 0;
 
             element(ids.activeMemberships).textContent =
-                overview?.active_memberships ?? 0;
+                overview?.active_member_links ?? 0;
 
-            element(ids.totalCourses).textContent =
-                overview?.total_courses ?? 0;
+            element(ids.todayBookings).textContent =
+                overview?.today_bookings ?? 0;
+
+            element(ids.activeTier2).textContent =
+                overview?.active_tier2 ?? 0;
+
+            element(ids.activePasses).textContent =
+                overview?.active_scorecard_passes ?? 0;
 
             element(ids.platformUsers).textContent =
                 overview?.platform_users ?? 0;
@@ -132,14 +158,15 @@
                                 <th>Club</th>
                             </tr>
                         </thead>
+
                         <tbody>
                             ${rows.map(function (row) {
                                 return `
                                     <tr>
-                                        <td>${formatDate(row.created_at)}</td>
-                                        <td>${formatAction(row.action)}</td>
-                                        <td>${row.actor_email || "System"}</td>
-                                        <td>${row.club_name || "—"}</td>
+                                        <td>${escapeHtml(formatDate(row.created_at))}</td>
+                                        <td>${escapeHtml(formatAction(row.action))}</td>
+                                        <td>${escapeHtml(row.actor_email || "System")}</td>
+                                        <td>${escapeHtml(row.club_name || "—")}</td>
                                     </tr>
                                 `;
                             }).join("")}

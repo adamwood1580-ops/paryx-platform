@@ -13,6 +13,7 @@
     const PAGE_SCRIPTS = {
         dashboard: "../js/pages/dashboard-page.js",
         clubs: "../js/pages/clubs-page.js",
+        accounts: "../js/pages/accounts-page.js",
         platformusers: "../js/pages/platform-users-page.js",
         audit: "../js/pages/audit-page.js"
     };
