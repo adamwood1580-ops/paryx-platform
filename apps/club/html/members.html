@@ -2,253 +2,430 @@
 <html lang="en" class="auth-protected">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
     <meta name="theme-color" content="#064831" />
+
     <link rel="stylesheet" href="../styles/tokens.css" />
     <link rel="stylesheet" href="../styles/app-shell.css" />
     <link rel="stylesheet" href="../styles/components.css" />
     <link rel="stylesheet" href="../styles/staff-shell.css" />
+    <link rel="stylesheet" href="../styles/dashboard.css" />
+    <link rel="stylesheet" href="../styles/members.css" />
+
     <link rel="manifest" href="../json/manifest.json" />
     <link rel="apple-touch-icon" href="../assets/paryx-apple-touch-icon.png" />
     <link rel="icon" type="image/png" href="../assets/paryx-favicon.png" />
+
     <meta name="application-name" content="Paryx" />
+
     <title>Members | Paryx</title>
-    <link rel="stylesheet" href="../styles/dashboard.css" /><link rel="stylesheet" href="../styles/members.css" />
-    <script src="../js/core/protected-loader.js?loader=4" defer></script>
+
+    <script
+        src="../js/core/protected-loader.js?loader=6"
+        defer
+    ></script>
 </head>
+
 <body data-page="members">
     <div class="staff-shell">
-        <aside class="staff-sidebar" data-staff-sidebar></aside>
+        <aside
+            class="staff-sidebar"
+            data-staff-sidebar
+        ></aside>
+
         <div class="staff-workspace">
-            <header class="staff-topbar" data-staff-header></header>
+            <header
+                class="staff-topbar"
+                data-staff-header
+            ></header>
+
             <main class="app-main admin-page admin-members-page">
-
-            <section class="admin-members-intro">
-                <div>
-                    <p class="page-heading__eyebrow">
-                        Member management
-                    </p>
-
-                    <h1 class="admin-members-intro__title">
-                        Members
-                    </h1>
-
-                    <p
-                        id="memberClubName"
-                        class="admin-members-intro__subtitle"
-                    >
-                        Loading club information...
-                    </p>
-                </div>
-
-                <a
-                    href="import-members.html"
-                    class="admin-primary-action"
-                >
-                    Import CSV
-                </a>
-            </section>
-
-            <section
-                id="membersError"
-                class="admin-error"
-                role="alert"
-                hidden
-            ></section>
-
-            <section class="card admin-access-requests">
-                <div class="admin-access-requests__header">
+                <section class="admin-members-intro">
                     <div>
-                        <div class="admin-access-requests__title-row">
-                            <h2>Member access requests</h2>
-                            <span
-                                id="memberAccessRequestCount"
-                                class="admin-access-request-count"
-                            >
-                                --
-                            </span>
-                        </div>
+                        <p class="page-heading__eyebrow">
+                            Member management
+                        </p>
 
-                        <p>
-                            Paryx players asking to link their account
-                            to this club membership.
+                        <h1 class="admin-members-intro__title">
+                            Members
+                        </h1>
+
+                        <p
+                            id="memberClubName"
+                            class="admin-members-intro__subtitle"
+                        >
+                            Loading club information...
                         </p>
                     </div>
 
+                    <a
+                        href="import-members.html"
+                        class="admin-primary-action"
+                    >
+                        Import CSV
+                    </a>
+                </section>
+
+                <section
+                    id="membersError"
+                    class="admin-error"
+                    role="alert"
+                    hidden
+                ></section>
+
+                <section
+                    id="membersSuccess"
+                    class="admin-member-success"
+                    role="status"
+                    hidden
+                ></section>
+
+                <section class="card admin-access-requests">
+                    <div class="admin-access-requests__header">
+                        <div>
+                            <div class="admin-access-requests__title-row">
+                                <h2>Member access requests</h2>
+
+                                <span
+                                    id="memberAccessRequestCount"
+                                    class="admin-access-request-count"
+                                >
+                                    --
+                                </span>
+                            </div>
+
+                            <p>
+                                Paryx players asking to link their account
+                                to this club membership.
+                            </p>
+                        </div>
+
+                        <button
+                            id="memberAccessRefreshBtn"
+                            class="admin-secondary-button"
+                            type="button"
+                        >
+                            Refresh
+                        </button>
+                    </div>
+
+                    <div
+                        id="memberAccessRequestList"
+                        class="admin-access-request-list"
+                        aria-live="polite"
+                    >
+                        <div class="admin-member-loading">
+                            Loading access requests...
+                        </div>
+                    </div>
+                </section>
+
+                <section class="card admin-member-toolbar">
+                    <label class="admin-member-search">
+                        <span class="admin-member-field-label">
+                            Search members
+                        </span>
+
+                        <input
+                            id="memberSearch"
+                            type="search"
+                            placeholder="Name, email or member number"
+                            autocomplete="off"
+                        />
+                    </label>
+
+                    <label class="admin-member-filter">
+                        <span class="admin-member-field-label">
+                            Status
+                        </span>
+
+                        <select id="memberStatusFilter">
+                            <option value="all">All statuses</option>
+                            <option value="active">Active</option>
+                            <option value="invited">Invited</option>
+                            <option value="pending">Pending</option>
+                            <option value="suspended">Suspended</option>
+                            <option value="expired">Expired</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </label>
+                </section>
+
+                <section class="admin-member-summary">
+                    <div>
+                        <span class="admin-member-summary__label">
+                            Results
+                        </span>
+
+                        <strong
+                            id="memberResultCount"
+                            class="admin-member-summary__value"
+                        >
+                            --
+                        </strong>
+                    </div>
+
                     <button
-                        id="memberAccessRefreshBtn"
+                        id="memberRefreshBtn"
                         class="admin-secondary-button"
                         type="button"
                     >
                         Refresh
                     </button>
-                </div>
+                </section>
 
-                <div
-                    id="memberAccessRequestList"
-                    class="admin-access-request-list"
+                <section
+                    id="memberList"
+                    class="admin-member-list"
                     aria-live="polite"
                 >
                     <div class="admin-member-loading">
-                        Loading access requests...
+                        Loading members...
                     </div>
-                </div>
-            </section>
-
-            <section class="card admin-member-toolbar">
-                <label class="admin-member-search">
-                    <span class="admin-member-field-label">
-                        Search members
-                    </span>
-
-                    <input
-                        id="memberSearch"
-                        type="search"
-                        placeholder="Name, email or member number"
-                        autocomplete="off"
-                    />
-                </label>
-
-                <label class="admin-member-filter">
-                    <span class="admin-member-field-label">
-                        Status
-                    </span>
-
-                    <select id="memberStatusFilter">
-                        <option value="all">All statuses</option>
-                        <option value="active">Active</option>
-                        <option value="invited">Invited</option>
-                        <option value="pending">Pending</option>
-                        <option value="suspended">Suspended</option>
-                        <option value="expired">Expired</option>
-                        <option value="cancelled">Cancelled</option>
-                    </select>
-                </label>
-            </section>
-
-            <section class="admin-member-summary">
-                <div>
-                    <span class="admin-member-summary__label">
-                        Results
-                    </span>
-
-                    <strong
-                        id="memberResultCount"
-                        class="admin-member-summary__value"
-                    >
-                        --
-                    </strong>
-                </div>
+                </section>
 
                 <button
-                    id="memberRefreshBtn"
-                    class="admin-secondary-button"
+                    id="loadMoreMembersBtn"
+                    class="admin-load-more"
                     type="button"
+                    hidden
                 >
-                    Refresh
+                    Load more members
                 </button>
-            </section>
 
-            <section
-                id="memberList"
-                class="admin-member-list"
-                aria-live="polite"
-            >
-                <div class="admin-member-loading">
-                    Loading members...
-                </div>
-            </section>
-
-            <button
-                id="loadMoreMembersBtn"
-                class="admin-load-more"
-                type="button"
-                hidden
-            >
-                Load more members
-            </button>
-
-            <dialog
-                id="memberAccessApprovalDialog"
-                class="admin-access-dialog"
-            >
-                <form
-                    id="memberAccessApprovalForm"
-                    class="admin-access-dialog__panel"
-                    novalidate
+                <!-- Member access approval -->
+                <dialog
+                    id="memberAccessApprovalDialog"
+                    class="admin-access-dialog"
                 >
-                    <header class="admin-access-dialog__header">
-                        <div>
-                            <p class="page-heading__eyebrow">
-                                Member access
-                            </p>
+                    <form
+                        id="memberAccessApprovalForm"
+                        class="admin-access-dialog__panel"
+                        novalidate
+                    >
+                        <header class="admin-access-dialog__header">
+                            <div>
+                                <p class="page-heading__eyebrow">
+                                    Member access
+                                </p>
 
-                            <h2>
-                                Approve player
-                            </h2>
+                                <h2>
+                                    Approve player
+                                </h2>
 
-                            <p id="memberAccessApprovalIdentity">
-                                Player
-                            </p>
-                        </div>
+                                <p id="memberAccessApprovalIdentity">
+                                    Player
+                                </p>
+                            </div>
 
-                        <button
-                            id="memberAccessApprovalClose"
-                            class="admin-access-dialog__close"
-                            type="button"
-                            aria-label="Close"
-                        >
-                            ×
-                        </button>
-                    </header>
-
-                    <input
-                        id="memberAccessApprovalRequestId"
-                        type="hidden"
-                    />
-
-                    <label class="admin-access-dialog__field">
-                        <span>Membership number</span>
+                            <button
+                                id="memberAccessApprovalClose"
+                                class="admin-access-dialog__close"
+                                type="button"
+                                aria-label="Close"
+                            >
+                                ×
+                            </button>
+                        </header>
 
                         <input
-                            id="memberAccessApprovalMembershipNumber"
-                            type="text"
-                            autocomplete="off"
-                            placeholder="Optional"
+                            id="memberAccessApprovalRequestId"
+                            type="hidden"
                         />
 
-                        <small>
-                            Confirm or correct the player's club
-                            membership number before approval.
-                        </small>
-                    </label>
+                        <label class="admin-access-dialog__field">
+                            <span>Membership number</span>
 
-                    <div class="admin-access-dialog__notice">
-                        Approving links the player's existing global
-                        Paryx account to this club as a member. It does
-                        not create another Paryx login.
-                    </div>
+                            <input
+                                id="memberAccessApprovalMembershipNumber"
+                                type="text"
+                                autocomplete="off"
+                                placeholder="Optional"
+                            />
 
-                    <div class="admin-access-dialog__actions">
-                        <button
-                            id="memberAccessApprovalCancel"
-                            class="admin-secondary-button"
-                            type="button"
-                        >
-                            Cancel
-                        </button>
+                            <small>
+                                Confirm or correct the player's club
+                                membership number before approval.
+                            </small>
+                        </label>
 
-                        <button
-                            id="memberAccessApprovalSubmit"
-                            class="admin-primary-action"
-                            type="submit"
-                        >
-                            Approve member
-                        </button>
-                    </div>
-                </form>
-            </dialog>
-        </main>
+                        <div class="admin-access-dialog__notice">
+                            Approving links the player's existing global
+                            Paryx account to this club as a member. It does
+                            not create another Paryx login.
+                        </div>
+
+                        <div class="admin-access-dialog__actions">
+                            <button
+                                id="memberAccessApprovalCancel"
+                                class="admin-secondary-button"
+                                type="button"
+                            >
+                                Cancel
+                            </button>
+
+                            <button
+                                id="memberAccessApprovalSubmit"
+                                class="admin-primary-action"
+                                type="submit"
+                            >
+                                Approve member
+                            </button>
+                        </div>
+                    </form>
+                </dialog>
+
+                <!-- Member details -->
+                <dialog
+                    id="memberDetailsDialog"
+                    class="admin-member-dialog"
+                >
+                    <form
+                        id="memberDetailsForm"
+                        class="admin-member-dialog__panel"
+                        novalidate
+                    >
+                        <header class="admin-member-dialog__header">
+                            <div>
+                                <p class="page-heading__eyebrow">
+                                    Club membership
+                                </p>
+
+                                <h2>
+                                    Member details
+                                </h2>
+
+                                <p id="memberDetailsIdentity">
+                                    Member
+                                </p>
+                            </div>
+
+                            <button
+                                id="memberDetailsClose"
+                                class="admin-member-dialog__close"
+                                type="button"
+                                aria-label="Close"
+                            >
+                                ×
+                            </button>
+                        </header>
+
+                        <input
+                            id="memberDetailsMembershipId"
+                            type="hidden"
+                        />
+
+                        <div class="admin-member-readonly-grid">
+                            <div>
+                                <span>Email</span>
+                                <strong id="memberDetailsEmail">—</strong>
+                            </div>
+
+                            <div>
+                                <span>Handicap index</span>
+                                <strong id="memberDetailsHandicap">Not set</strong>
+                            </div>
+
+                            <div>
+                                <span>ClubHub role</span>
+                                <strong id="memberDetailsRole">Member</strong>
+                            </div>
+
+                            <div>
+                                <span>Paryx account</span>
+                                <strong>Global identity</strong>
+                            </div>
+                        </div>
+
+                        <div class="admin-member-global-note">
+                            Name, email and account identity belong to the
+                            player's global Paryx account. ClubHub edits only
+                            this club's membership record.
+                        </div>
+
+                        <div class="admin-member-edit-grid">
+                            <label class="admin-member-edit-field">
+                                <span>Membership number</span>
+
+                                <input
+                                    id="memberDetailsNumber"
+                                    type="text"
+                                    maxlength="80"
+                                    autocomplete="off"
+                                    placeholder="Optional"
+                                />
+                            </label>
+
+                            <label class="admin-member-edit-field">
+                                <span>Membership type</span>
+
+                                <select id="memberDetailsType">
+                                    <option value="member">Member</option>
+                                    <option value="junior">Junior</option>
+                                    <option value="student">Student</option>
+                                    <option value="social">Social</option>
+                                    <option value="corporate">Corporate</option>
+                                </select>
+                            </label>
+
+                            <label class="admin-member-edit-field">
+                                <span>Status</span>
+
+                                <select id="memberDetailsStatus">
+                                    <option value="invited">Invited</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="active">Active</option>
+                                    <option value="suspended">Suspended</option>
+                                    <option value="expired">Expired</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </select>
+
+                                <small id="memberDetailsStatusHint"></small>
+                            </label>
+
+                            <label class="admin-member-edit-field">
+                                <span>Joined date</span>
+
+                                <input
+                                    id="memberDetailsJoinedAt"
+                                    type="date"
+                                />
+                            </label>
+                        </div>
+
+                        <div class="admin-member-dialog__actions">
+                            <a
+                                id="memberDetailsStaffLink"
+                                class="admin-member-dialog__staff-link"
+                                href="staff.html"
+                            >
+                                Manage staff access
+                            </a>
+
+                            <div>
+                                <button
+                                    id="memberDetailsCancel"
+                                    class="admin-secondary-button"
+                                    type="button"
+                                >
+                                    Cancel
+                                </button>
+
+                                <button
+                                    id="memberDetailsSave"
+                                    class="admin-primary-action"
+                                    type="submit"
+                                >
+                                    Save member
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </dialog>
+            </main>
         </div>
     </div>
 </body>

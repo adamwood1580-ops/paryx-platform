@@ -1,8 +1,8 @@
 (function () {
     "use strict";
 
-    // Paryx staff application namespace.
-    window.Paryx = window.Paryx || {};
+    window.Paryx =
+        window.Paryx || {};
 
     const PAGE_SIZE = 30;
 
@@ -27,18 +27,27 @@
         staff: "Staff"
     };
 
+    const SECTION_STAFF_ROLES = [
+        "starter",
+        "reception",
+        "professional",
+        "greenkeeper",
+        "manager",
+        "club_admin"
+    ];
+
     const elements = {};
 
     const state = {
         initialised: false,
         loading: false,
+        accessLoading: false,
         offset: 0,
         total: 0,
         search: "",
         status: "all",
         members: [],
         accessRequests: [],
-        accessLoading: false,
         currentUserId: null,
         clubId: null,
         adminRole: null,
@@ -46,90 +55,56 @@
     };
 
     function cacheElements() {
-        elements.clubName =
-            document.getElementById("memberClubName");
-
-        elements.error =
-            document.getElementById("membersError");
-
-        elements.search =
-            document.getElementById("memberSearch");
-
-        elements.status =
-            document.getElementById("memberStatusFilter");
-
-        elements.resultCount =
-            document.getElementById("memberResultCount");
-
-        elements.refresh =
-            document.getElementById("memberRefreshBtn");
-
-        elements.list =
-            document.getElementById("memberList");
-
-        elements.loadMore =
-            document.getElementById("loadMoreMembersBtn");
-
-        elements.accessCount =
-            document.getElementById(
-                "memberAccessRequestCount"
-            );
-
-        elements.accessRefresh =
-            document.getElementById(
-                "memberAccessRefreshBtn"
-            );
-
-        elements.accessList =
-            document.getElementById(
-                "memberAccessRequestList"
-            );
-
-        elements.accessDialog =
-            document.getElementById(
-                "memberAccessApprovalDialog"
-            );
-
-        elements.accessApprovalForm =
-            document.getElementById(
-                "memberAccessApprovalForm"
-            );
-
-        elements.accessApprovalIdentity =
-            document.getElementById(
-                "memberAccessApprovalIdentity"
-            );
-
-        elements.accessApprovalRequestId =
-            document.getElementById(
-                "memberAccessApprovalRequestId"
-            );
-
-        elements.accessApprovalMembershipNumber =
-            document.getElementById(
-                "memberAccessApprovalMembershipNumber"
-            );
-
-        elements.accessApprovalClose =
-            document.getElementById(
-                "memberAccessApprovalClose"
-            );
-
-        elements.accessApprovalCancel =
-            document.getElementById(
-                "memberAccessApprovalCancel"
-            );
-
-        elements.accessApprovalSubmit =
-            document.getElementById(
-                "memberAccessApprovalSubmit"
-            );
+        [
+            "memberClubName",
+            "membersError",
+            "membersSuccess",
+            "memberSearch",
+            "memberStatusFilter",
+            "memberResultCount",
+            "memberRefreshBtn",
+            "memberList",
+            "loadMoreMembersBtn",
+            "memberAccessRequestCount",
+            "memberAccessRefreshBtn",
+            "memberAccessRequestList",
+            "memberAccessApprovalDialog",
+            "memberAccessApprovalForm",
+            "memberAccessApprovalIdentity",
+            "memberAccessApprovalRequestId",
+            "memberAccessApprovalMembershipNumber",
+            "memberAccessApprovalClose",
+            "memberAccessApprovalCancel",
+            "memberAccessApprovalSubmit",
+            "memberDetailsDialog",
+            "memberDetailsForm",
+            "memberDetailsIdentity",
+            "memberDetailsMembershipId",
+            "memberDetailsEmail",
+            "memberDetailsHandicap",
+            "memberDetailsRole",
+            "memberDetailsNumber",
+            "memberDetailsType",
+            "memberDetailsStatus",
+            "memberDetailsStatusHint",
+            "memberDetailsJoinedAt",
+            "memberDetailsStaffLink",
+            "memberDetailsClose",
+            "memberDetailsCancel",
+            "memberDetailsSave"
+        ].forEach(
+            function (id) {
+                elements[id] =
+                    document.getElementById(id);
+            }
+        );
     }
 
     function getClient() {
         if (
             window.supabaseClient &&
-            typeof window.supabaseClient.rpc === "function"
+            typeof window.supabaseClient.rpc ===
+                "function"
         ) {
             return window.supabaseClient;
         }
@@ -139,20 +114,22 @@
         );
     }
 
-    function getReadableError(error) {
+    function readableError(error) {
         if (!error) {
             return "An unknown error occurred.";
         }
 
         if (
-            typeof error.message === "string" &&
+            typeof error.message ===
+                "string" &&
             error.message.trim()
         ) {
             return error.message.trim();
         }
 
         if (
-            typeof error.details === "string" &&
+            typeof error.details ===
+                "string" &&
             error.details.trim()
         ) {
             return error.details.trim();
@@ -170,27 +147,74 @@
             .replaceAll("'", "&#039;");
     }
 
+    function showError(error) {
+        console.error(
+            "Paryx Members error:",
+            error
+        );
+
+        elements.membersError.hidden =
+            false;
+
+        elements.membersError.textContent =
+            readableError(error);
+    }
+
+    function clearError() {
+        elements.membersError.hidden =
+            true;
+
+        elements.membersError.textContent =
+            "";
+    }
+
+    function showSuccess(message) {
+        elements.membersSuccess.hidden =
+            false;
+
+        elements.membersSuccess.textContent =
+            message;
+
+        window.setTimeout(
+            function () {
+                elements.membersSuccess.hidden =
+                    true;
+            },
+            4500
+        );
+    }
+
     function memberName(member) {
         const display =
-            String(member.display_name || "").trim();
+            String(
+                member.display_name ||
+                ""
+            ).trim();
 
         if (display) {
             return display;
         }
 
-        const fullName = [
-            member.first_name,
-            member.last_name
-        ]
-            .filter(Boolean)
-            .join(" ")
-            .trim();
+        const fullName =
+            [
+                member.first_name,
+                member.last_name
+            ]
+                .filter(Boolean)
+                .join(" ")
+                .trim();
 
-        return fullName || member.email || "Member";
+        return (
+            fullName ||
+            member.email ||
+            "Member"
+        );
     }
 
     function statusLabel(value) {
-        const text = String(value || "").trim();
+        const text =
+            String(value || "")
+                .trim();
 
         if (!text) {
             return "Unknown";
@@ -198,9 +222,13 @@
 
         return text
             .replaceAll("_", " ")
-            .replace(/\b\w/g, function (letter) {
-                return letter.toUpperCase();
-            });
+            .replace(
+                /\b\w/g,
+                function (letter) {
+                    return letter
+                        .toUpperCase();
+                }
+            );
     }
 
     function formatHandicap(value) {
@@ -212,282 +240,13 @@
             return "Not set";
         }
 
-        const number = Number(value);
+        const number =
+            Number(value);
 
         return Number.isFinite(number)
             ? number.toFixed(1)
             : String(value);
     }
-
-    function showError(error) {
-        console.error(
-            "Paryx member directory error:",
-            error
-        );
-
-        if (!elements.error) {
-            return;
-        }
-
-        elements.error.hidden = false;
-        elements.error.textContent =
-            getReadableError(error);
-    }
-
-    function clearError() {
-        if (elements.error) {
-            elements.error.hidden = true;
-            elements.error.textContent = "";
-        }
-    }
-
-    function renderLoading(reset) {
-        if (!elements.list) {
-            return;
-        }
-
-        if (reset) {
-            elements.list.innerHTML = `
-                <div class="admin-member-loading">
-                    Loading members...
-                </div>
-            `;
-        }
-
-        if (elements.refresh) {
-            elements.refresh.disabled = true;
-        }
-
-        if (elements.loadMore) {
-            elements.loadMore.disabled = true;
-        }
-    }
-
-    function renderCount() {
-        if (!elements.resultCount) {
-            return;
-        }
-
-        elements.resultCount.textContent =
-            new Intl.NumberFormat("en-GB")
-                .format(state.total);
-    }
-
-    function getMemberAction(member) {
-        const isSelf =
-            member.profile_id === state.currentUserId;
-
-        if (isSelf) {
-            return null;
-        }
-
-        if (
-            member.membership_role === "club_admin" &&
-            state.adminRole !== "club_admin"
-        ) {
-            return null;
-        }
-
-        if (member.membership_status === "active") {
-            return {
-                label: "Suspend",
-                nextStatus: "suspended",
-                danger: true
-            };
-        }
-
-        if (
-            [
-                "suspended",
-                "expired",
-                "cancelled"
-            ].includes(member.membership_status)
-        ) {
-            return {
-                label: "Reactivate",
-                nextStatus: "active",
-                danger: false
-            };
-        }
-
-        return null;
-    }
-
-    function canRemoveMember(member) {
-        const isSelf =
-            member.profile_id === state.currentUserId;
-
-        if (isSelf) {
-            return false;
-        }
-
-        if (state.adminRole !== "club_admin") {
-            return false;
-        }
-
-        return true;
-    }
-
-    function renderMemberCard(member) {
-        const action =
-            getMemberAction(member);
-
-        const status =
-            String(member.membership_status || "unknown");
-
-        const role =
-            ROLE_LABELS[member.membership_role] ||
-            statusLabel(member.membership_role);
-
-        const membershipType =
-            TYPE_LABELS[member.membership_type] ||
-            statusLabel(member.membership_type);
-
-        const isSelf =
-            member.profile_id === state.currentUserId;
-
-        return `
-            <article
-                class="admin-member-card"
-                data-membership-id="${escapeHtml(member.membership_id)}"
-            >
-                <div class="admin-member-card__top">
-                    <div>
-                        <h2 class="admin-member-card__name">
-                            ${escapeHtml(memberName(member))}
-                            ${isSelf ? '<small> · You</small>' : ""}
-                        </h2>
-
-                        <span class="admin-member-card__email">
-                            ${escapeHtml(member.email || "No email")}
-                        </span>
-                    </div>
-
-                    <span class="admin-member-status admin-member-status--${escapeHtml(status)}">
-                        ${escapeHtml(statusLabel(status))}
-                    </span>
-                </div>
-
-                <div class="admin-member-card__details">
-                    <div class="admin-member-detail">
-                        <span>Member no.</span>
-                        <strong>${escapeHtml(member.membership_number || "—")}</strong>
-                    </div>
-
-                    <div class="admin-member-detail">
-                        <span>Membership</span>
-                        <strong>${escapeHtml(membershipType)}</strong>
-                    </div>
-
-                    <div class="admin-member-detail">
-                        <span>Handicap</span>
-                        <strong>${escapeHtml(formatHandicap(member.handicap_index))}</strong>
-                    </div>
-
-                    <div class="admin-member-detail">
-                        <span>Role</span>
-                        <strong>${escapeHtml(role)}</strong>
-                    </div>
-                </div>
-
-                ${
-                    action || canRemoveMember(member)
-                        ? `
-                            <div class="admin-member-card__actions">
-                                ${
-                                    action
-                                        ? `
-                                            <button
-                                                class="admin-member-action ${action.danger ? "admin-member-action--danger" : ""}"
-                                                type="button"
-                                                data-member-status-action="${escapeHtml(action.nextStatus)}"
-                                                data-membership-id="${escapeHtml(member.membership_id)}"
-                                                data-member-name="${escapeHtml(memberName(member))}"
-                                            >
-                                                ${escapeHtml(action.label)}
-                                            </button>
-                                        `
-                                        : ""
-                                }
-
-                                ${
-                                    canRemoveMember(member)
-                                        ? `
-                                            <button
-                                                class="admin-member-action admin-member-action--remove"
-                                                type="button"
-                                                data-member-remove
-                                                data-membership-id="${escapeHtml(member.membership_id)}"
-                                                data-member-name="${escapeHtml(memberName(member))}"
-                                            >
-                                                Remove from club
-                                            </button>
-                                        `
-                                        : ""
-                                }
-                            </div>
-                        `
-                        : ""
-                }
-            </article>
-        `;
-    }
-
-    function renderMembers(reset) {
-        if (!elements.list) {
-            return;
-        }
-
-        if (!state.members.length) {
-            elements.list.innerHTML = `
-                <div class="admin-member-empty">
-                    No members match this search.
-                </div>
-            `;
-        } else {
-            const html = state.members
-                .map(renderMemberCard)
-                .join("");
-
-            elements.list.innerHTML = html;
-        }
-
-        renderCount();
-
-        if (elements.loadMore) {
-            elements.loadMore.hidden =
-                state.members.length >= state.total;
-
-            elements.loadMore.disabled = false;
-        }
-
-        if (elements.refresh) {
-            elements.refresh.disabled = false;
-        }
-
-        bindMemberActions();
-    }
-
-    function bindMemberActions() {
-        document
-            .querySelectorAll("[data-member-status-action]")
-            .forEach(function (button) {
-                button.addEventListener(
-                    "click",
-                    handleStatusAction
-                );
-            });
-
-        document
-            .querySelectorAll("[data-member-remove]")
-            .forEach(function (button) {
-                button.addEventListener(
-                    "click",
-                    handleRemoveMember
-                );
-            });
-    }
-
 
     function formatRequestDate(value) {
         if (!value) {
@@ -515,7 +274,438 @@
         ).format(date);
     }
 
-    function accessRequestName(request) {
+    function memberById(membershipId) {
+        return state.members.find(
+            function (member) {
+                return (
+                    member.membership_id ===
+                    membershipId
+                );
+            }
+        ) || null;
+    }
+
+    function renderLoading(reset) {
+        if (reset) {
+            elements.memberList.innerHTML = `
+                <div class="admin-member-loading">
+                    Loading members...
+                </div>
+            `;
+        }
+
+        elements.memberRefreshBtn.disabled =
+            true;
+
+        elements.loadMoreMembersBtn.disabled =
+            true;
+    }
+
+    function renderCount() {
+        elements.memberResultCount.textContent =
+            new Intl.NumberFormat(
+                "en-GB"
+            ).format(
+                state.total
+            );
+    }
+
+    function getMemberAction(member) {
+        const isSelf =
+            member.profile_id ===
+            state.currentUserId;
+
+        if (isSelf) {
+            return null;
+        }
+
+        if (
+            member.membership_role ===
+                "club_admin" &&
+            state.adminRole !==
+                "club_admin"
+        ) {
+            return null;
+        }
+
+        if (
+            member.membership_status ===
+            "active"
+        ) {
+            return {
+                label: "Suspend",
+                nextStatus: "suspended",
+                danger: true
+            };
+        }
+
+        if (
+            [
+                "suspended",
+                "expired",
+                "cancelled"
+            ].includes(
+                member.membership_status
+            )
+        ) {
+            return {
+                label: "Reactivate",
+                nextStatus: "active",
+                danger: false
+            };
+        }
+
+        return null;
+    }
+
+    function canRemoveMember(member) {
+        if (
+            member.profile_id ===
+            state.currentUserId
+        ) {
+            return false;
+        }
+
+        return (
+            state.adminRole ===
+            "club_admin"
+        );
+    }
+
+    function canEditMember(member) {
+        if (
+            member.membership_role ===
+                "club_admin" &&
+            state.adminRole !==
+                "club_admin"
+        ) {
+            return false;
+        }
+
+        return true;
+    }
+
+    function renderMemberCard(member) {
+        const action =
+            getMemberAction(member);
+
+        const status =
+            String(
+                member.membership_status ||
+                "unknown"
+            );
+
+        const role =
+            ROLE_LABELS[
+                member.membership_role
+            ] ||
+            statusLabel(
+                member.membership_role
+            );
+
+        const membershipType =
+            TYPE_LABELS[
+                member.membership_type
+            ] ||
+            statusLabel(
+                member.membership_type
+            );
+
+        const isSelf =
+            member.profile_id ===
+            state.currentUserId;
+
+        return `
+            <article
+                class="admin-member-card"
+                data-membership-id="${escapeHtml(
+                    member.membership_id
+                )}"
+            >
+                <div class="admin-member-card__top">
+                    <div>
+                        <h2 class="admin-member-card__name">
+                            ${escapeHtml(
+                                memberName(
+                                    member
+                                )
+                            )}
+                            ${
+                                isSelf
+                                    ? '<small> · You</small>'
+                                    : ""
+                            }
+                        </h2>
+
+                        <span class="admin-member-card__email">
+                            ${escapeHtml(
+                                member.email ||
+                                "No email"
+                            )}
+                        </span>
+                    </div>
+
+                    <span
+                        class="admin-member-status admin-member-status--${escapeHtml(
+                            status
+                        )}"
+                    >
+                        ${escapeHtml(
+                            statusLabel(
+                                status
+                            )
+                        )}
+                    </span>
+                </div>
+
+                <div class="admin-member-card__details">
+                    <div class="admin-member-detail">
+                        <span>Member no.</span>
+                        <strong>
+                            ${escapeHtml(
+                                member.membership_number ||
+                                "—"
+                            )}
+                        </strong>
+                    </div>
+
+                    <div class="admin-member-detail">
+                        <span>Membership</span>
+                        <strong>
+                            ${escapeHtml(
+                                membershipType
+                            )}
+                        </strong>
+                    </div>
+
+                    <div class="admin-member-detail">
+                        <span>Handicap</span>
+                        <strong>
+                            ${escapeHtml(
+                                formatHandicap(
+                                    member.handicap_index
+                                )
+                            )}
+                        </strong>
+                    </div>
+
+                    <div class="admin-member-detail">
+                        <span>Role</span>
+                        <strong>
+                            ${escapeHtml(
+                                role
+                            )}
+                        </strong>
+                    </div>
+                </div>
+
+                <div class="admin-member-card__actions">
+                    ${
+                        canEditMember(member)
+                            ? `
+                                <button
+                                    class="admin-member-action"
+                                    type="button"
+                                    data-member-edit
+                                    data-membership-id="${escapeHtml(
+                                        member.membership_id
+                                    )}"
+                                >
+                                    Edit details
+                                </button>
+                            `
+                            : ""
+                    }
+
+                    ${
+                        action
+                            ? `
+                                <button
+                                    class="admin-member-action ${
+                                        action.danger
+                                            ? "admin-member-action--danger"
+                                            : ""
+                                    }"
+                                    type="button"
+                                    data-member-status-action="${escapeHtml(
+                                        action.nextStatus
+                                    )}"
+                                    data-membership-id="${escapeHtml(
+                                        member.membership_id
+                                    )}"
+                                    data-member-name="${escapeHtml(
+                                        memberName(
+                                            member
+                                        )
+                                    )}"
+                                >
+                                    ${escapeHtml(
+                                        action.label
+                                    )}
+                                </button>
+                            `
+                            : ""
+                    }
+
+                    ${
+                        canRemoveMember(member)
+                            ? `
+                                <button
+                                    class="admin-member-action admin-member-action--remove"
+                                    type="button"
+                                    data-member-remove
+                                    data-membership-id="${escapeHtml(
+                                        member.membership_id
+                                    )}"
+                                    data-member-name="${escapeHtml(
+                                        memberName(
+                                            member
+                                        )
+                                    )}"
+                                >
+                                    Remove from club
+                                </button>
+                            `
+                            : ""
+                    }
+                </div>
+            </article>
+        `;
+    }
+
+    function renderMembers() {
+        if (!state.members.length) {
+            elements.memberList.innerHTML = `
+                <div class="admin-member-empty">
+                    No members match this search.
+                </div>
+            `;
+        } else {
+            elements.memberList.innerHTML =
+                state.members
+                    .map(
+                        renderMemberCard
+                    )
+                    .join("");
+        }
+
+        renderCount();
+
+        elements.loadMoreMembersBtn.hidden =
+            state.members.length >=
+            state.total;
+
+        elements.loadMoreMembersBtn.disabled =
+            false;
+
+        elements.memberRefreshBtn.disabled =
+            false;
+    }
+
+    async function loadMembers(
+        options = {}
+    ) {
+        if (state.loading) {
+            return;
+        }
+
+        const reset =
+            options.reset !==
+            false;
+
+        if (reset) {
+            state.offset = 0;
+            state.members = [];
+        }
+
+        state.loading =
+            true;
+
+        clearError();
+        renderLoading(reset);
+
+        try {
+            const {
+                data,
+                error
+            } =
+                await getClient().rpc(
+                    "get_admin_members",
+                    {
+                        p_club_id:
+                            state.clubId,
+                        p_search:
+                            state.search ||
+                            null,
+                        p_status:
+                            state.status ===
+                                "all"
+                                ? null
+                                : state.status,
+                        p_limit:
+                            PAGE_SIZE,
+                        p_offset:
+                            state.offset
+                    }
+                );
+
+            if (error) {
+                throw error;
+            }
+
+            const rows =
+                Array.isArray(data)
+                    ? data
+                    : [];
+
+            if (rows.length) {
+                state.total =
+                    Number(
+                        rows[0]
+                            .total_count ||
+                        0
+                    );
+            } else if (reset) {
+                state.total =
+                    0;
+            }
+
+            state.members =
+                reset
+                    ? rows
+                    : state.members
+                        .concat(
+                            rows
+                        );
+
+            state.offset =
+                state.members.length;
+
+            renderMembers();
+        } catch (error) {
+            showError(error);
+
+            if (reset) {
+                elements.memberList
+                    .innerHTML = `
+                        <div class="admin-member-empty">
+                            Member directory could not be loaded.
+                        </div>
+                    `;
+            }
+        } finally {
+            state.loading =
+                false;
+
+            elements.memberRefreshBtn
+                .disabled =
+                false;
+        }
+    }
+
+    function accessRequestName(
+        request
+    ) {
         return (
             String(
                 request.display_name ||
@@ -530,117 +720,139 @@
     }
 
     function renderAccessRequests() {
-        if (
-            !elements.accessList ||
-            !elements.accessCount
-        ) {
-            return;
-        }
-
-        elements.accessCount.textContent =
+        elements.memberAccessRequestCount
+            .textContent =
             String(
                 state.accessRequests.length
             );
 
-        if (!state.accessRequests.length) {
-            elements.accessList.innerHTML = `
-                <div class="admin-member-empty">
-                    No pending member access requests.
-                </div>
-            `;
+        if (
+            !state.accessRequests.length
+        ) {
+            elements.memberAccessRequestList
+                .innerHTML = `
+                    <div class="admin-member-empty">
+                        No pending member access requests.
+                    </div>
+                `;
 
             return;
         }
 
-        elements.accessList.innerHTML =
+        elements.memberAccessRequestList
+            .innerHTML =
             state.accessRequests
-                .map(function (request) {
-                    const requestName =
-                        accessRequestName(
-                            request
-                        );
+                .map(
+                    function (request) {
+                        const name =
+                            accessRequestName(
+                                request
+                            );
 
-                    const membershipNumber =
-                        String(
-                            request
-                                .requested_membership_number ||
-                            ""
-                        ).trim();
+                        const membershipNumber =
+                            String(
+                                request
+                                    .requested_membership_number ||
+                                ""
+                            ).trim();
 
-                    const message =
-                        String(
-                            request.message ||
-                            ""
-                        ).trim();
+                        const message =
+                            String(
+                                request.message ||
+                                ""
+                            ).trim();
 
-                    return `
-                        <article
-                            class="admin-access-request"
-                            data-access-request-id="${escapeHtml(request.request_id)}"
-                        >
-                            <div class="admin-access-request__top">
-                                <div>
-                                    <h3 class="admin-access-request__name">
-                                        ${escapeHtml(requestName)}
-                                    </h3>
+                        return `
+                            <article
+                                class="admin-access-request"
+                                data-access-request-id="${escapeHtml(
+                                    request.request_id
+                                )}"
+                            >
+                                <div class="admin-access-request__top">
+                                    <div>
+                                        <h3 class="admin-access-request__name">
+                                            ${escapeHtml(
+                                                name
+                                            )}
+                                        </h3>
 
-                                    <span class="admin-access-request__email">
-                                        ${escapeHtml(request.email || "No email")}
+                                        <span class="admin-access-request__email">
+                                            ${escapeHtml(
+                                                request.email ||
+                                                "No email"
+                                            )}
+                                        </span>
+                                    </div>
+
+                                    <span class="admin-access-request__pending">
+                                        Pending
                                     </span>
                                 </div>
 
-                                <span class="admin-access-request__pending">
-                                    Pending
-                                </span>
-                            </div>
+                                <div class="admin-access-request__details">
+                                    <div class="admin-access-request__detail">
+                                        <span>Membership no.</span>
+                                        <strong>
+                                            ${escapeHtml(
+                                                membershipNumber ||
+                                                "Not supplied"
+                                            )}
+                                        </strong>
+                                    </div>
 
-                            <div class="admin-access-request__details">
-                                <div class="admin-access-request__detail">
-                                    <span>Membership no.</span>
-                                    <strong>
-                                        ${escapeHtml(membershipNumber || "Not supplied")}
-                                    </strong>
+                                    <div class="admin-access-request__detail">
+                                        <span>Requested</span>
+                                        <strong>
+                                            ${escapeHtml(
+                                                formatRequestDate(
+                                                    request.created_at
+                                                )
+                                            )}
+                                        </strong>
+                                    </div>
                                 </div>
 
-                                <div class="admin-access-request__detail">
-                                    <span>Requested</span>
-                                    <strong>
-                                        ${escapeHtml(formatRequestDate(request.created_at))}
-                                    </strong>
+                                ${
+                                    message
+                                        ? `
+                                            <p class="admin-access-request__message">
+                                                ${escapeHtml(
+                                                    message
+                                                )}
+                                            </p>
+                                        `
+                                        : ""
+                                }
+
+                                <div class="admin-access-request__actions">
+                                    <button
+                                        class="admin-access-request__reject"
+                                        type="button"
+                                        data-access-reject="${escapeHtml(
+                                            request.request_id
+                                        )}"
+                                        data-access-name="${escapeHtml(
+                                            name
+                                        )}"
+                                    >
+                                        Reject
+                                    </button>
+
+                                    <button
+                                        class="admin-access-request__approve"
+                                        type="button"
+                                        data-access-approve="${escapeHtml(
+                                            request.request_id
+                                        )}"
+                                    >
+                                        Approve
+                                    </button>
                                 </div>
-                            </div>
-
-                            ${
-                                message
-                                    ? `
-                                        <p class="admin-access-request__message">
-                                            ${escapeHtml(message)}
-                                        </p>
-                                    `
-                                    : ""
-                            }
-
-                            <div class="admin-access-request__actions">
-                                <button
-                                    class="admin-access-request__reject"
-                                    type="button"
-                                    data-access-reject="${escapeHtml(request.request_id)}"
-                                    data-access-name="${escapeHtml(requestName)}"
-                                >
-                                    Reject
-                                </button>
-
-                                <button
-                                    class="admin-access-request__approve"
-                                    type="button"
-                                    data-access-approve="${escapeHtml(request.request_id)}"
-                                >
-                                    Approve
-                                </button>
-                            </div>
-                        </article>
-                    `;
-                })
+                            </article>
+                        `;
+                    }
+                )
                 .join("");
     }
 
@@ -655,28 +867,16 @@
         state.accessLoading =
             true;
 
-        if (elements.accessRefresh) {
-            elements.accessRefresh.disabled =
-                true;
-        }
-
-        if (elements.accessList) {
-            elements.accessList.innerHTML = `
-                <div class="admin-member-loading">
-                    Loading access requests...
-                </div>
-            `;
-        }
+        elements.memberAccessRefreshBtn
+            .disabled =
+            true;
 
         try {
-            const client =
-                getClient();
-
             const {
                 data,
                 error
             } =
-                await client.rpc(
+                await getClient().rpc(
                     "admin_get_member_access_requests",
                     {
                         p_club_id:
@@ -709,30 +909,29 @@
         } catch (error) {
             showError(error);
 
-            if (elements.accessList) {
-                elements.accessList.innerHTML = `
+            elements.memberAccessRequestList
+                .innerHTML = `
                     <div class="admin-member-empty">
                         Member access requests could not be loaded.
                     </div>
                 `;
-            }
 
-            if (elements.accessCount) {
-                elements.accessCount.textContent =
-                    "!";
-            }
+            elements.memberAccessRequestCount
+                .textContent =
+                "!";
         } finally {
             state.accessLoading =
                 false;
 
-            if (elements.accessRefresh) {
-                elements.accessRefresh.disabled =
-                    false;
-            }
+            elements.memberAccessRefreshBtn
+                .disabled =
+                false;
         }
     }
 
-    function openAccessApproval(requestId) {
+    function openAccessApproval(
+        requestId
+    ) {
         const request =
             state.accessRequests.find(
                 function (item) {
@@ -743,17 +942,16 @@
                 }
             );
 
-        if (
-            !request ||
-            !elements.accessDialog
-        ) {
+        if (!request) {
             return;
         }
 
-        elements.accessApprovalRequestId.value =
+        elements.memberAccessApprovalRequestId
+            .value =
             request.request_id;
 
-        elements.accessApprovalIdentity.textContent =
+        elements.memberAccessApprovalIdentity
+            .textContent =
             [
                 accessRequestName(
                     request
@@ -763,20 +961,22 @@
                 .filter(Boolean)
                 .join(" · ");
 
-        elements.accessApprovalMembershipNumber.value =
+        elements.memberAccessApprovalMembershipNumber
+            .value =
             String(
                 request
                     .requested_membership_number ||
                 ""
             ).trim();
 
-        elements.accessDialog.showModal();
+        elements.memberAccessApprovalDialog
+            .showModal();
 
         window.setTimeout(
             function () {
                 elements
-                    .accessApprovalMembershipNumber
-                    ?.focus();
+                    .memberAccessApprovalMembershipNumber
+                    .focus();
             },
             0
         );
@@ -787,13 +987,10 @@
         approve,
         membershipNumber
     ) {
-        const client =
-            getClient();
-
         const {
             error
         } =
-            await client.rpc(
+            await getClient().rpc(
                 "admin_resolve_member_access_request",
                 {
                     p_club_id:
@@ -801,7 +998,9 @@
                     p_request_id:
                         requestId,
                     p_approve:
-                        Boolean(approve),
+                        Boolean(
+                            approve
+                        ),
                     p_membership_number:
                         membershipNumber ||
                         null
@@ -813,16 +1012,68 @@
         }
     }
 
-    async function rejectAccessRequest(
-        requestId,
-        requestName
+    async function submitAccessApproval(
+        event
     ) {
-        const confirmed =
-            window.confirm(
-                `Reject the member access request from ${requestName || "this player"}?`
+        event.preventDefault();
+
+        const requestId =
+            elements
+                .memberAccessApprovalRequestId
+                .value;
+
+        if (!requestId) {
+            return;
+        }
+
+        clearError();
+
+        elements.memberAccessApprovalSubmit
+            .disabled =
+            true;
+
+        try {
+            await resolveAccessRequest(
+                requestId,
+                true,
+                elements
+                    .memberAccessApprovalMembershipNumber
+                    .value
+                    .trim() ||
+                    null
             );
 
-        if (!confirmed) {
+            elements.memberAccessApprovalDialog
+                .close();
+
+            showSuccess(
+                "Member access approved."
+            );
+
+            await Promise.all([
+                loadAccessRequests(),
+                loadMembers({
+                    reset: true
+                })
+            ]);
+        } catch (error) {
+            showError(error);
+        } finally {
+            elements.memberAccessApprovalSubmit
+                .disabled =
+                false;
+        }
+    }
+
+    async function rejectAccessRequest(
+        requestId,
+        name
+    ) {
+        if (
+            !window.confirm(
+                `Reject the member access request from ${name || "this player"}?`
+            )
+        ) {
             return;
         }
 
@@ -835,235 +1086,328 @@
                 null
             );
 
+            showSuccess(
+                "Member access request rejected."
+            );
+
             await loadAccessRequests();
         } catch (error) {
             showError(error);
         }
     }
 
-    async function submitAccessApproval(
+    function openMemberDetails(
+        membershipId
+    ) {
+        const member =
+            memberById(
+                membershipId
+            );
+
+        if (!member) {
+            return;
+        }
+
+        const isSelf =
+            member.profile_id ===
+            state.currentUserId;
+
+        elements.memberDetailsMembershipId
+            .value =
+            member.membership_id;
+
+        elements.memberDetailsIdentity
+            .textContent =
+            memberName(
+                member
+            );
+
+        elements.memberDetailsEmail
+            .textContent =
+            member.email ||
+            "No email";
+
+        elements.memberDetailsHandicap
+            .textContent =
+            formatHandicap(
+                member.handicap_index
+            );
+
+        elements.memberDetailsRole
+            .textContent =
+            ROLE_LABELS[
+                member.membership_role
+            ] ||
+            statusLabel(
+                member.membership_role
+            );
+
+        elements.memberDetailsNumber
+            .value =
+            member.membership_number ||
+            "";
+
+        elements.memberDetailsType
+            .value =
+            [
+                "member",
+                "junior",
+                "student",
+                "social",
+                "corporate"
+            ].includes(
+                member.membership_type
+            )
+                ? member.membership_type
+                : "member";
+
+        elements.memberDetailsStatus
+            .value =
+            member.membership_status ||
+            "active";
+
+        elements.memberDetailsJoinedAt
+            .value =
+            member.joined_at ||
+            "";
+
+        elements.memberDetailsStatus
+            .disabled =
+            isSelf;
+
+        elements.memberDetailsStatusHint
+            .textContent =
+            isSelf
+                ? "You cannot deactivate your own ClubHub membership here."
+                : "";
+
+        const staffManaged =
+            SECTION_STAFF_ROLES.includes(
+                member.membership_role
+            );
+
+        elements.memberDetailsStaffLink
+            .textContent =
+            staffManaged
+                ? "Manage staff access"
+                : "Grant ClubHub staff access";
+
+        elements.memberDetailsStaffLink
+            .href =
+            `staff.html?email=${encodeURIComponent(
+                member.email ||
+                ""
+            )}`;
+
+        elements.memberDetailsDialog
+            .showModal();
+    }
+
+    async function saveMemberDetails(
         event
     ) {
         event.preventDefault();
 
-        const requestId =
+        const membershipId =
             elements
-                .accessApprovalRequestId
+                .memberDetailsMembershipId
                 .value;
 
-        if (!requestId) {
+        if (!membershipId) {
             return;
         }
 
         clearError();
 
-        elements.accessApprovalSubmit.disabled =
+        elements.memberDetailsSave
+            .disabled =
             true;
 
         try {
-            await resolveAccessRequest(
-                requestId,
-                true,
-                elements
-                    .accessApprovalMembershipNumber
-                    .value
-                    .trim() ||
-                    null
-            );
+            const member =
+                memberById(
+                    membershipId
+                );
 
-            elements.accessDialog.close();
-
-            await Promise.all([
-                loadAccessRequests(),
-                loadMembers({
-                    reset: true
-                })
-            ]);
-        } catch (error) {
-            showError(error);
-        } finally {
-            elements.accessApprovalSubmit.disabled =
-                false;
-        }
-    }
-
-    async function loadMembers(options = {}) {
-        if (state.loading) {
-            return;
-        }
-
-        const reset =
-            options.reset !== false;
-
-        if (reset) {
-            state.offset = 0;
-            state.members = [];
-        }
-
-        state.loading = true;
-        clearError();
-        renderLoading(reset);
-
-        try {
-            const client = getClient();
+            const status =
+                elements.memberDetailsStatus
+                    .disabled
+                    ? (
+                        member
+                            ?.membership_status ||
+                        "active"
+                    )
+                    : elements
+                        .memberDetailsStatus
+                        .value;
 
             const {
-                data,
                 error
-            } = await client.rpc(
-                "get_admin_members",
-                {
-                    p_club_id:
-                        state.clubId,
-                    p_search:
-                        state.search || null,
-                    p_status:
-                        state.status === "all"
-                            ? null
-                            : state.status,
-                    p_limit: PAGE_SIZE,
-                    p_offset: state.offset
-                }
-            );
+            } =
+                await getClient().rpc(
+                    "admin_update_member_details",
+                    {
+                        p_club_id:
+                            state.clubId,
+                        p_membership_id:
+                            membershipId,
+                        p_membership_number:
+                            elements
+                                .memberDetailsNumber
+                                .value
+                                .trim() ||
+                            null,
+                        p_membership_type:
+                            elements
+                                .memberDetailsType
+                                .value,
+                        p_status:
+                            status,
+                        p_joined_at:
+                            elements
+                                .memberDetailsJoinedAt
+                                .value ||
+                            null
+                    }
+                );
 
             if (error) {
                 throw error;
             }
 
-            const rows =
-                Array.isArray(data)
-                    ? data
-                    : [];
+            elements.memberDetailsDialog
+                .close();
 
-            if (rows.length) {
-                state.total =
-                    Number(rows[0].total_count || 0);
-            } else if (reset) {
-                state.total = 0;
-            }
-
-            state.members =
-                reset
-                    ? rows
-                    : state.members.concat(rows);
-
-            state.offset =
-                state.members.length;
-
-            renderMembers(reset);
-        } catch (error) {
-            showError(error);
-
-            if (reset && elements.list) {
-                elements.list.innerHTML = `
-                    <div class="admin-member-empty">
-                        Member directory could not be loaded.
-                    </div>
-                `;
-            }
-        } finally {
-            state.loading = false;
-
-            if (elements.refresh) {
-                elements.refresh.disabled = false;
-            }
-        }
-    }
-
-    async function handleStatusAction(event) {
-        const button = event.currentTarget;
-        const membershipId =
-            button.dataset.membershipId;
-        const nextStatus =
-            button.dataset.memberStatusAction;
-        const memberNameValue =
-            button.dataset.memberName || "this member";
-
-        if (!membershipId || !nextStatus) {
-            return;
-        }
-
-        const actionText =
-            nextStatus === "active"
-                ? "reactivate"
-                : "suspend";
-
-        const confirmed = window.confirm(
-            `Are you sure you want to ${actionText} ${memberNameValue}?`
-        );
-
-        if (!confirmed) {
-            return;
-        }
-
-        button.disabled = true;
-        clearError();
-
-        try {
-            const client = getClient();
-
-            const {
-                error
-            } = await client.rpc(
-                "admin_set_member_status",
-                {
-                    p_club_id:
-                        state.clubId,
-                    p_membership_id:
-                        membershipId,
-                    p_status:
-                        nextStatus
-                }
+            showSuccess(
+                "Member details updated."
             );
-
-            if (error) {
-                throw error;
-            }
 
             await loadMembers({
                 reset: true
             });
         } catch (error) {
             showError(error);
-            button.disabled = false;
+        } finally {
+            elements.memberDetailsSave
+                .disabled =
+                false;
         }
     }
 
-    async function handleRemoveMember(event) {
-        const button =
-            event.currentTarget;
-
+    async function handleStatusAction(
+        button
+    ) {
         const membershipId =
-            button.dataset.membershipId;
+            button.dataset
+                .membershipId;
 
-        const memberNameValue =
-            button.dataset.memberName ||
+        const nextStatus =
+            button.dataset
+                .memberStatusAction;
+
+        const name =
+            button.dataset
+                .memberName ||
+            "this member";
+
+        if (
+            !membershipId ||
+            !nextStatus
+        ) {
+            return;
+        }
+
+        const actionText =
+            nextStatus ===
+            "active"
+                ? "reactivate"
+                : "suspend";
+
+        if (
+            !window.confirm(
+                `Are you sure you want to ${actionText} ${name}?`
+            )
+        ) {
+            return;
+        }
+
+        button.disabled =
+            true;
+
+        clearError();
+
+        try {
+            const {
+                error
+            } =
+                await getClient().rpc(
+                    "admin_set_member_status",
+                    {
+                        p_club_id:
+                            state.clubId,
+                        p_membership_id:
+                            membershipId,
+                        p_status:
+                            nextStatus
+                    }
+                );
+
+            if (error) {
+                throw error;
+            }
+
+            showSuccess(
+                nextStatus ===
+                    "active"
+                    ? "Member reactivated."
+                    : "Member suspended."
+            );
+
+            await loadMembers({
+                reset: true
+            });
+        } catch (error) {
+            showError(error);
+
+            button.disabled =
+                false;
+        }
+    }
+
+    async function handleRemoveMember(
+        button
+    ) {
+        const membershipId =
+            button.dataset
+                .membershipId;
+
+        const name =
+            button.dataset
+                .memberName ||
             "this member";
 
         if (!membershipId) {
             return;
         }
 
-        const confirmed =
-            window.confirm(
-                `Remove ${memberNameValue} from this club?\\n\\nTheir membership at this club will be deleted. Their Paryx login account is not deleted.`
-            );
-
-        if (!confirmed) {
+        if (
+            !window.confirm(
+                `Remove ${name} from this club?\n\nTheir member access will be removed, but their global Paryx account and historical booking records remain.`
+            )
+        ) {
             return;
         }
 
-        button.disabled = true;
+        button.disabled =
+            true;
+
         clearError();
 
         try {
-            const client =
-                getClient();
-
             const {
                 error
             } =
-                await client.rpc(
+                await getClient().rpc(
                     "admin_remove_member",
                     {
                         p_club_id:
@@ -1077,149 +1421,238 @@
                 throw error;
             }
 
+            showSuccess(
+                "Member access removed from this club."
+            );
+
             await loadMembers({
                 reset: true
             });
         } catch (error) {
             showError(error);
-            button.disabled = false;
+
+            button.disabled =
+                false;
         }
     }
 
     function bindControls() {
-        elements.accessRefresh
-            ?.addEventListener(
+        elements.memberSearch
+            .addEventListener(
+                "input",
+                function () {
+                    state.search =
+                        elements
+                            .memberSearch
+                            .value
+                            .trim();
+
+                    window.clearTimeout(
+                        state.debounceTimer
+                    );
+
+                    state.debounceTimer =
+                        window.setTimeout(
+                            function () {
+                                loadMembers({
+                                    reset: true
+                                });
+                            },
+                            300
+                        );
+                }
+            );
+
+        elements.memberStatusFilter
+            .addEventListener(
+                "change",
+                function () {
+                    state.status =
+                        elements
+                            .memberStatusFilter
+                            .value;
+
+                    loadMembers({
+                        reset: true
+                    });
+                }
+            );
+
+        elements.memberRefreshBtn
+            .addEventListener(
+                "click",
+                function () {
+                    loadMembers({
+                        reset: true
+                    });
+                }
+            );
+
+        elements.loadMoreMembersBtn
+            .addEventListener(
+                "click",
+                function () {
+                    loadMembers({
+                        reset: false
+                    });
+                }
+            );
+
+        elements.memberAccessRefreshBtn
+            .addEventListener(
                 "click",
                 loadAccessRequests
             );
 
-        elements.accessList
-            ?.addEventListener(
+        elements.memberAccessRequestList
+            .addEventListener(
                 "click",
                 function (event) {
-                    const approveButton =
+                    const approve =
                         event.target.closest(
                             "[data-access-approve]"
                         );
 
-                    if (approveButton) {
+                    if (approve) {
                         openAccessApproval(
-                            approveButton
-                                .dataset
+                            approve.dataset
                                 .accessApprove
                         );
 
                         return;
                     }
 
-                    const rejectButton =
+                    const reject =
                         event.target.closest(
                             "[data-access-reject]"
                         );
 
-                    if (rejectButton) {
+                    if (reject) {
                         rejectAccessRequest(
-                            rejectButton
-                                .dataset
+                            reject.dataset
                                 .accessReject,
-                            rejectButton
-                                .dataset
+                            reject.dataset
                                 .accessName
                         );
                     }
                 }
             );
 
-        elements.accessApprovalForm
-            ?.addEventListener(
+        elements.memberList
+            .addEventListener(
+                "click",
+                function (event) {
+                    const edit =
+                        event.target.closest(
+                            "[data-member-edit]"
+                        );
+
+                    if (edit) {
+                        openMemberDetails(
+                            edit.dataset
+                                .membershipId
+                        );
+
+                        return;
+                    }
+
+                    const status =
+                        event.target.closest(
+                            "[data-member-status-action]"
+                        );
+
+                    if (status) {
+                        handleStatusAction(
+                            status
+                        );
+
+                        return;
+                    }
+
+                    const remove =
+                        event.target.closest(
+                            "[data-member-remove]"
+                        );
+
+                    if (remove) {
+                        handleRemoveMember(
+                            remove
+                        );
+                    }
+                }
+            );
+
+        elements.memberAccessApprovalForm
+            .addEventListener(
                 "submit",
                 submitAccessApproval
             );
 
+        elements.memberDetailsForm
+            .addEventListener(
+                "submit",
+                saveMemberDetails
+            );
+
         [
-            elements.accessApprovalClose,
-            elements.accessApprovalCancel
+            [
+                elements
+                    .memberAccessApprovalClose,
+                elements
+                    .memberAccessApprovalDialog
+            ],
+            [
+                elements
+                    .memberAccessApprovalCancel,
+                elements
+                    .memberAccessApprovalDialog
+            ],
+            [
+                elements
+                    .memberDetailsClose,
+                elements
+                    .memberDetailsDialog
+            ],
+            [
+                elements
+                    .memberDetailsCancel,
+                elements
+                    .memberDetailsDialog
+            ]
         ].forEach(
-            function (button) {
-                button
-                    ?.addEventListener(
-                        "click",
-                        function () {
-                            elements
-                                .accessDialog
-                                ?.close();
-                        }
-                    );
-            }
-        );
-
-        elements.search.addEventListener(
-            "input",
-            function () {
-                state.search =
-                    elements.search.value.trim();
-
-                window.clearTimeout(
-                    state.debounceTimer
+            function (
+                [
+                    button,
+                    dialog
+                ]
+            ) {
+                button.addEventListener(
+                    "click",
+                    function () {
+                        dialog.close();
+                    }
                 );
-
-                state.debounceTimer =
-                    window.setTimeout(
-                        function () {
-                            loadMembers({
-                                reset: true
-                            });
-                        },
-                        300
-                    );
-            }
-        );
-
-        elements.status.addEventListener(
-            "change",
-            function () {
-                state.status =
-                    elements.status.value;
-
-                loadMembers({
-                    reset: true
-                });
-            }
-        );
-
-        elements.refresh.addEventListener(
-            "click",
-            function () {
-                loadMembers({
-                    reset: true
-                });
-            }
-        );
-
-        elements.loadMore.addEventListener(
-            "click",
-            function () {
-                loadMembers({
-                    reset: false
-                });
             }
         );
     }
 
     async function loadAdminContext() {
-        if (!window.Paryx.clubContext) {
+        if (
+            !window.Paryx
+                .clubContext
+        ) {
             throw new Error(
                 "Paryx club context is unavailable."
             );
         }
 
-        const clubContext =
+        const context =
             await window.Paryx
                 .clubContext
                 .ready;
 
         const activeClub =
-            clubContext?.activeClub ||
+            context?.activeClub ||
             window.Paryx
                 .clubContext
                 .getActiveClub();
@@ -1243,11 +1676,10 @@
         state.adminRole =
             activeClub.role;
 
-        if (elements.clubName) {
-            elements.clubName.textContent =
-                activeClub.name ||
-                "Your club";
-        }
+        elements.memberClubName
+            .textContent =
+            activeClub.name ||
+            "Your club";
     }
 
     async function initialise() {
@@ -1255,7 +1687,9 @@
             return;
         }
 
-        state.initialised = true;
+        state.initialised =
+            true;
+
         cacheElements();
         bindControls();
 
@@ -1284,7 +1718,7 @@
             ]);
         } catch (error) {
             const message =
-                getReadableError(error)
+                readableError(error)
                     .toLowerCase();
 
             if (
@@ -1295,9 +1729,11 @@
                     "staff club access required"
                 )
             ) {
-                window.location.replace(
-                    "login.html?reason=access"
-                );
+                window.location
+                    .replace(
+                        "login.html?reason=access"
+                    );
+
                 return;
             }
 
@@ -1305,11 +1741,16 @@
         }
     }
 
-    if (document.readyState === "loading") {
+    if (
+        document.readyState ===
+        "loading"
+    ) {
         document.addEventListener(
             "DOMContentLoaded",
             initialise,
-            { once: true }
+            {
+                once: true
+            }
         );
     } else {
         initialise();
