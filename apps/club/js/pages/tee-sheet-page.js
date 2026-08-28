@@ -76,6 +76,7 @@
         loadStatus: document.getElementById("teeSheetLoadStatus"),
         empty: document.getElementById("teeSheetEmpty"),
         rows: document.getElementById("teeSheetRows"),
+        earlierTimes: document.getElementById("earlierTeeTimesButton"),
         eventsEmpty: document.getElementById("teeSheetEventsEmpty"),
         events: document.getElementById("teeSheetEvents"),
 
@@ -503,12 +504,83 @@
         return row.lead_name || "Booked";
     }
 
+    function findCurrentOrNextTeeTime() {
+        if (state.playDate !== todayIso()) {
+            return null;
+        }
+
+        return (
+            state.teeTimes.find(function (row) {
+                return !isPastTeeTime(row);
+            }) ||
+            state.teeTimes[state.teeTimes.length - 1] ||
+            null
+        );
+    }
+
+    function updateEarlierTimesButton() {
+        const hasEarlier =
+            state.playDate === todayIso() &&
+            state.teeTimes.some(function (row) {
+                return isPastTeeTime(row);
+            });
+
+        elements.earlierTimes.hidden =
+            !hasEarlier;
+    }
+
+    function focusCurrentTeeTime() {
+        updateEarlierTimesButton();
+
+        if (
+            !state.teeTimes.length ||
+            state.playDate !== todayIso()
+        ) {
+            elements.rows.scrollTop = 0;
+            return;
+        }
+
+        const anchorRow =
+            findCurrentOrNextTeeTime();
+
+        if (!anchorRow) {
+            return;
+        }
+
+        window.requestAnimationFrame(function () {
+            const element =
+                elements.rows.querySelector(
+                    `[data-tee-time-id="${CSS.escape(
+                        String(anchorRow.tee_time_id)
+                    )}"]`
+                );
+
+            if (!element) {
+                return;
+            }
+
+            elements.rows.scrollTop =
+                Math.max(
+                    0,
+                    element.offsetTop - 8
+                );
+        });
+    }
+
+    function showEarlierTeeTimes() {
+        elements.rows.scrollTo({
+            top: 0,
+            behavior: "smooth"
+        });
+    }
+
     function renderTeeSheet() {
         renderSummary();
         elements.empty.hidden = state.teeTimes.length > 0;
 
         if (!state.teeTimes.length) {
             elements.rows.innerHTML = "";
+            elements.earlierTimes.hidden = true;
             return;
         }
 
@@ -582,7 +654,11 @@
                     `;
 
                 return `
-                    <article class="tee-sheet-row tee-sheet-row--${escapeHtml(status)}" data-tee-time-id="${escapeHtml(row.tee_time_id)}">
+                    <article
+                        class="tee-sheet-row tee-sheet-row--${escapeHtml(status)}${past ? " tee-sheet-row--past-time" : ""}"
+                        data-tee-time-id="${escapeHtml(row.tee_time_id)}"
+                        data-past-time="${past ? "true" : "false"}"
+                    >
                         <time>${escapeHtml(shortTime(row.start_time))}</time>
 
                         <div class="tee-sheet-row__main">
@@ -660,6 +736,8 @@
                 `;
             })
             .join("");
+
+        focusCurrentTeeTime();
     }
 
     function defaultAction(event) {
@@ -1812,6 +1890,11 @@
             state.playDate = todayIso();
             await loadDay();
         });
+
+        elements.earlierTimes.addEventListener(
+            "click",
+            showEarlierTeeTimes
+        );
 
         elements.generate.addEventListener("click", generateDay);
         elements.manageSchedules.addEventListener("click", openSchedules);

@@ -954,3 +954,70 @@
         grid-template-columns: 1fr 1fr;
     }
 }
+
+
+/* BOOKING v3.4 — CURRENT / FUTURE TEE-TIME FOCUS */
+
+.tee-sheet-section-heading__actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: .7rem;
+}
+
+.tee-sheet-section-heading__actions > span {
+    color: var(--color-text-muted);
+    font-size: .86rem;
+}
+
+.tee-sheet-earlier-button {
+    min-height: 34px;
+    padding: .42rem .72rem;
+    border: 1px solid var(--color-border-brand);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--color-primary);
+    font: inherit;
+    font-size: .74rem;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.tee-sheet-earlier-button:hover {
+    background: var(--color-primary-light);
+}
+
+.tee-sheet-rows {
+    position: relative;
+    max-height: min(68vh, 760px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+    scroll-behavior: smooth;
+}
+
+.tee-sheet-row--past-time {
+    background: #fafbfa;
+}
+
+.tee-sheet-row--past-time > time {
+    color: var(--color-text-muted);
+}
+
+@media (max-width: 760px) {
+    .tee-sheet-section-heading__actions {
+        align-items: flex-end;
+        flex-direction: column-reverse;
+        gap: .35rem;
+    }
+
+    .tee-sheet-earlier-button {
+        min-height: 32px;
+        padding: .35rem .62rem;
+        font-size: .7rem;
+    }
+
+    .tee-sheet-rows {
+        max-height: 64vh;
+    }
+}
