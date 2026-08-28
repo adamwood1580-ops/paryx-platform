@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width,initial-scale=1,viewport-fit=cover"
+    >
+    <meta name="theme-color" content="#064831">
+
+    <title>Account Details | Paryx</title>
+
+    <link
+        rel="stylesheet"
+        href="../styles/member.css"
+    >
+
+    <link
+        rel="manifest"
+        href="../json/manifest.json"
+    >
+</head>
+
+<body data-page="profile">
+    <main class="member-app">
+        <header class="topbar">
+            <div class="brand account-page-brand">
+                <a
+                    class="account-back-button"
+                    href="profile.html"
+                    aria-label="Back to Profile"
+                >
+                    ‹
+                </a>
+
+                <strong>
+                    Account details
+                </strong>
+            </div>
+        </header>
+
+        <section class="hero account-details-hero">
+            <p class="eyebrow">
+                Global Paryx account
+            </p>
+
+            <h1 class="title">
+                Your details
+            </h1>
+
+            <p class="subtitle">
+                These details belong to your Paryx account
+                and follow you across every linked club.
+            </p>
+        </section>
+
+        <section
+            id="accountDetailsError"
+            class="notice error"
+            role="alert"
+            hidden
+        ></section>
+
+        <section
+            id="accountDetailsSuccess"
+            class="notice account-details-success"
+            role="status"
+            hidden
+        ></section>
+
+        <form
+            id="accountDetailsForm"
+            class="section account-details-form"
+            novalidate
+        >
+            <div class="section-head">
+                <h2>Personal details</h2>
+            </div>
+
+            <div class="card account-details-card">
+                <label class="account-details-field">
+                    <span>First name</span>
+
+                    <input
+                        id="accountFirstName"
+                        type="text"
+                        maxlength="100"
+                        autocomplete="given-name"
+                    >
+                </label>
+
+                <label class="account-details-field">
+                    <span>Last name</span>
+
+                    <input
+                        id="accountLastName"
+                        type="text"
+                        maxlength="100"
+                        autocomplete="family-name"
+                    >
+                </label>
+
+                <label class="account-details-field">
+                    <span>Display name</span>
+
+                    <input
+                        id="accountDisplayName"
+                        type="text"
+                        maxlength="120"
+                        autocomplete="name"
+                        placeholder="How your name appears in Paryx"
+                    >
+
+                    <small>
+                        If left blank, Paryx uses your first and
+                        last name.
+                    </small>
+                </label>
+
+                <label class="account-details-field">
+                    <span>Phone</span>
+
+                    <input
+                        id="accountPhone"
+                        type="tel"
+                        maxlength="40"
+                        autocomplete="tel"
+                        inputmode="tel"
+                        placeholder="Optional"
+                    >
+                </label>
+            </div>
+
+            <div class="section-head account-details-login-heading">
+                <h2>Sign-in details</h2>
+            </div>
+
+            <div class="card account-login-card">
+                <div class="account-login-row">
+                    <div>
+                        <span>Email</span>
+
+                        <strong id="accountEmail">
+                            —
+                        </strong>
+                    </div>
+
+                    <span
+                        id="accountEmailStatus"
+                        class="badge"
+                    >
+                        —
+                    </span>
+                </div>
+
+                <p>
+                    Your email is your global Paryx sign-in
+                    address. Email changes are kept separate
+                    from profile editing so club links are not
+                    accidentally disrupted.
+                </p>
+            </div>
+
+            <button
+                id="accountSaveButton"
+                class="button full"
+                type="submit"
+            >
+                Save details
+            </button>
+        </form>
+    </main>
+
+    <div data-member-shell></div>
+
+    <script src="../js/core/config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/core/supabase.js"></script>
+    <script src="../js/core/member-core.js"></script>
+    <script src="../js/core/member-shell.js"></script>
+    <script src="../js/pages/account-page.js?v=0.16.0"></script>
+</body>
+</html>

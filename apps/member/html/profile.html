@@ -70,35 +70,31 @@
                 <h2>Account</h2>
             </div>
 
-            <div class="card profile-details-card">
-                <div class="profile-detail-row">
-                    <span>Email</span>
-
-                    <strong id="profileEmail">
-                        —
-                    </strong>
+            <a
+                class="card profile-account-link"
+                href="account.html"
+            >
+                <div class="profile-account-link__icon">
+                    ○
                 </div>
 
-                <div class="profile-detail-row">
-                    <span>Email status</span>
-
-                    <strong id="profileEmailStatus">
-                        —
+                <div class="profile-account-link__body">
+                    <strong>
+                        Account details
                     </strong>
+
+                    <span id="profileAccountEmail">
+                        View and edit your Paryx details
+                    </span>
                 </div>
 
-                <div
-                    id="profilePhoneRow"
-                    class="profile-detail-row"
-                    hidden
+                <span
+                    class="profile-account-link__chevron"
+                    aria-hidden="true"
                 >
-                    <span>Phone</span>
-
-                    <strong id="profilePhone">
-                        —
-                    </strong>
-                </div>
-            </div>
+                    ›
+                </span>
+            </a>
         </section>
 
         <section class="section">
@@ -206,6 +202,6 @@
     <script src="../js/core/supabase.js"></script>
     <script src="../js/core/member-core.js"></script>
     <script src="../js/core/member-shell.js"></script>
-    <script src="../js/pages/profile-page.js?v=0.15.0"></script>
+    <script src="../js/pages/profile-page.js?v=0.16.0"></script>
 </body>
 </html>

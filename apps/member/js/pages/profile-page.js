@@ -15,24 +15,9 @@
                 "profileName"
             ),
 
-        email:
+        accountEmail:
             document.getElementById(
-                "profileEmail"
-            ),
-
-        emailStatus:
-            document.getElementById(
-                "profileEmailStatus"
-            ),
-
-        phoneRow:
-            document.getElementById(
-                "profilePhoneRow"
-            ),
-
-        phone:
-            document.getElementById(
-                "profilePhone"
+                "profileAccountEmail"
             ),
 
         tierBadge:
@@ -569,12 +554,6 @@
                 ""
             ).trim();
 
-        const phone =
-            String(
-                profile.phone ||
-                ""
-            ).trim();
-
         const access =
             entitlementState(
                 entitlement
@@ -588,25 +567,9 @@
         elements.name.textContent =
             playerName;
 
-        elements.email.textContent =
+        elements.accountEmail.textContent =
             email ||
-            "—";
-
-        elements.emailStatus.textContent =
-            user.email_confirmed_at
-                ? "Verified"
-                : "Not verified";
-
-        if (phone) {
-            elements.phone.textContent =
-                phone;
-
-            elements.phoneRow.hidden =
-                false;
-        } else {
-            elements.phoneRow.hidden =
-                true;
-        }
+            "View and edit your Paryx details";
 
         elements.tierBadge.textContent =
             access.badge;

@@ -561,3 +561,190 @@
     font-size: .71rem;
     line-height: 1.45;
 }
+
+
+/* =========================================================
+   PLAYER ACCOUNT DETAILS
+   ========================================================= */
+
+.profile-account-link {
+    display: grid;
+    grid-template-columns:
+        auto
+        minmax(0, 1fr)
+        auto;
+    align-items: center;
+    gap: 12px;
+    color: inherit;
+    text-decoration: none;
+}
+
+.profile-account-link__icon {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 13px;
+    background: var(--green-soft);
+    color: var(--green-dark);
+    font-size: 1rem;
+    font-weight: 900;
+}
+
+.profile-account-link__body {
+    min-width: 0;
+}
+
+.profile-account-link__body strong,
+.profile-account-link__body span {
+    display: block;
+}
+
+.profile-account-link__body strong {
+    color: var(--green-dark);
+    font-size: .84rem;
+}
+
+.profile-account-link__body span {
+    margin-top: 3px;
+    color: var(--muted);
+    font-size: .7rem;
+    overflow-wrap: anywhere;
+}
+
+.profile-account-link__chevron {
+    color: var(--muted);
+    font-size: 1.45rem;
+    line-height: 1;
+}
+
+.account-page-brand {
+    gap: 9px;
+}
+
+.account-back-button {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    margin-left: -5px;
+    border-radius: 11px;
+    color: var(--green-dark);
+    text-decoration: none;
+    font-size: 1.65rem;
+    line-height: 1;
+}
+
+.account-details-hero {
+    display: block;
+}
+
+.account-details-form {
+    padding-bottom:
+        calc(
+            30px +
+            env(safe-area-inset-bottom)
+        );
+}
+
+.account-details-card {
+    display: grid;
+    gap: 14px;
+}
+
+.account-details-field {
+    display: grid;
+    gap: 6px;
+}
+
+.account-details-field > span {
+    color: var(--muted);
+    font-size: .68rem;
+    font-weight: 800;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.account-details-field input {
+    width: 100%;
+    min-height: 46px;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 13px;
+    background: #fff;
+    color: var(--text);
+    font: inherit;
+    font-size: .86rem;
+}
+
+.account-details-field input:focus {
+    outline: 2px solid
+        rgba(
+            6,
+            72,
+            49,
+            .12
+        );
+    border-color: var(--green);
+}
+
+.account-details-field small {
+    color: var(--muted);
+    font-size: .68rem;
+    line-height: 1.4;
+}
+
+.account-details-login-heading {
+    margin-top: 18px;
+}
+
+.account-login-card {
+    display: grid;
+    gap: 11px;
+}
+
+.account-login-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.account-login-row > div {
+    min-width: 0;
+}
+
+.account-login-row span,
+.account-login-row strong {
+    display: block;
+}
+
+.account-login-row > div > span {
+    color: var(--muted);
+    font-size: .66rem;
+    font-weight: 800;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.account-login-row strong {
+    margin-top: 3px;
+    color: var(--green-dark);
+    font-size: .82rem;
+    overflow-wrap: anywhere;
+}
+
+.account-login-card p {
+    margin: 0;
+    color: var(--muted);
+    font-size: .7rem;
+    line-height: 1.45;
+}
+
+.account-details-success {
+    margin: 0 14px 14px;
+    border-color: #b9dec7;
+    background: #edf8f1;
+    color: #17673d;
+}
