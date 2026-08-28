@@ -168,7 +168,7 @@
 
 .admin-tool-card {
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 1fr);
     align-items: center;
     gap: var(--space-3);
     width: 100%;
@@ -243,22 +243,6 @@
     line-height: 1.35;
 }
 
-.admin-tool-card__status {
-    align-self: start;
-    padding: 0.35rem 0.6rem;
-    color: var(--color-text-muted);
-    background: var(--color-surface-muted);
-    border-radius: var(--radius-round);
-    font-size: 0.65rem;
-    font-weight: var(--font-weight-bold);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
-.admin-tool-card--featured .admin-tool-card__status {
-    color: #765500;
-    background: var(--color-accent-light);
-}
 
 .admin-updated {
     margin: var(--space-5) 0 0;
@@ -297,11 +281,6 @@
 
     .admin-tool-card {
         grid-template-columns: auto minmax(0, 1fr);
-    }
-
-    .admin-tool-card__status {
-        grid-column: 2;
-        justify-self: start;
     }
 }
 
