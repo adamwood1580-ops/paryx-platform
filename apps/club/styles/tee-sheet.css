@@ -141,7 +141,7 @@
 
 .tee-sheet-summary {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: var(--space-3);
 }
 
@@ -881,5 +881,76 @@
 
     .tee-sheet-row__actions .tee-sheet-row__action {
         flex: 1 1 120px;
+    }
+}
+
+
+/* =========================================================
+   BOOKING V3 — OPERATIONAL CLEANUP
+   ========================================================= */
+
+.tee-sheet-row__checked-in,
+.tee-sheet-row__past {
+    display: inline-flex;
+    align-items: center;
+    min-height: 25px;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 800;
+}
+
+.tee-sheet-row__checked-in {
+    background: #e8f6ef;
+    color: #12613f;
+}
+
+.tee-sheet-row__past {
+    background: #eef0ef;
+    color: var(--color-text-muted);
+}
+
+.tee-sheet-row__past-action {
+    display: inline-flex;
+    justify-content: center;
+    width: 100%;
+    color: var(--color-text-soft);
+    font-size: 0.76rem;
+    font-weight: 700;
+}
+
+.tee-sheet-check-in-button {
+    min-height: 36px;
+    padding: 0.5rem 0.78rem;
+    border: 1px solid var(--color-primary);
+    border-radius: 999px;
+    background: var(--color-primary);
+    color: #fff;
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.tee-sheet-check-in-button.is-checked-in {
+    border-color: var(--color-border-brand);
+    background: #fff;
+    color: var(--color-primary);
+}
+
+.tee-sheet-check-in-button:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+}
+
+@media (max-width: 1100px) {
+    .tee-sheet-summary {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 760px) {
+    .tee-sheet-summary {
+        grid-template-columns: 1fr 1fr;
     }
 }

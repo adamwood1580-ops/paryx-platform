@@ -14,7 +14,7 @@
     <link rel="icon" type="image/png" href="../assets/paryx-favicon.png" />
     <meta name="application-name" content="Paryx" />
     <title>Tee Sheet | Paryx</title>
-    <script src="../js/core/protected-loader.js?loader=5" defer></script>
+    <script src="../js/core/protected-loader.js?loader=7" defer></script>
 </head>
 <body data-page="teesheet">
     <div class="staff-shell">
@@ -77,8 +77,12 @@
                         <strong id="teeSheetOpenCount">0</strong>
                     </article>
                     <article>
-                        <span>Booked</span>
+                        <span>Bookings</span>
                         <strong id="teeSheetBookedCount">0</strong>
+                    </article>
+                    <article>
+                        <span>Players</span>
+                        <strong id="teeSheetPlayerCount">0</strong>
                     </article>
                     <article>
                         <span>Event / unavailable</span>
@@ -263,7 +267,21 @@
                 </section>
 
                 <section class="tee-sheet-booking-details">
-                    <h3>Booking details</h3>
+                    <div class="tee-sheet-booking-section-heading">
+                        <div>
+                            <h3>Booking details</h3>
+                            <p id="bookingOperationalStatus">New booking</p>
+                        </div>
+
+                        <button
+                            id="checkInBookingButton"
+                            class="tee-sheet-check-in-button"
+                            type="button"
+                            hidden
+                        >
+                            Check in
+                        </button>
+                    </div>
 
                     <label class="tee-sheet-field">
                         <span>Booking type</span>
