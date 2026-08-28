@@ -250,29 +250,77 @@
 
         const client = getClient();
 
-        const {
-            data,
-            error
-        } = await client.rpc(
-            "get_admin_dashboard",
-            {
-                p_club_id:
-                    clubId
-            }
-        );
+        const [
+            dashboardResult,
+            activeMembersResult
+        ] = await Promise.all([
+            client.rpc(
+                "get_admin_dashboard",
+                {
+                    p_club_id:
+                        clubId
+                }
+            ),
 
-        if (error) {
-            throw error;
+            client.rpc(
+                "get_admin_members",
+                {
+                    p_club_id:
+                        clubId,
+                    p_search:
+                        null,
+                    p_status:
+                        "active",
+                    p_limit:
+                        1,
+                    p_offset:
+                        0
+                }
+            )
+        ]);
+
+        if (dashboardResult.error) {
+            throw dashboardResult.error;
+        }
+
+        if (activeMembersResult.error) {
+            throw activeMembersResult.error;
         }
 
         const dashboard =
-            getDashboardRow(data);
+            getDashboardRow(
+                dashboardResult.data
+            );
 
         if (!dashboard) {
             throw new Error(
                 "No admin dashboard data was returned."
             );
         }
+
+        const activeMemberRows =
+            Array.isArray(
+                activeMembersResult.data
+            )
+                ? activeMembersResult.data
+                : [];
+
+        /*
+         * Keep Dashboard "Active members" aligned with
+         * the Members directory itself.
+         *
+         * get_admin_members excludes visitor, guest and
+         * staff-only relationships, so these do not inflate
+         * the genuine club-member count.
+         */
+        dashboard.active_members =
+            activeMemberRows.length
+                ? Number(
+                    activeMemberRows[0]
+                        .total_count ||
+                    0
+                )
+                : 0;
 
         return dashboard;
     }
