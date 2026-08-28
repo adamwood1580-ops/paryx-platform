@@ -15,8 +15,6 @@
         },
         { key: "calendar", label: "Calendar", href: "calendar.html" },
         { key: "courses", label: "Courses", href: "courses.html" },
-        { key: "communications", label: "Communications", href: null },
-        { key: "reports", label: "Reports", href: null },
         { key: "settings", label: "Settings", href: "settings.html" }
     ];
 
