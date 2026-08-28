@@ -660,3 +660,157 @@
         grid-template-columns: 1fr 1fr;
     }
 }
+
+
+/* =========================================================
+   MEMBERSHIP RENEWAL REMINDERS
+   ========================================================= */
+
+.admin-renewal-alerts {
+    margin-bottom: var(--space-5);
+    padding: var(--space-4);
+}
+
+.admin-renewal-alerts__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-bottom: var(--space-3);
+}
+
+.admin-renewal-alerts__title-row {
+    display: flex;
+    align-items: center;
+    gap: .55rem;
+    flex-wrap: wrap;
+}
+
+.admin-renewal-alerts__header h2 {
+    margin: 0;
+    color: var(--color-primary);
+    font-size: var(--font-size-lg);
+}
+
+.admin-renewal-alerts__header p {
+    max-width: 46rem;
+    margin: .35rem 0 0;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    line-height: 1.45;
+}
+
+.admin-renewal-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.85rem;
+    min-height: 1.85rem;
+    padding: 0 .55rem;
+    border-radius: var(--radius-round);
+    background: #fbf1d5;
+    color: #785b05;
+    font-size: .72rem;
+    font-weight: var(--font-weight-bold);
+}
+
+.admin-renewal-list {
+    display: grid;
+    gap: .7rem;
+}
+
+.admin-renewal-item {
+    display: grid;
+    gap: .7rem;
+    padding: var(--space-3);
+    border: 1px solid var(--color-border-soft);
+    border-radius: var(--radius-md);
+    background: var(--color-surface-muted);
+}
+
+.admin-renewal-item--overdue {
+    border-color: #e7baba;
+    background: #fff8f8;
+}
+
+.admin-renewal-item--30_day {
+    border-color: #e7d39a;
+    background: #fffaf0;
+}
+
+.admin-renewal-item__main {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-3);
+}
+
+.admin-renewal-item__main h3 {
+    margin: 0;
+    color: var(--color-primary);
+    font-size: var(--font-size-md);
+}
+
+.admin-renewal-item__main > div > span {
+    display: block;
+    margin-top: .18rem;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-xs);
+}
+
+.admin-renewal-stage {
+    flex: 0 0 auto;
+    padding: .32rem .58rem;
+    border-radius: var(--radius-round);
+    background: #fbf1d5;
+    color: #785b05;
+    font-size: .66rem;
+    font-weight: 800;
+}
+
+.admin-renewal-item--overdue .admin-renewal-stage {
+    background: #f8eaea;
+    color: #8d3434;
+}
+
+.admin-renewal-item__meta span,
+.admin-renewal-item__meta strong {
+    display: block;
+}
+
+.admin-renewal-item__meta span {
+    color: var(--color-text-soft);
+    font-size: .64rem;
+    font-weight: 800;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.admin-renewal-item__meta strong {
+    margin-top: .2rem;
+    color: var(--color-text);
+    font-size: .8rem;
+}
+
+.admin-renewal-item__actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+@media (max-width: 36rem) {
+    .admin-renewal-alerts__header {
+        display: grid;
+    }
+
+    .admin-renewal-alerts__header .admin-secondary-button {
+        width: 100%;
+    }
+
+    .admin-renewal-item__main {
+        display: grid;
+    }
+
+    .admin-renewal-stage {
+        justify-self: start;
+    }
+}

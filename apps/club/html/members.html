@@ -123,6 +123,48 @@
                     </div>
                 </section>
 
+
+                <section class="card admin-renewal-alerts">
+                    <div class="admin-renewal-alerts__header">
+                        <div>
+                            <div class="admin-renewal-alerts__title-row">
+                                <h2>Membership renewals</h2>
+
+                                <span
+                                    id="memberRenewalCount"
+                                    class="admin-renewal-count"
+                                >
+                                    --
+                                </span>
+                            </div>
+
+                            <p>
+                                Members due to renew within 90 days,
+                                including memberships that have passed
+                                their renewal date.
+                            </p>
+                        </div>
+
+                        <button
+                            id="memberRenewalRefreshBtn"
+                            class="admin-secondary-button"
+                            type="button"
+                        >
+                            Refresh
+                        </button>
+                    </div>
+
+                    <div
+                        id="memberRenewalList"
+                        class="admin-renewal-list"
+                        aria-live="polite"
+                    >
+                        <div class="admin-member-loading">
+                            Loading renewal reminders...
+                        </div>
+                    </div>
+                </section>
+
                 <section class="card admin-member-toolbar">
                     <label class="admin-member-search">
                         <span class="admin-member-field-label">
@@ -393,6 +435,21 @@
                                     id="memberDetailsJoinedAt"
                                     type="date"
                                 />
+                            </label>
+
+                            <label class="admin-member-edit-field">
+                                <span>Renewal date</span>
+
+                                <input
+                                    id="memberDetailsRenewalDate"
+                                    type="date"
+                                />
+
+                                <small>
+                                    ClubHub starts warning staff 90 days
+                                    before this date. The player sees
+                                    reminders from 60 days.
+                                </small>
                             </label>
                         </div>
 

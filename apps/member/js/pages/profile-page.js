@@ -70,6 +70,16 @@
                 "profileClubs"
             ),
 
+        membershipNoticesSection:
+            document.getElementById(
+                "profileMembershipNoticesSection"
+            ),
+
+        membershipNotices:
+            document.getElementById(
+                "profileMembershipNotices"
+            ),
+
         signOut:
             document.getElementById(
                 "signOut"
@@ -351,6 +361,185 @@
                 .join("");
     }
 
+    function formatRenewalDate(value) {
+        if (!value) {
+            return "";
+        }
+
+        const parts =
+            String(value)
+                .split("-")
+                .map(Number);
+
+        const date =
+            new Date(
+                parts[0],
+                (parts[1] || 1) - 1,
+                parts[2] || 1
+            );
+
+        if (
+            Number.isNaN(
+                date.getTime()
+            )
+        ) {
+            return String(value);
+        }
+
+        return new Intl.DateTimeFormat(
+            "en-GB",
+            {
+                day: "numeric",
+                month: "short",
+                year: "numeric"
+            }
+        ).format(date);
+    }
+
+    function renewalCopy(notice) {
+        const clubName =
+            String(
+                notice.club_name ||
+                "your club"
+            );
+
+        const days =
+            Number(
+                notice.days_remaining
+            );
+
+        const date =
+            formatRenewalDate(
+                notice.renewal_date
+            );
+
+        const level =
+            String(
+                notice.notice_level ||
+                "60_day"
+            );
+
+        if (level === "expired") {
+            return {
+                title:
+                    `${clubName} membership expired`,
+                body:
+                    `Your membership at ${clubName} expired on ${date}. If you have not renewed, contact the club.`
+            };
+        }
+
+        const remaining =
+            days === 0
+                ? "today"
+                : days === 1
+                    ? "in 1 day"
+                    : `in ${days} days`;
+
+        return {
+            title:
+                level === "30_day"
+                    ? "30-day renewal reminder"
+                    : "60-day renewal reminder",
+            body:
+                `Your membership at ${clubName} expires ${remaining} on ${date}.`
+        };
+    }
+
+    function renderMembershipNotices(
+        notices
+    ) {
+        const safe =
+            Array.isArray(notices)
+                ? notices
+                : [];
+
+        if (!safe.length) {
+            elements
+                .membershipNoticesSection
+                .hidden =
+                true;
+
+            elements
+                .membershipNotices
+                .innerHTML =
+                "";
+
+            return;
+        }
+
+        elements
+            .membershipNoticesSection
+            .hidden =
+            false;
+
+        elements.membershipNotices
+            .innerHTML =
+            safe
+                .map(
+                    function (notice) {
+                        const copy =
+                            renewalCopy(
+                                notice
+                            );
+
+                        const level =
+                            String(
+                                notice.notice_level ||
+                                "60_day"
+                            );
+
+                        return `
+                            <article
+                                class="profile-renewal-notice profile-renewal-notice--${P.escapeHtml(
+                                    level
+                                )}"
+                            >
+                                <div class="profile-renewal-notice__icon">
+                                    !
+                                </div>
+
+                                <div>
+                                    <strong>
+                                        ${P.escapeHtml(
+                                            copy.title
+                                        )}
+                                    </strong>
+
+                                    <p>
+                                        ${P.escapeHtml(
+                                            copy.body
+                                        )}
+                                    </p>
+                                </div>
+                            </article>
+                        `;
+                    }
+                )
+                .join("");
+    }
+
+    async function loadMembershipNotices() {
+        try {
+            const data =
+                await P.rpc(
+                    "member_get_membership_renewal_notices"
+                );
+
+            renderMembershipNotices(
+                data
+            );
+        } catch (error) {
+            console.warn(
+                "Paryx membership renewal notice warning:",
+                error
+            );
+
+            renderMembershipNotices(
+                []
+            );
+        }
+    }
+
     function render(
         context
     ) {
@@ -476,7 +665,15 @@
     );
 
     P.ready
-        .then(render)
+        .then(
+            async function (context) {
+                render(
+                    context
+                );
+
+                await loadMembershipNotices();
+            }
+        )
         .catch(
             function (error) {
                 elements.clubs.innerHTML = `

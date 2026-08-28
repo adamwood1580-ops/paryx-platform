@@ -42,12 +42,14 @@
         initialised: false,
         loading: false,
         accessLoading: false,
+        renewalLoading: false,
         offset: 0,
         total: 0,
         search: "",
         status: "all",
         members: [],
         accessRequests: [],
+        renewals: [],
         currentUserId: null,
         clubId: null,
         adminRole: null,
@@ -76,6 +78,9 @@
             "memberAccessApprovalClose",
             "memberAccessApprovalCancel",
             "memberAccessApprovalSubmit",
+            "memberRenewalCount",
+            "memberRenewalRefreshBtn",
+            "memberRenewalList",
             "memberDetailsDialog",
             "memberDetailsForm",
             "memberDetailsIdentity",
@@ -88,6 +93,7 @@
             "memberDetailsStatus",
             "memberDetailsStatusHint",
             "memberDetailsJoinedAt",
+            "memberDetailsRenewalDate",
             "memberDetailsStaffLink",
             "memberDetailsClose",
             "memberDetailsCancel",
@@ -272,6 +278,67 @@
                 year: "numeric"
             }
         ).format(date);
+    }
+
+    function formatMembershipDate(value) {
+        if (!value) {
+            return "Not set";
+        }
+
+        const parts =
+            String(value)
+                .split("-")
+                .map(Number);
+
+        const date =
+            new Date(
+                parts[0],
+                (parts[1] || 1) - 1,
+                parts[2] || 1
+            );
+
+        if (
+            Number.isNaN(
+                date.getTime()
+            )
+        ) {
+            return String(value);
+        }
+
+        return new Intl.DateTimeFormat(
+            "en-GB",
+            {
+                day: "numeric",
+                month: "short",
+                year: "numeric"
+            }
+        ).format(date);
+    }
+
+    function renewalMessage(daysRemaining) {
+        const days =
+            Number(daysRemaining);
+
+        if (!Number.isFinite(days)) {
+            return "Renewal due";
+        }
+
+        if (days < 0) {
+            const overdue =
+                Math.abs(days);
+
+            return overdue === 1
+                ? "1 day overdue"
+                : `${overdue} days overdue`;
+        }
+
+        if (days === 0) {
+            return "Due today";
+        }
+
+        return days === 1
+            ? "Due in 1 day"
+            : `Due in ${days} days`;
     }
 
     function memberById(membershipId) {
@@ -474,6 +541,17 @@
                         <strong>
                             ${escapeHtml(
                                 membershipType
+                            )}
+                        </strong>
+                    </div>
+
+                    <div class="admin-member-detail">
+                        <span>Renewal</span>
+                        <strong>
+                            ${escapeHtml(
+                                formatMembershipDate(
+                                    member.renewal_date
+                                )
                             )}
                         </strong>
                     </div>
@@ -698,6 +776,163 @@
                 false;
 
             elements.memberRefreshBtn
+                .disabled =
+                false;
+        }
+    }
+
+    function renderRenewals() {
+        elements.memberRenewalCount
+            .textContent =
+            String(
+                state.renewals.length
+            );
+
+        if (!state.renewals.length) {
+            elements.memberRenewalList
+                .innerHTML = `
+                    <div class="admin-member-empty">
+                        No memberships are due for renewal
+                        within the next 90 days.
+                    </div>
+                `;
+
+            return;
+        }
+
+        elements.memberRenewalList
+            .innerHTML =
+            state.renewals
+                .map(
+                    function (renewal) {
+                        const level =
+                            String(
+                                renewal.notice_level ||
+                                "90_day"
+                            );
+
+                        return `
+                            <article
+                                class="admin-renewal-item admin-renewal-item--${escapeHtml(
+                                    level
+                                )}"
+                            >
+                                <div class="admin-renewal-item__main">
+                                    <div>
+                                        <h3>
+                                            ${escapeHtml(
+                                                renewal.display_name ||
+                                                renewal.email ||
+                                                "Member"
+                                            )}
+                                        </h3>
+
+                                        <span>
+                                            ${escapeHtml(
+                                                renewal.membership_number ||
+                                                renewal.email ||
+                                                "No membership number"
+                                            )}
+                                        </span>
+                                    </div>
+
+                                    <span class="admin-renewal-stage">
+                                        ${escapeHtml(
+                                            renewalMessage(
+                                                renewal.days_remaining
+                                            )
+                                        )}
+                                    </span>
+                                </div>
+
+                                <div class="admin-renewal-item__meta">
+                                    <span>
+                                        Renewal date
+                                    </span>
+
+                                    <strong>
+                                        ${escapeHtml(
+                                            formatMembershipDate(
+                                                renewal.renewal_date
+                                            )
+                                        )}
+                                    </strong>
+                                </div>
+
+                                <div class="admin-renewal-item__actions">
+                                    <button
+                                        class="admin-member-action"
+                                        type="button"
+                                        data-renewal-edit-member="${escapeHtml(
+                                            renewal.membership_id
+                                        )}"
+                                    >
+                                        Edit member
+                                    </button>
+                                </div>
+                            </article>
+                        `;
+                    }
+                )
+                .join("");
+    }
+
+    async function loadRenewals() {
+        if (
+            state.renewalLoading ||
+            !state.clubId
+        ) {
+            return;
+        }
+
+        state.renewalLoading =
+            true;
+
+        elements.memberRenewalRefreshBtn
+            .disabled =
+            true;
+
+        try {
+            const {
+                data,
+                error
+            } =
+                await getClient().rpc(
+                    "admin_get_membership_renewals",
+                    {
+                        p_club_id:
+                            state.clubId
+                    }
+                );
+
+            if (error) {
+                throw error;
+            }
+
+            state.renewals =
+                Array.isArray(data)
+                    ? data
+                    : [];
+
+            renderRenewals();
+        } catch (error) {
+            showError(error);
+
+            elements.memberRenewalList
+                .innerHTML = `
+                    <div class="admin-member-empty">
+                        Renewal reminders could not be loaded.
+                    </div>
+                `;
+
+            elements.memberRenewalCount
+                .textContent =
+                "!";
+        } finally {
+            state.renewalLoading =
+                false;
+
+            elements.memberRenewalRefreshBtn
                 .disabled =
                 false;
         }
@@ -1171,6 +1406,11 @@
             member.joined_at ||
             "";
 
+        elements.memberDetailsRenewalDate
+            .value =
+            member.renewal_date ||
+            "";
+
         elements.memberDetailsStatus
             .disabled =
             isSelf;
@@ -1268,6 +1508,12 @@
                                 .memberDetailsJoinedAt
                                 .value ||
                             null
+,
+                        p_renewal_date:
+                            elements
+                                .memberDetailsRenewalDate
+                                .value ||
+                            null
                     }
                 );
 
@@ -1282,9 +1528,12 @@
                 "Member details updated."
             );
 
-            await loadMembers({
-                reset: true
-            });
+            await Promise.all([
+                loadMembers({
+                    reset: true
+                }),
+                loadRenewals()
+            ]);
         } catch (error) {
             showError(error);
         } finally {
@@ -1363,9 +1612,12 @@
                     : "Member suspended."
             );
 
-            await loadMembers({
-                reset: true
-            });
+            await Promise.all([
+                loadMembers({
+                    reset: true
+                }),
+                loadRenewals()
+            ]);
         } catch (error) {
             showError(error);
 
@@ -1425,9 +1677,12 @@
                 "Member access removed from this club."
             );
 
-            await loadMembers({
-                reset: true
-            });
+            await Promise.all([
+                loadMembers({
+                    reset: true
+                }),
+                loadRenewals()
+            ]);
         } catch (error) {
             showError(error);
 
@@ -1502,6 +1757,30 @@
             .addEventListener(
                 "click",
                 loadAccessRequests
+            );
+
+        elements.memberRenewalRefreshBtn
+            .addEventListener(
+                "click",
+                loadRenewals
+            );
+
+        elements.memberRenewalList
+            .addEventListener(
+                "click",
+                function (event) {
+                    const edit =
+                        event.target.closest(
+                            "[data-renewal-edit-member]"
+                        );
+
+                    if (edit) {
+                        openMemberDetails(
+                            edit.dataset
+                                .renewalEditMember
+                        );
+                    }
+                }
             );
 
         elements.memberAccessRequestList
@@ -1714,7 +1993,8 @@
                 loadMembers({
                     reset: true
                 }),
-                loadAccessRequests()
+                loadAccessRequests(),
+                loadRenewals()
             ]);
         } catch (error) {
             const message =
