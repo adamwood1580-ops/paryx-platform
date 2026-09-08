@@ -931,6 +931,97 @@
         return null;
     }
 
+    function isActiveClubMember(member) {
+        if (
+            typeof member?.is_active_member ===
+            "boolean"
+        ) {
+            return member.is_active_member;
+        }
+
+        const membershipType =
+            String(
+                member?.membership_type ||
+                ""
+            )
+                .trim()
+                .toLowerCase();
+
+        const membershipStatus =
+            String(
+                member?.membership_status ||
+                ""
+            )
+                .trim()
+                .toLowerCase();
+
+        return (
+            membershipStatus === "active" &&
+            ![
+                "visitor",
+                "guest",
+                "staff"
+            ].includes(
+                membershipType
+            )
+        );
+    }
+
+    function bookingRelationshipLabel(member) {
+        const membershipType =
+            String(
+                member?.membership_type ||
+                ""
+            )
+                .trim()
+                .toLowerCase();
+
+        const membershipStatus =
+            String(
+                member?.membership_status ||
+                ""
+            )
+                .trim()
+                .toLowerCase();
+
+        if (isActiveClubMember(member)) {
+            return member.membership_number
+                ? `Member ${member.membership_number}`
+                : "Club member";
+        }
+
+        if (
+            membershipType === "visitor" ||
+            membershipType === "guest"
+        ) {
+            return "Visitor";
+        }
+
+        if (membershipType === "staff") {
+            return "Staff";
+        }
+
+        const inactiveLabels = {
+            invited:
+                "Membership invited",
+            pending:
+                "Membership pending",
+            suspended:
+                "Membership suspended",
+            expired:
+                "Membership expired",
+            cancelled:
+                "Membership cancelled"
+        };
+
+        return (
+            inactiveLabels[
+                membershipStatus
+            ] ||
+            "Paryx player"
+        );
+    }
+
     function renderBookingPlayers() {
         const total = selectedPlayerCount();
         elements.bookingCapacity.textContent = `${total} / ${state.booking.maxPlayers}`;
@@ -945,9 +1036,9 @@
                         Number(member.party_size || 1) > 1
                             ? `${Number(member.party_size)} places`
                             : "1 place",
-                        member.membership_number
-                            ? `Member ${member.membership_number}`
-                            : "Club member",
+                        bookingRelationshipLabel(
+                            member
+                        ),
                         member.email || ""
                     ].filter(Boolean).join(" · ")
                 };
