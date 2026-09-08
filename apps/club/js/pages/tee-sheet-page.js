@@ -108,6 +108,7 @@
 
         bookingDialog: document.getElementById("bookingDialog"),
         bookingForm: document.getElementById("bookingForm"),
+        bookingDialogEyebrow: document.getElementById("bookingDialogEyebrow"),
         bookingDialogTitle: document.getElementById("bookingDialogTitle"),
         bookingDialogSubtitle: document.getElementById("bookingDialogSubtitle"),
         bookingDialogError: document.getElementById("bookingDialogError"),
@@ -1177,6 +1178,12 @@
                 .textContent =
                 "New booking";
 
+            if (elements.bookingDialogEyebrow) {
+                elements.bookingDialogEyebrow
+                    .textContent =
+                    "Staff booking";
+            }
+
             elements.checkInBooking.hidden =
                 true;
 
@@ -1193,6 +1200,12 @@
             "staff"
                 ? "Staff booking"
                 : "Player booking";
+
+        if (elements.bookingDialogEyebrow) {
+            elements.bookingDialogEyebrow
+                .textContent =
+                source;
+        }
 
         elements.bookingOperationalStatus
             .textContent =
