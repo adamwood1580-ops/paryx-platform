@@ -100,6 +100,11 @@
                 "accountReadOnlyNote"
             ),
 
+        entitlementStatus:
+            document.getElementById(
+                "accountEntitlementStatus"
+            ),
+
         entitlementForm:
             document.getElementById(
                 "accountEntitlementForm"
@@ -172,6 +177,33 @@
 
         elements.success.hidden =
             true;
+    }
+
+    function clearEntitlementStatus() {
+        elements.entitlementStatus.textContent =
+            "";
+
+        elements.entitlementStatus.className =
+            "console-success";
+
+        elements.entitlementStatus.hidden =
+            true;
+    }
+
+    function showEntitlementStatus(
+        text,
+        type = "success"
+    ) {
+        elements.entitlementStatus.textContent =
+            text;
+
+        elements.entitlementStatus.className =
+            type === "error"
+                ? "console-error"
+                : "console-success";
+
+        elements.entitlementStatus.hidden =
+            false;
     }
 
     function readableError(error) {
@@ -841,6 +873,7 @@
         }
 
         clearMessages();
+        clearEntitlementStatus();
         fillAccount(row);
 
         elements.dialog.showModal();
@@ -904,6 +937,7 @@
         }
 
         clearMessages();
+        clearEntitlementStatus();
 
         elements.save.disabled =
             true;
@@ -1003,9 +1037,9 @@
 
             render();
 
-            showMessage(
-                elements.success,
-                "Player entitlement updated."
+            showEntitlementStatus(
+                "Player entitlement updated.",
+                "success"
             );
         } catch (error) {
             console.error(
@@ -1013,11 +1047,11 @@
                 error
             );
 
-            showMessage(
-                elements.error,
+            showEntitlementStatus(
                 readableError(
                     error
-                )
+                ),
+                "error"
             );
         } finally {
             elements.save.disabled =

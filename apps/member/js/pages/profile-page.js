@@ -125,7 +125,14 @@
             )
                 .trim()
                 .split(/\s+/)
-                .filter(Boolean);
+                .filter(
+                    function (part) {
+                        return (
+                            Boolean(part) &&
+                            !/^\d+$/.test(part)
+                        );
+                    }
+                );
 
         if (!parts.length) {
             return "P";

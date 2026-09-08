@@ -210,7 +210,7 @@
         "access"
     ) {
         showMessage(
-            "Your account does not have access to the Paryx staff workspace.",
+            "ClubHub is for authorised club staff. Your Paryx Player account does not have staff access.",
             "error"
         );
     } else if (
