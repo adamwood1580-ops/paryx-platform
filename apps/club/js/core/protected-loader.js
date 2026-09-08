@@ -21,7 +21,8 @@
         courses: ["../js/pages/courses-page.js"],
         calendar: ["../js/pages/calendar-page.js"],
         teesheet: ["../js/pages/tee-sheet-page.js"],
-        staff: ["../js/pages/staff-page.js"]
+        staff: ["../js/pages/staff-page.js"],
+        stock: ["../js/pages/stock-page.js"]
     };
 
     function pageName() {

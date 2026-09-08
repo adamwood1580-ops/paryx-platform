@@ -15,6 +15,18 @@
         },
         { key: "calendar", label: "Calendar", href: "calendar.html" },
         { key: "courses", label: "Courses", href: "courses.html" },
+        {
+            key: "stock",
+            label: "Stock",
+            href: "stock.html",
+            moduleKey: "stock_inventory",
+            roles: [
+                "reception",
+                "professional",
+                "manager",
+                "club_admin"
+            ]
+        },
         { key: "settings", label: "Settings", href: "settings.html" }
     ];
 
@@ -80,6 +92,8 @@
                         class="staff-nav__item${active ? " is-active" : ""}"
                         href="${item.href}"
                         ${item.adminOnly ? 'data-staff-admin-only="true"' : ""}
+                        ${item.moduleKey ? `data-club-module="${item.moduleKey}" hidden` : ""}
+                        ${Array.isArray(item.roles) ? `data-staff-roles="${item.roles.join(",")}"` : ""}
                     >
                         ${item.label}
                     </a>
@@ -332,6 +346,72 @@
                         !canAdminister;
                 }
             );
+
+        hydrateClubModules(activeClub);
+    }
+
+    async function hydrateClubModules(activeClub) {
+        const moduleLinks = Array.from(
+            document.querySelectorAll("[data-club-module]")
+        );
+
+        if (!moduleLinks.length) {
+            return;
+        }
+
+        moduleLinks.forEach(function (link) {
+            link.hidden = true;
+        });
+
+        if (
+            !activeClub?.id ||
+            !window.supabaseClient ||
+            typeof window.supabaseClient.rpc !== "function"
+        ) {
+            return;
+        }
+
+        try {
+            const { data, error } = await window.supabaseClient.rpc(
+                "get_my_club_modules",
+                { p_club_id: activeClub.id }
+            );
+
+            if (error) {
+                throw error;
+            }
+
+            const enabled = new Set(
+                (Array.isArray(data) ? data : [])
+                    .filter(function (item) {
+                        return item.is_enabled === true;
+                    })
+                    .map(function (item) {
+                        return String(item.module_key || "");
+                    })
+            );
+
+            moduleLinks.forEach(function (link) {
+                const moduleKey = String(link.dataset.clubModule || "");
+                const allowedRoles = String(link.dataset.staffRoles || "")
+                    .split(",")
+                    .map(function (role) { return role.trim(); })
+                    .filter(Boolean);
+
+                const roleAllowed =
+                    !allowedRoles.length ||
+                    allowedRoles.includes(activeClub.role);
+
+                link.hidden = !(
+                    enabled.has(moduleKey) && roleAllowed
+                );
+            });
+        } catch (error) {
+            console.warn(
+                "Paryx optional modules could not be loaded:",
+                error
+            );
+        }
     }
 
     async function hydratePlatformConsoleLink() {

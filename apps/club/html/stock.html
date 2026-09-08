@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en" class="auth-protected">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#064831" />
+    <link rel="stylesheet" href="../styles/tokens.css" />
+    <link rel="stylesheet" href="../styles/app-shell.css" />
+    <link rel="stylesheet" href="../styles/components.css" />
+    <link rel="stylesheet" href="../styles/staff-shell.css" />
+    <link rel="stylesheet" href="../styles/stock.css" />
+    <link rel="manifest" href="../json/manifest.json" />
+    <link rel="apple-touch-icon" href="../assets/paryx-apple-touch-icon.png" />
+    <link rel="icon" type="image/png" href="../assets/paryx-favicon.png" />
+    <meta name="application-name" content="Paryx" />
+    <title>Stock Inventory | Paryx</title>
+    <script src="../js/core/protected-loader.js?loader=stock-v1" defer></script>
+</head>
+<body data-page="stock">
+    <div class="staff-shell">
+        <aside class="staff-sidebar" data-staff-sidebar></aside>
+        <div class="staff-workspace">
+            <header class="staff-topbar" data-staff-header></header>
+            <main class="app-main stock-page">
+                <section class="stock-intro">
+                    <div>
+                        <p class="page-heading__eyebrow">Retail operations</p>
+                        <h1 class="stock-intro__title">Stock Inventory</h1>
+                        <p id="stockClubName" class="stock-intro__subtitle">Loading stock inventory...</p>
+                    </div>
+                    <span id="stockRoleBadge" class="stock-role-badge">Checking access</span>
+                </section>
+
+                <section id="stockError" class="admin-error" role="alert" hidden></section>
+                <section id="stockSuccess" class="stock-success" role="status" aria-live="polite" hidden></section>
+
+                <section id="stockModuleDisabled" class="stock-disabled-card" hidden>
+                    <span class="stock-card__eyebrow">Optional module</span>
+                    <h2>Stock Inventory is not enabled</h2>
+                    <p>Enable the Stock Inventory module for this club from Paryx platform configuration before using this workspace.</p>
+                </section>
+
+                <div id="stockWorkspace" hidden>
+                    <section class="stock-summary-grid" aria-label="Stock summary">
+                        <article class="stock-summary-card">
+                            <span>Active products</span>
+                            <strong id="stockActiveProducts">--</strong>
+                            <small id="stockProductDetail">Loading products...</small>
+                        </article>
+                        <article class="stock-summary-card">
+                            <span>Low stock</span>
+                            <strong id="stockLowCount">--</strong>
+                            <small>At or below reorder level</small>
+                        </article>
+                        <article class="stock-summary-card">
+                            <span>Out of stock</span>
+                            <strong id="stockOutCount">--</strong>
+                            <small>Tracked active products</small>
+                        </article>
+                        <article class="stock-summary-card">
+                            <span>Stock cost value</span>
+                            <strong id="stockCostValue">--</strong>
+                            <small id="stockRetailValue">Retail value --</small>
+                        </article>
+                    </section>
+
+                    <section class="stock-card stock-toolbar-card">
+                        <div class="stock-toolbar">
+                            <label class="stock-search">
+                                <span>Search inventory</span>
+                                <input id="stockSearch" type="search" placeholder="Product, SKU, barcode, category or supplier" autocomplete="off" />
+                            </label>
+                            <label class="stock-filter">
+                                <span>Status</span>
+                                <select id="stockFilter">
+                                    <option value="all">All products</option>
+                                    <option value="low">Low stock</option>
+                                    <option value="out">Out of stock</option>
+                                    <option value="inactive">Inactive</option>
+                                </select>
+                            </label>
+                            <button id="addStockProduct" class="stock-button" type="button">+ Add product</button>
+                        </div>
+                    </section>
+
+                    <section class="stock-card">
+                        <div class="stock-card__header">
+                            <div>
+                                <span class="stock-card__eyebrow">Products</span>
+                                <h2>Inventory</h2>
+                            </div>
+                            <button id="refreshStock" class="stock-button stock-button--secondary stock-button--compact" type="button">Refresh</button>
+                        </div>
+                        <div class="stock-table-wrap">
+                            <table class="stock-table">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th><th>SKU</th><th>Category</th>
+                                        <th class="stock-number">In stock</th><th class="stock-number">Reorder</th>
+                                        <th class="stock-money">Cost</th><th class="stock-money">Retail</th><th>Status</th><th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="stockTableBody">
+                                    <tr><td colspan="9" class="stock-empty-cell">Loading inventory...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="stockTableEmpty" class="stock-empty" hidden>No stock products match this view.</div>
+                    </section>
+
+                    <section class="stock-card">
+                        <div class="stock-card__header">
+                            <div><span class="stock-card__eyebrow">Audit trail</span><h2>Recent stock activity</h2></div>
+                        </div>
+                        <div id="stockActivity" class="stock-activity-list">
+                            <div class="stock-empty">Loading recent activity...</div>
+                        </div>
+                    </section>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <dialog id="stockProductDialog" class="stock-dialog">
+        <form id="stockProductForm" method="dialog" class="stock-dialog__panel">
+            <div class="stock-dialog__header">
+                <div><span class="stock-card__eyebrow">Product record</span><h2 id="stockProductDialogTitle">Add product</h2></div>
+                <button id="closeStockProductDialog" class="stock-icon-button" type="button" aria-label="Close product editor">×</button>
+            </div>
+            <input id="stockProductId" type="hidden" />
+            <div class="stock-form-grid">
+                <label class="stock-field"><span>Product name</span><input id="stockProductName" type="text" maxlength="160" required /></label>
+                <label class="stock-field"><span>SKU</span><input id="stockProductSku" type="text" maxlength="80" required /></label>
+                <label class="stock-field"><span>Barcode</span><input id="stockProductBarcode" type="text" maxlength="120" /></label>
+                <label class="stock-field"><span>Category</span><input id="stockProductCategory" type="text" maxlength="100" placeholder="e.g. Balls, Gloves, Clothing" /></label>
+                <label class="stock-field stock-field--wide"><span>Supplier</span><input id="stockProductSupplier" type="text" maxlength="160" /></label>
+                <label class="stock-field"><span>Cost price (£)</span><input id="stockProductCost" type="number" min="0" step="0.01" value="0.00" required /></label>
+                <label class="stock-field"><span>Retail price (£)</span><input id="stockProductPrice" type="number" min="0" step="0.01" value="0.00" required /></label>
+                <label class="stock-field"><span>VAT rate (%)</span><input id="stockProductVat" type="number" min="0" max="100" step="0.01" value="20.00" /></label>
+                <label class="stock-field"><span>Reorder level</span><input id="stockProductReorder" type="number" min="0" step="1" value="0" /></label>
+                <label id="stockOpeningQuantityField" class="stock-field"><span>Opening stock</span><input id="stockProductOpening" type="number" min="0" step="1" value="0" /></label>
+                <label class="stock-field stock-field--wide"><span>Description</span><textarea id="stockProductDescription" rows="3" maxlength="1000"></textarea></label>
+            </div>
+            <div class="stock-check-row">
+                <label><input id="stockProductTracked" type="checkbox" checked /> Track quantity</label>
+                <label><input id="stockProductActive" type="checkbox" checked /> Active product</label>
+            </div>
+            <div class="stock-dialog__actions">
+                <button id="adjustStockButton" class="stock-button stock-button--secondary" type="button" hidden>Adjust stock</button>
+                <span class="stock-dialog__spacer"></span>
+                <button class="stock-button stock-button--secondary" type="button" data-close-product-dialog>Cancel</button>
+                <button id="saveStockProduct" class="stock-button" type="submit">Save product</button>
+            </div>
+        </form>
+    </dialog>
+
+    <dialog id="stockAdjustmentDialog" class="stock-dialog stock-dialog--small">
+        <form id="stockAdjustmentForm" method="dialog" class="stock-dialog__panel">
+            <div class="stock-dialog__header">
+                <div><span class="stock-card__eyebrow">Stock movement</span><h2 id="stockAdjustmentTitle">Adjust stock</h2></div>
+                <button id="closeStockAdjustmentDialog" class="stock-icon-button" type="button" aria-label="Close stock adjustment">×</button>
+            </div>
+            <input id="stockAdjustmentProductId" type="hidden" />
+            <div class="stock-form-grid stock-form-grid--one">
+                <label class="stock-field">
+                    <span>Movement</span>
+                    <select id="stockMovementType" required>
+                        <option value="receipt">Stock received</option>
+                        <option value="adjustment_in">Adjustment in</option>
+                        <option value="adjustment_out">Adjustment out</option>
+                        <option value="return">Customer return</option>
+                        <option value="stocktake">Stocktake correction</option>
+                    </select>
+                </label>
+                <label class="stock-field"><span id="stockQuantityLabel">Quantity</span><input id="stockAdjustmentQuantity" type="number" step="1" value="1" required /></label>
+                <label class="stock-field"><span>Reference</span><input id="stockAdjustmentReference" type="text" maxlength="160" placeholder="Delivery note, stocktake, etc." /></label>
+                <label class="stock-field"><span>Note</span><textarea id="stockAdjustmentNote" rows="3" maxlength="1000"></textarea></label>
+            </div>
+            <p id="stockAdjustmentHint" class="stock-adjustment-hint">Enter the number of units received.</p>
+            <div class="stock-dialog__actions">
+                <span class="stock-dialog__spacer"></span>
+                <button class="stock-button stock-button--secondary" type="button" data-close-adjustment-dialog>Cancel</button>
+                <button id="saveStockAdjustment" class="stock-button" type="submit">Save movement</button>
+            </div>
+        </form>
+    </dialog>
+</body>
+</html>
