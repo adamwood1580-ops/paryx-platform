@@ -5,6 +5,19 @@
        PARYX LOGIN
        ========================================================= */
 
+    const STAFF_ROLES =
+        new Set([
+            "starter",
+            "reception",
+            "professional",
+            "greenkeeper",
+            "manager",
+            "club_admin"
+        ]);
+
+    const LAST_ACTIVITY_KEY =
+        "paryx_last_activity";
+
     const form =
         document.getElementById("loginForm");
 
@@ -155,6 +168,75 @@
     }
 
     /* =========================================================
+       STAFF ACCESS
+       ========================================================= */
+
+    function clearClubHubActivity() {
+        try {
+            window.localStorage.removeItem(
+                LAST_ACTIVITY_KEY
+            );
+        } catch (error) {
+            console.warn(
+                "ClubHub could not clear the previous activity timestamp:",
+                error
+            );
+        }
+    }
+
+    function recordClubHubActivity() {
+        try {
+            window.localStorage.setItem(
+                LAST_ACTIVITY_KEY,
+                String(
+                    Date.now()
+                )
+            );
+        } catch (error) {
+            console.warn(
+                "ClubHub could not save the current activity timestamp:",
+                error
+            );
+        }
+    }
+
+    async function verifyStaffAccess() {
+        const {
+            data,
+            error
+        } =
+            await window.supabaseClient
+                .rpc(
+                    "get_my_staff_clubs"
+                );
+
+        if (error) {
+            throw error;
+        }
+
+        const rows =
+            Array.isArray(data)
+                ? data
+                : [];
+
+        return rows.some(
+            function (row) {
+                const role =
+                    String(
+                        row?.staff_role ||
+                        ""
+                    )
+                        .trim()
+                        .toLowerCase();
+
+                return STAFF_ROLES.has(
+                    role
+                );
+            }
+        );
+    }
+
+    /* =========================================================
        REDIRECT
        ========================================================= */
 
@@ -210,7 +292,7 @@
         "access"
     ) {
         showMessage(
-            "ClubHub is for authorised club staff. Your Paryx Player account does not have staff access.",
+            "ClubHub is available only to authorised club staff. Contact your club administrator if you require access.",
             "error"
         );
     } else if (
@@ -420,11 +502,48 @@
                 }
 
                 /*
-                 * Redirect immediately.
+                 * Authentication is not enough for ClubHub.
                  *
-                 * No success message, timeout or intermediate
-                 * loading screen.
+                 * Confirm an active staff relationship BEFORE
+                 * navigating to any protected ClubHub route.
                  */
+                const hasStaffAccess =
+                    await verifyStaffAccess();
+
+                if (!hasStaffAccess) {
+                    /*
+                     * Do not let a stale ClubHub inactivity
+                     * timestamp convert an access denial into
+                     * a timeout if the Player later opens a
+                     * protected ClubHub URL directly.
+                     *
+                     * The shared Paryx session is deliberately
+                     * kept intact so rejecting ClubHub access
+                     * does not sign the Player out of Paryx.
+                     */
+                    clearClubHubActivity();
+
+                    submissionInProgress =
+                        false;
+
+                    setLoading(false);
+
+                    showMessage(
+                        "ClubHub is available only to authorised club staff. Contact your club administrator if you require access.",
+                        "error"
+                    );
+
+                    return;
+                }
+
+                /*
+                 * A valid staff sign-in starts a fresh ClubHub
+                 * inactivity window. This prevents an old
+                 * timestamp from immediately signing a newly
+                 * authenticated staff user out.
+                 */
+                recordClubHubActivity();
+
                 openDestination();
             } catch (error) {
                 console.error(
@@ -437,8 +556,18 @@
 
                 setLoading(false);
 
+                const isCredentialError =
+                    Boolean(
+                        error?.status === 400 ||
+                        error?.status === 422 ||
+                        error?.code ===
+                            "invalid_credentials"
+                    );
+
                 showMessage(
-                    "The email address or password is incorrect.",
+                    isCredentialError
+                        ? "The email address or password is incorrect."
+                        : "ClubHub could not verify staff access. Refresh and try again.",
                     "error"
                 );
             }

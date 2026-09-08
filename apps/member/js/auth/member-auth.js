@@ -109,6 +109,13 @@
                 ? "Create free account"
                 : "Sign in";
 
+        password.setAttribute(
+            "autocomplete",
+            signup
+                ? "new-password"
+                : "current-password"
+        );
+
         if (forgotPassword) {
             forgotPassword.hidden =
                 signup;
@@ -324,6 +331,11 @@
 
                     mode =
                         "signin";
+
+                    password.setAttribute(
+                        "autocomplete",
+                        "current-password"
+                    );
 
                     names.hidden =
                         true;
