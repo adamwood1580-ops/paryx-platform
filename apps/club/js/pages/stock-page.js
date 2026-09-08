@@ -43,6 +43,7 @@
         moduleEnabled: false,
         canManage: false,
         products: [],
+        filteredProducts: [],
         productMap: new Map(),
         summary: null,
         activity: [],
@@ -63,11 +64,22 @@
         costValue: document.getElementById("stockCostValue"),
         retailValue: document.getElementById("stockRetailValue"),
         search: document.getElementById("stockSearch"),
+        categoryFilter: document.getElementById("stockCategoryFilter"),
+        supplierFilter: document.getElementById("stockSupplierFilter"),
         filter: document.getElementById("stockFilter"),
+        productSelect: document.getElementById("stockProductSelect"),
+        clearLookup: document.getElementById("clearStockLookup"),
+        lookupPrompt: document.getElementById("stockLookupPrompt"),
+        resultsCard: document.getElementById("stockResultsCard"),
+        resultSummary: document.getElementById("stockResultSummary"),
+        viewAudit: document.getElementById("viewStockAudit"),
         addProduct: document.getElementById("addStockProduct"),
         refresh: document.getElementById("refreshStock"),
         tableBody: document.getElementById("stockTableBody"),
         tableEmpty: document.getElementById("stockTableEmpty"),
+        auditDialog: document.getElementById("stockAuditDialog"),
+        closeAuditDialog: document.getElementById("closeStockAuditDialog"),
+        closeAuditButton: document.getElementById("closeStockAuditButton"),
         activity: document.getElementById("stockActivity"),
         productDialog: document.getElementById("stockProductDialog"),
         productForm: document.getElementById("stockProductForm"),
@@ -90,6 +102,7 @@
         productActive: document.getElementById("stockProductActive"),
         saveProduct: document.getElementById("saveStockProduct"),
         adjustStock: document.getElementById("adjustStockButton"),
+        removeProduct: document.getElementById("removeStockProductButton"),
         adjustmentDialog: document.getElementById("stockAdjustmentDialog"),
         adjustmentForm: document.getElementById("stockAdjustmentForm"),
         adjustmentTitle: document.getElementById("stockAdjustmentTitle"),
@@ -193,6 +206,159 @@
         elements.retailValue.textContent = `Retail value ${formatMoney(summary.stock_retail_value)}`;
     }
 
+    function normaliseLookup(value) {
+        return String(value || "").trim().toLowerCase();
+    }
+
+    function uniqueSorted(values) {
+        return Array.from(
+            new Set(
+                values
+                    .map(function (value) {
+                        return String(value || "").trim();
+                    })
+                    .filter(Boolean)
+            )
+        ).sort(function (a, b) {
+            return a.localeCompare(b, "en-GB", { sensitivity: "base" });
+        });
+    }
+
+    function populateLookupSelectors() {
+        const selectedCategory = elements.categoryFilter.value;
+        const selectedSupplier = elements.supplierFilter.value;
+        const selectedProduct = elements.productSelect.value;
+
+        const categories = uniqueSorted(
+            state.products.map(function (product) {
+                return product.category;
+            })
+        );
+
+        const suppliers = uniqueSorted(
+            state.products.map(function (product) {
+                return product.supplier;
+            })
+        );
+
+        elements.categoryFilter.innerHTML =
+            '<option value="">All categories</option>' +
+            categories.map(function (category) {
+                return `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`;
+            }).join("");
+
+        elements.supplierFilter.innerHTML =
+            '<option value="">All suppliers</option>' +
+            suppliers.map(function (supplier) {
+                return `<option value="${escapeHtml(supplier)}">${escapeHtml(supplier)}</option>`;
+            }).join("");
+
+        if (categories.includes(selectedCategory)) {
+            elements.categoryFilter.value = selectedCategory;
+        }
+
+        if (suppliers.includes(selectedSupplier)) {
+            elements.supplierFilter.value = selectedSupplier;
+        }
+
+        elements.productSelect.innerHTML =
+            '<option value="">Select a product...</option>' +
+            state.products
+                .slice()
+                .sort(function (a, b) {
+                    return String(a.product_name || "").localeCompare(
+                        String(b.product_name || ""),
+                        "en-GB",
+                        { sensitivity: "base" }
+                    );
+                })
+                .map(function (product) {
+                    return `<option value="${escapeHtml(product.product_id)}">${escapeHtml(product.product_name)} · ${escapeHtml(product.sku)}</option>`;
+                })
+                .join("");
+
+        if (
+            selectedProduct &&
+            state.products.some(function (product) {
+                return product.product_id === selectedProduct;
+            })
+        ) {
+            elements.productSelect.value = selectedProduct;
+        }
+    }
+
+    function lookupIsActive() {
+        return Boolean(
+            String(elements.search.value || "").trim() ||
+            elements.categoryFilter.value ||
+            elements.supplierFilter.value ||
+            elements.filter.value !== "all" ||
+            elements.productSelect.value
+        );
+    }
+
+    function applyProductLookup() {
+        const query = normaliseLookup(elements.search.value);
+        const category = normaliseLookup(elements.categoryFilter.value);
+        const supplier = normaliseLookup(elements.supplierFilter.value);
+        const status = elements.filter.value || "all";
+        const selectedProduct = elements.productSelect.value || "";
+
+        state.filteredProducts = state.products.filter(function (product) {
+            if (selectedProduct && product.product_id !== selectedProduct) {
+                return false;
+            }
+
+            if (
+                category &&
+                normaliseLookup(product.category) !== category
+            ) {
+                return false;
+            }
+
+            if (
+                supplier &&
+                normaliseLookup(product.supplier) !== supplier
+            ) {
+                return false;
+            }
+
+            if (query) {
+                const haystack = [
+                    product.product_name,
+                    product.sku,
+                    product.barcode,
+                    product.category,
+                    product.supplier
+                ]
+                    .map(normaliseLookup)
+                    .join(" ");
+
+                if (!haystack.includes(query)) {
+                    return false;
+                }
+            }
+
+            const productState = productStatus(product).text;
+
+            if (status === "low" && productState !== "Low") {
+                return false;
+            }
+
+            if (status === "out" && productState !== "Out") {
+                return false;
+            }
+
+            if (status === "inactive" && product.is_active === true) {
+                return false;
+            }
+
+            return true;
+        });
+
+        renderProducts();
+    }
+
     function renderProducts() {
         state.productMap = new Map(
             state.products.map(function (product) {
@@ -200,14 +366,30 @@
             })
         );
 
-        if (!state.products.length) {
+        const active = lookupIsActive();
+
+        elements.lookupPrompt.hidden = active;
+        elements.resultsCard.hidden = !active;
+
+        if (!active) {
+            elements.tableBody.innerHTML = "";
+            elements.tableEmpty.hidden = true;
+            elements.resultSummary.textContent = "0 records";
+            return;
+        }
+
+        elements.resultSummary.textContent =
+            `${state.filteredProducts.length} record${state.filteredProducts.length === 1 ? "" : "s"}`;
+
+        if (!state.filteredProducts.length) {
             elements.tableBody.innerHTML = "";
             elements.tableEmpty.hidden = false;
             return;
         }
 
         elements.tableEmpty.hidden = true;
-        elements.tableBody.innerHTML = state.products.map(function (product) {
+
+        elements.tableBody.innerHTML = state.filteredProducts.map(function (product) {
             const status = productStatus(product);
             const quantity = toNumber(product.quantity_on_hand);
             const reorder = toNumber(product.reorder_level);
@@ -280,12 +462,15 @@
     async function loadProducts() {
         const { data, error } = await getClient().rpc("stock_list_products", {
             p_club_id: state.clubId,
-            p_search: String(elements.search.value || "").trim() || null,
-            p_filter: elements.filter.value || "all"
+            p_search: null,
+            p_filter: "all"
         });
+
         if (error) throw error;
+
         state.products = Array.isArray(data) ? data : [];
-        renderProducts();
+        populateLookupSelectors();
+        applyProductLookup();
     }
 
     async function loadActivity() {
@@ -302,7 +487,7 @@
     async function refreshAll() {
         if (!state.moduleEnabled) return;
         clearMessages();
-        await Promise.all([loadSummary(), loadProducts(), loadActivity()]);
+        await Promise.all([loadSummary(), loadProducts()]);
     }
 
     function setProductFormEditable(editable) {
@@ -311,6 +496,30 @@
         });
         elements.saveProduct.hidden = !editable;
         elements.adjustStock.hidden = !editable || !elements.productId.value;
+        elements.removeProduct.hidden = !editable || !elements.productId.value;
+    }
+
+    async function openAuditDialog() {
+        clearMessages();
+
+        elements.activity.innerHTML =
+            '<div class="stock-empty">Loading stock activity...</div>';
+
+        elements.auditDialog.showModal();
+
+        try {
+            await loadActivity();
+        } catch (error) {
+            elements.activity.innerHTML =
+                '<div class="stock-empty">Stock activity could not be loaded.</div>';
+            showError(error);
+        }
+    }
+
+    function closeAuditDialog() {
+        if (elements.auditDialog.open) {
+            elements.auditDialog.close();
+        }
     }
 
     function openProductDialog(product = null) {
@@ -411,6 +620,72 @@
         }
     }
 
+    async function removeProduct() {
+        if (
+            !state.canManage ||
+            !elements.productId.value
+        ) {
+            return;
+        }
+
+        const product =
+            state.productMap.get(
+                elements.productId.value
+            );
+
+        if (!product) {
+            return;
+        }
+
+        const confirmed =
+            window.confirm(
+                `Remove "${product.product_name}" from Stock Inventory?\n\n` +
+                "The product will disappear from the inventory, but its previous stock movement history will be retained for audit purposes."
+            );
+
+        if (!confirmed) {
+            return;
+        }
+
+        clearMessages();
+
+        elements.removeProduct.disabled =
+            true;
+
+        try {
+            const {
+                error
+            } =
+                await getClient().rpc(
+                    "stock_remove_product",
+                    {
+                        p_club_id:
+                            state.clubId,
+
+                        p_product_id:
+                            product.product_id
+                    }
+                );
+
+            if (error) {
+                throw error;
+            }
+
+            closeProductDialog();
+
+            await refreshAll();
+
+            showSuccess(
+                "Product removed from Stock Inventory."
+            );
+        } catch (error) {
+            showError(error);
+        } finally {
+            elements.removeProduct.disabled =
+                false;
+        }
+    }
+
     async function saveAdjustment(event) {
         event.preventDefault();
         if (!state.canManage) return;
@@ -452,11 +727,49 @@
     function bindControls() {
         elements.addProduct.addEventListener("click", function () { openProductDialog(); });
         elements.refresh.addEventListener("click", function () { refreshAll().catch(showError); });
-        elements.filter.addEventListener("change", function () { loadProducts().catch(showError); });
+        [
+            elements.categoryFilter,
+            elements.supplierFilter,
+            elements.filter
+        ].forEach(function (control) {
+            control.addEventListener("change", applyProductLookup);
+        });
+
+        elements.productSelect.addEventListener("change", function () {
+            if (elements.productSelect.value) {
+                elements.search.value = "";
+                elements.categoryFilter.value = "";
+                elements.supplierFilter.value = "";
+                elements.filter.value = "all";
+            }
+
+            applyProductLookup();
+        });
+
         elements.search.addEventListener("input", function () {
             window.clearTimeout(state.searchTimer);
-            state.searchTimer = window.setTimeout(function () { loadProducts().catch(showError); }, 250);
+
+            if (elements.search.value.trim()) {
+                elements.productSelect.value = "";
+            }
+
+            state.searchTimer = window.setTimeout(applyProductLookup, 180);
         });
+
+        elements.clearLookup.addEventListener("click", function () {
+            elements.search.value = "";
+            elements.categoryFilter.value = "";
+            elements.supplierFilter.value = "";
+            elements.filter.value = "all";
+            elements.productSelect.value = "";
+
+            applyProductLookup();
+            elements.search.focus();
+        });
+
+        elements.viewAudit.addEventListener("click", openAuditDialog);
+        elements.closeAuditDialog.addEventListener("click", closeAuditDialog);
+        elements.closeAuditButton.addEventListener("click", closeAuditDialog);
         elements.tableBody.addEventListener("click", function (event) {
             const button = event.target.closest("[data-stock-product]");
             if (!button) return;
@@ -468,6 +781,11 @@
         elements.adjustStock.addEventListener("click", function () {
             openAdjustmentDialog(state.productMap.get(elements.productId.value));
         });
+
+        elements.removeProduct.addEventListener(
+            "click",
+            removeProduct
+        );
         elements.closeProductDialog.addEventListener("click", closeProductDialog);
         elements.closeAdjustmentDialog.addEventListener("click", closeAdjustmentDialog);
         document.querySelectorAll("[data-close-product-dialog]").forEach(function (button) {
