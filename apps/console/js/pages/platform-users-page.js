@@ -26,6 +26,10 @@
             "platformUserSubmit"
         );
 
+    const state = {
+        isOwner: false
+    };
+
     function escapeHtml(value) {
         return String(value ?? "")
             .replaceAll("&", "&amp;")
@@ -86,19 +90,21 @@
                         <td>${new Date(row.updated_at).toLocaleDateString("en-GB")}</td>
                         <td>
                             ${
-                                row.user_id !== window.ParyxConsole?.context?.user?.id
-                                    ? `
-                                        <button
-                                            class="console-button console-button--secondary console-delete-link"
-                                            type="button"
-                                            data-platform-user-remove
-                                            data-user-id="${escapeHtml(row.user_id)}"
-                                            data-user-email="${escapeHtml(row.email)}"
-                                        >
-                                            Remove access
-                                        </button>
-                                    `
-                                    : "<small>Current account</small>"
+                                row.user_id === window.ParyxConsole?.context?.user?.id
+                                    ? "<small>Current account</small>"
+                                    : state.isOwner
+                                        ? `
+                                            <button
+                                                class="console-button console-button--secondary console-delete-link"
+                                                type="button"
+                                                data-platform-user-remove
+                                                data-user-id="${escapeHtml(row.user_id)}"
+                                                data-user-email="${escapeHtml(row.email)}"
+                                            >
+                                                Remove access
+                                            </button>
+                                        `
+                                        : "<small>Owner only</small>"
                             }
                         </td>
                     </tr>
@@ -127,6 +133,15 @@
     }
 
     async function removePlatformAccess(button) {
+        if (!state.isOwner) {
+            show(
+                errorBox,
+                "Only a Platform Owner can remove Console access."
+            );
+
+            return;
+        }
+
         const userId =
             button.dataset.userId;
 
@@ -194,6 +209,9 @@
         const owner =
             context?.access?.role ===
             "platform_owner";
+
+        state.isOwner =
+            owner;
 
         if (!owner) {
             form.hidden = true;
