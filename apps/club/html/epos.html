@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en" class="auth-protected">
+<head>
+    <meta charset="UTF-8" />
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+
+    <meta
+        name="theme-color"
+        content="#064831"
+    />
+
+    <link rel="stylesheet" href="../styles/tokens.css" />
+    <link rel="stylesheet" href="../styles/app-shell.css" />
+    <link rel="stylesheet" href="../styles/components.css" />
+    <link rel="stylesheet" href="../styles/staff-shell.css" />
+    <link rel="stylesheet" href="../styles/epos.css" />
+
+    <link
+        rel="manifest"
+        href="../json/manifest.json"
+    />
+
+    <link
+        rel="apple-touch-icon"
+        href="../assets/paryx-apple-touch-icon.png"
+    />
+
+    <link
+        rel="icon"
+        type="image/png"
+        href="../assets/paryx-favicon.png"
+    />
+
+    <meta
+        name="application-name"
+        content="Paryx"
+    />
+
+    <title>EPOS Integration | Paryx</title>
+
+    <script
+        src="../js/core/protected-loader.js?loader=epos-v1"
+        defer
+    ></script>
+</head>
+
+<body data-page="epos">
+    <div class="staff-shell">
+        <aside
+            class="staff-sidebar"
+            data-staff-sidebar
+        ></aside>
+
+        <div class="staff-workspace">
+            <header
+                class="staff-topbar"
+                data-staff-header
+            ></header>
+
+            <main class="app-main epos-page">
+                <section class="epos-intro">
+                    <div>
+                        <p class="page-heading__eyebrow">
+                            Retail integration
+                        </p>
+
+                        <h1 class="epos-intro__title">
+                            EPOS Integration
+                        </h1>
+
+                        <p
+                            id="eposClubName"
+                            class="epos-intro__subtitle"
+                        >
+                            Loading integration...
+                        </p>
+                    </div>
+
+                    <span
+                        id="eposRoleBadge"
+                        class="epos-role-badge"
+                    >
+                        Checking access
+                    </span>
+                </section>
+
+                <section
+                    id="eposError"
+                    class="admin-error"
+                    role="alert"
+                    hidden
+                ></section>
+
+                <section
+                    id="eposSuccess"
+                    class="epos-success"
+                    role="status"
+                    aria-live="polite"
+                    hidden
+                ></section>
+
+                <section
+                    id="eposModuleDisabled"
+                    class="epos-disabled-card"
+                    hidden
+                >
+                    <span class="epos-card__eyebrow">
+                        Optional module
+                    </span>
+
+                    <h2>
+                        EPOS Integration is not enabled
+                    </h2>
+
+                    <p>
+                        Enable the EPOS Integration module for this club
+                        in Paryx platform configuration.
+                    </p>
+                </section>
+
+                <div
+                    id="eposWorkspace"
+                    hidden
+                >
+                    <section
+                        class="epos-summary-grid"
+                        aria-label="EPOS integration summary"
+                    >
+                        <article class="epos-summary-card">
+                            <span>Connection</span>
+
+                            <strong id="eposConnectionState">
+                                --
+                            </strong>
+
+                            <small id="eposProviderSummary">
+                                Loading provider...
+                            </small>
+                        </article>
+
+                        <article class="epos-summary-card">
+                            <span>Mapped products</span>
+
+                            <strong id="eposMappedProducts">
+                                --
+                            </strong>
+
+                            <small id="eposMappingSummary">
+                                Loading mappings...
+                            </small>
+                        </article>
+
+                        <article class="epos-summary-card">
+                            <span>Last sync</span>
+
+                            <strong id="eposLastSync">
+                                --
+                            </strong>
+
+                            <small id="eposLastSyncSummary">
+                                No completed sync
+                            </small>
+                        </article>
+
+                        <article class="epos-summary-card">
+                            <span>Sync health</span>
+
+                            <strong id="eposSyncHealth">
+                                --
+                            </strong>
+
+                            <small id="eposSyncError">
+                                No reported errors
+                            </small>
+                        </article>
+                    </section>
+
+                    <section class="epos-control-card">
+                        <div class="epos-control-row">
+                            <div>
+                                <span class="epos-card__eyebrow">
+                                    Provider
+                                </span>
+
+                                <h2 id="eposProviderName">
+                                    Not configured
+                                </h2>
+
+                                <p id="eposProviderMeta">
+                                    Tell Paryx which EPOS provider the club uses.
+                                </p>
+                            </div>
+
+                            <button
+                                id="configureEposButton"
+                                class="epos-button"
+                                type="button"
+                            >
+                                Configure
+                            </button>
+                        </div>
+
+                        <div class="epos-control-row">
+                            <div>
+                                <span class="epos-card__eyebrow">
+                                    Product mapping
+                                </span>
+
+                                <h2>
+                                    Link EPOS products to Paryx stock
+                                </h2>
+
+                                <p>
+                                    Each external product is mapped once to
+                                    the corresponding Stock Inventory record.
+                                </p>
+                            </div>
+
+                            <button
+                                id="manageMappingsButton"
+                                class="epos-button epos-button--secondary"
+                                type="button"
+                            >
+                                Manage mappings
+                            </button>
+                        </div>
+
+                        <div class="epos-control-row">
+                            <div>
+                                <span class="epos-card__eyebrow">
+                                    Sync history
+                                </span>
+
+                                <h2>
+                                    Adapter activity
+                                </h2>
+
+                                <p>
+                                    Review completed, partial and failed sync
+                                    attempts without cluttering the main page.
+                                </p>
+                            </div>
+
+                            <button
+                                id="viewSyncHistoryButton"
+                                class="epos-button epos-button--secondary"
+                                type="button"
+                            >
+                                View sync history
+                            </button>
+                        </div>
+                    </section>
+
+                    <section class="epos-adapter-note">
+                        <div class="epos-adapter-note__icon" aria-hidden="true">
+                            ↔
+                        </div>
+
+                        <div>
+                            <strong>
+                                Provider-neutral foundation
+                            </strong>
+
+                            <p>
+                                Paryx is ready to receive sales and refunds
+                                through a secure provider adapter. API keys and
+                                passwords are deliberately not stored in this
+                                ClubHub page.
+                            </p>
+                        </div>
+                    </section>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <dialog
+        id="eposConfigDialog"
+        class="epos-dialog"
+    >
+        <form
+            id="eposConfigForm"
+            method="dialog"
+            class="epos-dialog__panel"
+        >
+            <div class="epos-dialog__header">
+                <div>
+                    <span class="epos-card__eyebrow">
+                        Connection profile
+                    </span>
+
+                    <h2>
+                        Configure EPOS
+                    </h2>
+
+                    <p>
+                        Store non-secret provider identifiers now. Credentials
+                        will be connected securely when the provider adapter is built.
+                    </p>
+                </div>
+
+                <button
+                    id="closeEposConfigDialog"
+                    class="epos-icon-button"
+                    type="button"
+                    aria-label="Close EPOS configuration"
+                >
+                    ×
+                </button>
+            </div>
+
+            <div class="epos-form-grid">
+                <label class="epos-field epos-field--wide">
+                    <span>Provider name</span>
+
+                    <input
+                        id="eposProviderInput"
+                        type="text"
+                        maxlength="120"
+                        placeholder="e.g. Club Systems, Lightspeed, Square"
+                    />
+                </label>
+
+                <label class="epos-field">
+                    <span>Merchant / account reference</span>
+
+                    <input
+                        id="eposMerchantRef"
+                        type="text"
+                        maxlength="160"
+                    />
+                </label>
+
+                <label class="epos-field">
+                    <span>Store / location reference</span>
+
+                    <input
+                        id="eposLocationRef"
+                        type="text"
+                        maxlength="160"
+                    />
+                </label>
+
+                <label class="epos-field epos-field--wide">
+                    <span>API base URL</span>
+
+                    <input
+                        id="eposApiBaseUrl"
+                        type="url"
+                        maxlength="500"
+                        placeholder="Optional until provider confirmed"
+                    />
+                </label>
+            </div>
+
+            <div class="epos-sync-options">
+                <label>
+                    <input
+                        id="eposSalesSync"
+                        type="checkbox"
+                        checked
+                    />
+
+                    Import sales into stock
+                </label>
+
+                <label>
+                    <input
+                        id="eposRefundSync"
+                        type="checkbox"
+                        checked
+                    />
+
+                    Import refunds into stock
+                </label>
+
+                <label>
+                    <input
+                        id="eposProductSync"
+                        type="checkbox"
+                    />
+
+                    Provider product catalogue sync
+                </label>
+            </div>
+
+            <div class="epos-security-note">
+                <strong>
+                    Secure credentials
+                </strong>
+
+                <p>
+                    Do not enter API keys, passwords or secrets here.
+                    Provider credentials will be stored outside the browser
+                    through the Paryx adapter layer.
+                </p>
+            </div>
+
+            <div class="epos-dialog__actions">
+                <span class="epos-dialog__spacer"></span>
+
+                <button
+                    id="cancelEposConfig"
+                    class="epos-button epos-button--secondary"
+                    type="button"
+                >
+                    Cancel
+                </button>
+
+                <button
+                    id="saveEposConfig"
+                    class="epos-button"
+                    type="submit"
+                >
+                    Save configuration
+                </button>
+            </div>
+        </form>
+    </dialog>
+
+    <dialog
+        id="eposMappingsDialog"
+        class="epos-dialog epos-dialog--wide"
+    >
+        <div class="epos-dialog__panel">
+            <div class="epos-dialog__header">
+                <div>
+                    <span class="epos-card__eyebrow">
+                        Product mapping
+                    </span>
+
+                    <h2>
+                        Map EPOS products
+                    </h2>
+
+                    <p>
+                        Search Paryx Stock Inventory, then attach the
+                        provider's product identifier.
+                    </p>
+                </div>
+
+                <button
+                    id="closeMappingsDialog"
+                    class="epos-icon-button"
+                    type="button"
+                    aria-label="Close product mappings"
+                >
+                    ×
+                </button>
+            </div>
+
+            <div class="epos-mapping-search">
+                <label class="epos-field">
+                    <span>Search Paryx stock</span>
+
+                    <input
+                        id="eposMappingSearch"
+                        type="search"
+                        placeholder="Product, SKU or barcode"
+                        autocomplete="off"
+                    />
+                </label>
+            </div>
+
+            <div
+                id="eposMappingPrompt"
+                class="epos-database-prompt"
+            >
+                Search Stock Inventory to view mapping records.
+            </div>
+
+            <div
+                id="eposMappingResults"
+                class="epos-mapping-results"
+                hidden
+            ></div>
+
+            <div class="epos-dialog__actions">
+                <span class="epos-dialog__spacer"></span>
+
+                <button
+                    id="closeMappingsButton"
+                    class="epos-button epos-button--secondary"
+                    type="button"
+                >
+                    Close
+                </button>
+            </div>
+        </div>
+    </dialog>
+
+    <dialog
+        id="eposMappingEditorDialog"
+        class="epos-dialog epos-dialog--small"
+    >
+        <form
+            id="eposMappingForm"
+            method="dialog"
+            class="epos-dialog__panel"
+        >
+            <div class="epos-dialog__header">
+                <div>
+                    <span class="epos-card__eyebrow">
+                        External mapping
+                    </span>
+
+                    <h2 id="eposMappingEditorTitle">
+                        Map product
+                    </h2>
+                </div>
+
+                <button
+                    id="closeMappingEditor"
+                    class="epos-icon-button"
+                    type="button"
+                    aria-label="Close mapping editor"
+                >
+                    ×
+                </button>
+            </div>
+
+            <input
+                id="eposMappingStockProductId"
+                type="hidden"
+            />
+
+            <div class="epos-form-grid epos-form-grid--one">
+                <label class="epos-field">
+                    <span>EPOS product ID</span>
+
+                    <input
+                        id="eposExternalProductId"
+                        type="text"
+                        maxlength="200"
+                        required
+                    />
+                </label>
+
+                <label class="epos-field">
+                    <span>EPOS SKU</span>
+
+                    <input
+                        id="eposExternalSku"
+                        type="text"
+                        maxlength="120"
+                    />
+                </label>
+            </div>
+
+            <div class="epos-dialog__actions">
+                <button
+                    id="deleteMappingButton"
+                    class="epos-button epos-button--danger"
+                    type="button"
+                    hidden
+                >
+                    Delete mapping
+                </button>
+
+                <span class="epos-dialog__spacer"></span>
+
+                <button
+                    id="cancelMappingEditor"
+                    class="epos-button epos-button--secondary"
+                    type="button"
+                >
+                    Cancel
+                </button>
+
+                <button
+                    id="saveMappingButton"
+                    class="epos-button"
+                    type="submit"
+                >
+                    Save mapping
+                </button>
+            </div>
+        </form>
+    </dialog>
+
+    <dialog
+        id="eposSyncHistoryDialog"
+        class="epos-dialog epos-dialog--wide"
+    >
+        <div class="epos-dialog__panel">
+            <div class="epos-dialog__header">
+                <div>
+                    <span class="epos-card__eyebrow">
+                        Integration audit
+                    </span>
+
+                    <h2>
+                        Sync history
+                    </h2>
+                </div>
+
+                <button
+                    id="closeSyncHistoryDialog"
+                    class="epos-icon-button"
+                    type="button"
+                    aria-label="Close sync history"
+                >
+                    ×
+                </button>
+            </div>
+
+            <div
+                id="eposSyncHistoryList"
+                class="epos-sync-history-list"
+            >
+                <div class="epos-empty">
+                    Loading sync history...
+                </div>
+            </div>
+
+            <div class="epos-dialog__actions">
+                <span class="epos-dialog__spacer"></span>
+
+                <button
+                    id="closeSyncHistoryButton"
+                    class="epos-button epos-button--secondary"
+                    type="button"
+                >
+                    Close
+                </button>
+            </div>
+        </div>
+    </dialog>
+</body>
+</html>

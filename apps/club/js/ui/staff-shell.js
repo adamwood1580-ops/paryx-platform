@@ -27,6 +27,17 @@
                 "club_admin"
             ]
         },
+        {
+            key: "epos",
+            label: "EPOS",
+            href: "epos.html",
+            moduleKey: "epos_integration",
+            roles: [
+                "professional",
+                "manager",
+                "club_admin"
+            ]
+        },
         { key: "settings", label: "Settings", href: "settings.html" }
     ];
 

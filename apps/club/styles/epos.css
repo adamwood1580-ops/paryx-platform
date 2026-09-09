@@ -1,0 +1,526 @@
+.epos-page {
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.epos-intro {
+    display: flex;
+    justify-content: space-between;
+    gap: 1.5rem;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+}
+
+.epos-intro__title {
+    margin: 0.15rem 0 0;
+    color: var(--paryx-primary, #064831);
+    font-size: clamp(2rem, 3vw, 2.7rem);
+    line-height: 1.05;
+}
+
+.epos-intro__subtitle {
+    margin: 0.55rem 0 0;
+    color: #607068;
+}
+
+.epos-role-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.25rem;
+    padding: 0.45rem 0.8rem;
+    border: 1px solid #d9e1dd;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #45554e;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.epos-success {
+    margin-bottom: 1rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid #b9dec7;
+    border-radius: 0.8rem;
+    background: #eef9f1;
+    color: #1d6234;
+    font-weight: 650;
+}
+
+.epos-disabled-card,
+.epos-control-card,
+.epos-summary-card,
+.epos-adapter-note {
+    border: 1px solid #e0e6e3;
+    border-radius: 1rem;
+    background: #ffffff;
+    box-shadow: 0 8px 26px rgba(16, 48, 36, 0.05);
+}
+
+.epos-disabled-card {
+    max-width: 760px;
+    padding: 2rem;
+}
+
+.epos-disabled-card h2 {
+    margin: 0.35rem 0 0.6rem;
+    color: #173c30;
+}
+
+.epos-disabled-card p {
+    margin: 0;
+    color: #65756e;
+    line-height: 1.6;
+}
+
+.epos-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.epos-summary-card {
+    padding: 1.2rem;
+}
+
+.epos-summary-card span,
+.epos-summary-card small {
+    display: block;
+    color: #6b7973;
+}
+
+.epos-summary-card span {
+    font-size: 0.78rem;
+    font-weight: 750;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.epos-summary-card strong {
+    display: block;
+    margin: 0.35rem 0;
+    color: #173c30;
+    font-size: 1.45rem;
+    line-height: 1.15;
+}
+
+.epos-summary-card small {
+    font-size: 0.8rem;
+}
+
+.epos-control-card {
+    overflow: hidden;
+}
+
+.epos-control-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: 1.25rem 1.35rem;
+    border-bottom: 1px solid #edf1ef;
+}
+
+.epos-control-row:last-child {
+    border-bottom: 0;
+}
+
+.epos-control-row h2 {
+    margin: 0.2rem 0 0.25rem;
+    color: #173c30;
+    font-size: 1.05rem;
+}
+
+.epos-control-row p {
+    margin: 0;
+    max-width: 720px;
+    color: #6d7b75;
+    font-size: 0.85rem;
+    line-height: 1.45;
+}
+
+.epos-card__eyebrow {
+    color: #8c6f17;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.epos-button {
+    min-height: 2.7rem;
+    padding: 0.55rem 1rem;
+    border: 1px solid var(--paryx-primary, #064831);
+    border-radius: 0.7rem;
+    background: var(--paryx-primary, #064831);
+    color: #ffffff;
+    font: inherit;
+    font-size: 0.86rem;
+    font-weight: 750;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.epos-button--secondary {
+    background: #ffffff;
+    color: var(--paryx-primary, #064831);
+}
+
+.epos-button--danger {
+    border-color: #a12626;
+    background: #ffffff;
+    color: #a12626;
+}
+
+.epos-button:hover:not(:disabled) {
+    filter: brightness(0.95);
+}
+
+.epos-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.epos-adapter-note {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    margin-top: 1rem;
+    padding: 1.15rem 1.3rem;
+}
+
+.epos-adapter-note__icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 0.8rem;
+    background: #edf4f0;
+    color: var(--paryx-primary, #064831);
+    font-size: 1.35rem;
+    font-weight: 800;
+}
+
+.epos-adapter-note strong {
+    color: #173c30;
+}
+
+.epos-adapter-note p {
+    margin: 0.3rem 0 0;
+    color: #6d7b75;
+    font-size: 0.84rem;
+    line-height: 1.5;
+}
+
+.epos-dialog {
+    width: min(760px, calc(100vw - 2rem));
+    max-height: calc(100vh - 2rem);
+    padding: 0;
+    border: 0;
+    border-radius: 1rem;
+    background: transparent;
+}
+
+.epos-dialog--wide {
+    width: min(980px, calc(100vw - 2rem));
+}
+
+.epos-dialog--small {
+    width: min(520px, calc(100vw - 2rem));
+}
+
+.epos-dialog::backdrop {
+    background: rgba(13, 31, 24, 0.55);
+}
+
+.epos-dialog__panel {
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+    border-radius: 1rem;
+    background: #ffffff;
+    box-shadow: 0 24px 70px rgba(8, 31, 22, 0.24);
+}
+
+.epos-dialog__header {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: flex-start;
+    padding: 1.25rem 1.4rem;
+    border-bottom: 1px solid #e9eeeb;
+}
+
+.epos-dialog__header h2 {
+    margin: 0.2rem 0 0;
+    color: #173c30;
+}
+
+.epos-dialog__header p {
+    margin: 0.4rem 0 0;
+    color: #6d7b75;
+    font-size: 0.83rem;
+    line-height: 1.5;
+}
+
+.epos-icon-button {
+    width: 2.4rem;
+    height: 2.4rem;
+    border: 1px solid #d9e1dd;
+    border-radius: 50%;
+    background: #ffffff;
+    color: #4c5c55;
+    font-size: 1.35rem;
+    cursor: pointer;
+}
+
+.epos-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    padding: 1.3rem 1.4rem;
+}
+
+.epos-form-grid--one {
+    grid-template-columns: 1fr;
+}
+
+.epos-field {
+    display: grid;
+    gap: 0.4rem;
+}
+
+.epos-field--wide {
+    grid-column: 1 / -1;
+}
+
+.epos-field > span {
+    color: #41534b;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.epos-field input,
+.epos-field select {
+    width: 100%;
+    min-height: 2.8rem;
+    padding: 0 0.8rem;
+    border: 1px solid #ccd7d1;
+    border-radius: 0.7rem;
+    background: #ffffff;
+    color: #1f2f29;
+    font: inherit;
+}
+
+.epos-field input:focus,
+.epos-field select:focus {
+    border-color: var(--paryx-primary, #064831);
+    outline: 2px solid rgba(6, 72, 49, 0.12);
+    outline-offset: 1px;
+}
+
+.epos-sync-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.2rem;
+    padding: 0 1.4rem 1rem;
+    color: #41534b;
+    font-size: 0.86rem;
+    font-weight: 650;
+}
+
+.epos-sync-options label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.epos-security-note {
+    margin: 0 1.4rem 1.2rem;
+    padding: 1rem;
+    border: 1px solid #e7dcc0;
+    border-radius: 0.8rem;
+    background: #fffaf0;
+}
+
+.epos-security-note strong {
+    color: #6f5712;
+}
+
+.epos-security-note p {
+    margin: 0.3rem 0 0;
+    color: #756b4f;
+    font-size: 0.82rem;
+    line-height: 1.45;
+}
+
+.epos-dialog__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem;
+    align-items: center;
+    padding: 1rem 1.4rem 1.3rem;
+    border-top: 1px solid #e9eeeb;
+}
+
+.epos-dialog__spacer {
+    flex: 1;
+}
+
+.epos-mapping-search {
+    padding: 1rem 1.4rem;
+    border-bottom: 1px solid #edf1ef;
+}
+
+.epos-database-prompt,
+.epos-empty {
+    padding: 2rem;
+    color: #7a8982;
+    text-align: center;
+}
+
+.epos-mapping-results {
+    display: grid;
+    max-height: 58vh;
+    overflow-y: auto;
+}
+
+.epos-mapping-row {
+    display: grid;
+    grid-template-columns: minmax(220px, 1.4fr) 180px minmax(220px, 1fr) auto;
+    gap: 1rem;
+    align-items: center;
+    padding: 0.9rem 1.4rem;
+    border-bottom: 1px solid #edf1ef;
+}
+
+.epos-mapping-row:last-child {
+    border-bottom: 0;
+}
+
+.epos-mapping-row strong {
+    color: #173c30;
+}
+
+.epos-mapping-row small,
+.epos-mapping-row span {
+    display: block;
+    color: #6e7d76;
+    font-size: 0.8rem;
+}
+
+.epos-mapping-state {
+    display: inline-flex !important;
+    width: fit-content;
+    margin-top: 0.25rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 999px;
+    background: #eef6f1;
+    color: #22623b !important;
+    font-weight: 800;
+}
+
+.epos-mapping-state--unmapped {
+    background: #f1f2f2;
+    color: #69736f !important;
+}
+
+.epos-sync-history-list {
+    display: grid;
+    max-height: 62vh;
+    overflow-y: auto;
+}
+
+.epos-sync-row {
+    display: grid;
+    grid-template-columns: 160px 150px minmax(200px, 1fr) 130px;
+    gap: 1rem;
+    align-items: center;
+    padding: 0.9rem 1.4rem;
+    border-bottom: 1px solid #edf1ef;
+}
+
+.epos-sync-row:last-child {
+    border-bottom: 0;
+}
+
+.epos-sync-row strong {
+    color: #173c30;
+}
+
+.epos-sync-row span,
+.epos-sync-row small {
+    color: #6d7b75;
+    font-size: 0.8rem;
+}
+
+.epos-sync-badge {
+    display: inline-flex !important;
+    width: fit-content;
+    padding: 0.22rem 0.52rem;
+    border-radius: 999px;
+    background: #eef6f1;
+    color: #22623b !important;
+    font-weight: 800;
+}
+
+.epos-sync-badge--failed {
+    background: #fff0f0;
+    color: #9c2929 !important;
+}
+
+.epos-sync-badge--partial {
+    background: #fff5df;
+    color: #8f5600 !important;
+}
+
+@media (max-width: 1000px) {
+    .epos-summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .epos-mapping-row,
+    .epos-sync-row {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 720px) {
+    .epos-page {
+        padding: 1rem;
+    }
+
+    .epos-intro,
+    .epos-control-row {
+        flex-direction: column;
+    }
+
+    .epos-summary-grid,
+    .epos-form-grid,
+    .epos-mapping-row,
+    .epos-sync-row {
+        grid-template-columns: 1fr;
+    }
+
+    .epos-field--wide {
+        grid-column: auto;
+    }
+
+    .epos-control-row .epos-button {
+        width: 100%;
+    }
+
+    .epos-dialog__actions {
+        align-items: stretch;
+    }
+
+    .epos-dialog__spacer {
+        display: none;
+    }
+
+    .epos-dialog__actions .epos-button {
+        width: 100%;
+    }
+}
