@@ -323,3 +323,16 @@
         align-items: flex-start;
     }
 }
+
+
+/* Stock v1.3 explicit delete action */
+#removeStockProductButton {
+    border-color: #a12626;
+    background: #a12626;
+    color: #ffffff;
+}
+
+#removeStockProductButton:hover:not(:disabled) {
+    background: #861f1f;
+    filter: none;
+}

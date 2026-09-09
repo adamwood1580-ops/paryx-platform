@@ -634,13 +634,18 @@
             );
 
         if (!product) {
+            showError(
+                new Error(
+                    "The selected product could not be found."
+                )
+            );
             return;
         }
 
         const confirmed =
             window.confirm(
-                `Remove "${product.product_name}" from Stock Inventory?\n\n` +
-                "The product will disappear from the inventory, but its previous stock movement history will be retained for audit purposes."
+                `Delete "${product.product_name}" from Stock Inventory?\n\n` +
+                "This removes it from the live stock database. Historic stock movements remain available in Audit."
             );
 
         if (!confirmed) {
@@ -654,10 +659,11 @@
 
         try {
             const {
+                data,
                 error
             } =
                 await getClient().rpc(
-                    "stock_remove_product",
+                    "stock_delete_product",
                     {
                         p_club_id:
                             state.clubId,
@@ -671,12 +677,35 @@
                 throw error;
             }
 
+            if (data !== true) {
+                throw new Error(
+                    "Paryx did not confirm that the product was deleted."
+                );
+            }
+
             closeProductDialog();
+
+            elements.search.value =
+                "";
+
+            elements.categoryFilter.value =
+                "";
+
+            elements.supplierFilter.value =
+                "";
+
+            elements.filter.value =
+                "all";
+
+            elements.productSelect.value =
+                "";
 
             await refreshAll();
 
+            applyProductLookup();
+
             showSuccess(
-                "Product removed from Stock Inventory."
+                "Product deleted from Stock Inventory."
             );
         } catch (error) {
             showError(error);
