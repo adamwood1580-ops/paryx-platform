@@ -65,6 +65,36 @@
                 "profileMembershipNotices"
             ),
 
+        clubCreditSection:
+            document.getElementById(
+                "profileClubCreditSection"
+            ),
+
+        clubCredit:
+            document.getElementById(
+                "profileClubCredit"
+            ),
+
+        creditDialog:
+            document.getElementById(
+                "profileCreditDialog"
+            ),
+
+        creditDialogTitle:
+            document.getElementById(
+                "profileCreditDialogTitle"
+            ),
+
+        creditDialogClose:
+            document.getElementById(
+                "profileCreditDialogClose"
+            ),
+
+        creditTransactions:
+            document.getElementById(
+                "profileCreditTransactions"
+            ),
+
         signOut:
             document.getElementById(
                 "signOut"
@@ -532,6 +562,211 @@
         }
     }
 
+    const CREDIT_TYPE_LABELS = {
+        competition_prize: "Competition prize",
+        manual_credit: "Club credit",
+        manual_debit: "Club debit",
+        epos_purchase: "Club purchase",
+        refund: "Refund",
+        adjustment: "Adjustment"
+    };
+
+    function formatCreditMoney(value, currency) {
+        return new Intl.NumberFormat(
+            "en-GB",
+            {
+                style: "currency",
+                currency: String(currency || "GBP")
+            }
+        ).format(Number(value || 0));
+    }
+
+    function renderClubCredit(accounts) {
+        const safe =
+            Array.isArray(accounts)
+                ? accounts
+                : [];
+
+        if (!safe.length) {
+            elements.clubCreditSection.hidden = true;
+            elements.clubCredit.innerHTML = "";
+            return;
+        }
+
+        elements.clubCreditSection.hidden = false;
+
+        elements.clubCredit.innerHTML =
+            safe
+                .map(function (account) {
+                    return `
+                        <article class="card profile-credit-card">
+                            <div class="profile-credit-card__club">
+                                <strong>
+                                    ${P.escapeHtml(account.club_name)}
+                                </strong>
+                                <span>
+                                    Club-specific member credit
+                                </span>
+                            </div>
+
+                            <div class="profile-credit-card__balance">
+                                <strong>
+                                    ${P.escapeHtml(
+                                        formatCreditMoney(
+                                            account.balance,
+                                            account.currency_code
+                                        )
+                                    )}
+                                </strong>
+
+                                <button
+                                    type="button"
+                                    data-credit-club="${P.escapeHtml(account.club_id)}"
+                                    data-credit-name="${P.escapeHtml(account.club_name)}"
+                                    data-credit-currency="${P.escapeHtml(
+                                        account.currency_code || "GBP"
+                                    )}"
+                                >
+                                    View activity
+                                </button>
+                            </div>
+                        </article>
+                    `;
+                })
+                .join("");
+    }
+
+    async function loadClubCredit() {
+        try {
+            const data =
+                P.rows(
+                    await P.rpc(
+                        "member_get_club_credit_accounts"
+                    )
+                );
+
+            renderClubCredit(data);
+        } catch (error) {
+            console.warn(
+                "Paryx club-credit warning:",
+                error
+            );
+            renderClubCredit([]);
+        }
+    }
+
+    function renderCreditTransactions(rows, currency) {
+        const safe =
+            Array.isArray(rows)
+                ? rows
+                : [];
+
+        if (!safe.length) {
+            elements.creditTransactions.innerHTML = `
+                <div class="empty">
+                    No club-credit activity yet.
+                </div>
+            `;
+            return;
+        }
+
+        elements.creditTransactions.innerHTML =
+            safe
+                .map(function (item) {
+                    const amount =
+                        Number(item.amount || 0);
+
+                    const positive =
+                        amount > 0;
+
+                    return `
+                        <div class="profile-credit-transaction">
+                            <div>
+                                <strong>
+                                    ${P.escapeHtml(
+                                        CREDIT_TYPE_LABELS[
+                                            item.transaction_type
+                                        ] ||
+                                        item.transaction_type
+                                    )}
+                                </strong>
+
+                                <span>
+                                    ${P.escapeHtml(
+                                        item.reference ||
+                                        item.description ||
+                                        "Club account"
+                                    )}
+                                </span>
+
+                                <small>
+                                    ${P.escapeHtml(
+                                        formatExpiry(item.created_at)
+                                    )}
+                                </small>
+                            </div>
+
+                            <span class="profile-credit-transaction__amount ${
+                                positive
+                                    ? "profile-credit-transaction__amount--credit"
+                                    : "profile-credit-transaction__amount--debit"
+                            }">
+                                ${positive ? "+" : ""}${P.escapeHtml(
+                                    formatCreditMoney(
+                                        amount,
+                                        currency
+                                    )
+                                )}
+                            </span>
+                        </div>
+                    `;
+                })
+                .join("");
+    }
+
+    async function openCreditActivity(
+        clubId,
+        clubName,
+        currency
+    ) {
+        elements.creditDialogTitle.textContent =
+            clubName || "Club credit";
+
+        elements.creditTransactions.innerHTML = `
+            <div class="empty">
+                Loading activity…
+            </div>
+        `;
+
+        elements.creditDialog.showModal();
+
+        try {
+            const rows =
+                P.rows(
+                    await P.rpc(
+                        "member_get_club_credit_transactions",
+                        {
+                            p_club_id: clubId,
+                            p_limit: 50
+                        }
+                    )
+                );
+
+            renderCreditTransactions(
+                rows,
+                currency
+            );
+        } catch (error) {
+            elements.creditTransactions.innerHTML = `
+                <div class="notice error">
+                    ${P.escapeHtml(
+                        P.readableError(error)
+                    )}
+                </div>
+            `;
+        }
+    }
+
     function render(
         context
     ) {
@@ -607,6 +842,33 @@
         );
     }
 
+    elements.clubCredit.addEventListener(
+        "click",
+        function (event) {
+            const button =
+                event.target.closest(
+                    "[data-credit-club]"
+                );
+
+            if (!button) {
+                return;
+            }
+
+            openCreditActivity(
+                button.dataset.creditClub,
+                button.dataset.creditName,
+                button.dataset.creditCurrency
+            );
+        }
+    );
+
+    elements.creditDialogClose.addEventListener(
+        "click",
+        function () {
+            elements.creditDialog.close();
+        }
+    );
+
     elements.signOut.addEventListener(
         "click",
         async function () {
@@ -641,7 +903,10 @@
                     context
                 );
 
-                await loadMembershipNotices();
+                await Promise.all([
+                    loadMembershipNotices(),
+                    loadClubCredit()
+                ]);
             }
         )
         .catch(

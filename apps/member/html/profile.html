@@ -142,6 +142,27 @@
         </section>
 
 
+
+        <section
+            id="profileClubCreditSection"
+            class="section"
+            hidden
+        >
+            <div class="section-head">
+                <div>
+                    <h2>Club credit</h2>
+                    <p class="profile-section-meta">
+                        Credit held with your clubs
+                    </p>
+                </div>
+            </div>
+
+            <div
+                id="profileClubCredit"
+                class="profile-credit-list"
+            ></div>
+        </section>
+
         <section
             id="profileMembershipNoticesSection"
             class="section"
@@ -195,6 +216,36 @@
         </section>
     </main>
 
+    <dialog
+        id="profileCreditDialog"
+        class="member-dialog profile-credit-dialog"
+    >
+        <div class="member-dialog__panel">
+            <div class="member-dialog__header">
+                <div>
+                    <p class="eyebrow">Club credit</p>
+                    <h2 id="profileCreditDialogTitle">Account activity</h2>
+                </div>
+
+                <button
+                    id="profileCreditDialogClose"
+                    class="dialog-close"
+                    type="button"
+                    aria-label="Close club credit activity"
+                >
+                    ×
+                </button>
+            </div>
+
+            <div
+                id="profileCreditTransactions"
+                class="profile-credit-transactions"
+            >
+                <div class="empty">Loading activity…</div>
+            </div>
+        </div>
+    </dialog>
+
     <div data-member-shell></div>
 
     <script src="../js/core/config.js"></script>
@@ -202,6 +253,6 @@
     <script src="../js/core/supabase.js"></script>
     <script src="../js/core/member-core.js"></script>
     <script src="../js/core/member-shell.js"></script>
-    <script src="../js/pages/profile-page.js?v=0.16.0"></script>
+    <script src="../js/pages/profile-page.js?v=0.17.0-member-credit"></script>
 </body>
 </html>

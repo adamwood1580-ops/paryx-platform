@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en" class="auth-protected">
+<head>
+    <meta charset="UTF-8" />
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#064831" />
+
+    <link rel="stylesheet" href="../styles/tokens.css" />
+    <link rel="stylesheet" href="../styles/app-shell.css" />
+    <link rel="stylesheet" href="../styles/components.css" />
+    <link rel="stylesheet" href="../styles/staff-shell.css" />
+    <link rel="stylesheet" href="../styles/club-credit.css" />
+
+    <link rel="manifest" href="../json/manifest.json" />
+    <link rel="apple-touch-icon" href="../assets/paryx-apple-touch-icon.png" />
+    <link rel="icon" type="image/png" href="../assets/paryx-favicon.png" />
+
+    <meta name="application-name" content="Paryx" />
+    <title>Club Credit | Paryx</title>
+
+    <script src="../js/core/protected-loader.js?loader=credit-v1" defer></script>
+</head>
+
+<body data-page="credit">
+    <div class="staff-shell">
+        <aside class="staff-sidebar" data-staff-sidebar></aside>
+
+        <div class="staff-workspace">
+            <header class="staff-topbar" data-staff-header></header>
+
+            <main class="app-main credit-page">
+                <section class="credit-intro">
+                    <div>
+                        <p class="page-heading__eyebrow">Member accounts</p>
+                        <h1 class="credit-intro__title">Club Credit</h1>
+                        <p id="creditClubName" class="credit-intro__subtitle">
+                            Loading member credit...
+                        </p>
+                    </div>
+
+                    <span id="creditRoleBadge" class="credit-role-badge">
+                        Checking access
+                    </span>
+                </section>
+
+                <section
+                    id="creditError"
+                    class="admin-error"
+                    role="alert"
+                    hidden
+                ></section>
+
+                <section
+                    id="creditSuccess"
+                    class="credit-success"
+                    role="status"
+                    aria-live="polite"
+                    hidden
+                ></section>
+
+                <section
+                    id="creditModuleDisabled"
+                    class="credit-disabled-card"
+                    hidden
+                >
+                    <span class="credit-card__eyebrow">Optional module</span>
+                    <h2>Member Club Credit is not enabled</h2>
+                    <p>
+                        Enable the Member Club Credit module for this club
+                        in Paryx platform configuration.
+                    </p>
+                </section>
+
+                <div id="creditWorkspace" hidden>
+                    <section
+                        class="credit-summary-grid"
+                        aria-label="Club credit summary"
+                    >
+                        <article class="credit-summary-card">
+                            <span>Members with credit</span>
+                            <strong id="creditMemberCount">--</strong>
+                            <small>Positive account balance</small>
+                        </article>
+
+                        <article class="credit-summary-card">
+                            <span>Total club credit</span>
+                            <strong id="creditTotalBalance">--</strong>
+                            <small>Outstanding member balance</small>
+                        </article>
+
+                        <article class="credit-summary-card">
+                            <span>Credits this month</span>
+                            <strong id="creditMonthCredits">--</strong>
+                            <small>Prizes, refunds and credits</small>
+                        </article>
+
+                        <article class="credit-summary-card">
+                            <span>Debits this month</span>
+                            <strong id="creditMonthDebits">--</strong>
+                            <small>Member-account spend and debits</small>
+                        </article>
+                    </section>
+
+                    <section class="credit-card credit-search-card">
+                        <div class="credit-card__header">
+                            <div>
+                                <span class="credit-card__eyebrow">Member database</span>
+                                <h2>Find a member account</h2>
+                                <p>
+                                    Search before viewing account data so the page
+                                    stays clean as the membership grows.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="credit-search-controls">
+                            <label class="credit-field">
+                                <span>Search members</span>
+                                <input
+                                    id="creditSearch"
+                                    type="search"
+                                    placeholder="Name, email or membership number"
+                                    autocomplete="off"
+                                />
+                            </label>
+
+                            <button
+                                id="clearCreditSearch"
+                                class="credit-button credit-button--secondary"
+                                type="button"
+                            >
+                                Clear
+                            </button>
+                        </div>
+
+                        <div id="creditSearchPrompt" class="credit-database-prompt">
+                            <div
+                                class="credit-database-prompt__icon"
+                                aria-hidden="true"
+                            >
+                                £
+                            </div>
+
+                            <div>
+                                <strong>Search member accounts</strong>
+                                <p>
+                                    Enter a member name, email address or membership number.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div
+                            id="creditSearchResults"
+                            class="credit-search-results"
+                            hidden
+                        ></div>
+                    </section>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <dialog id="creditAccountDialog" class="credit-dialog">
+        <div class="credit-dialog__panel">
+            <div class="credit-dialog__header">
+                <div>
+                    <span class="credit-card__eyebrow">Member account</span>
+                    <h2 id="creditAccountName">Member</h2>
+                    <p id="creditAccountMeta">Membership account</p>
+                </div>
+
+                <button
+                    id="closeCreditAccountDialog"
+                    class="credit-icon-button"
+                    type="button"
+                    aria-label="Close member credit account"
+                >
+                    ×
+                </button>
+            </div>
+
+            <section class="credit-balance-panel">
+                <span>Available club credit</span>
+                <strong id="creditAccountBalance">£0.00</strong>
+            </section>
+
+            <section
+                id="creditTransactionFormSection"
+                class="credit-transaction-form-section"
+            >
+                <div class="credit-section-heading">
+                    <div>
+                        <span class="credit-card__eyebrow">New transaction</span>
+                        <h3>Credit or debit account</h3>
+                    </div>
+                </div>
+
+                <form id="creditTransactionForm">
+                    <div class="credit-form-grid">
+                        <label class="credit-field">
+                            <span>Transaction type</span>
+                            <select id="creditTransactionType" required>
+                                <option value="competition_prize">Competition prize</option>
+                                <option value="manual_credit">Manual credit</option>
+                                <option value="manual_debit">Manual debit</option>
+                                <option value="refund">Refund</option>
+                                <option value="adjustment_credit">Credit adjustment</option>
+                                <option value="adjustment_debit">Debit adjustment</option>
+                            </select>
+                        </label>
+
+                        <label class="credit-field">
+                            <span>Amount</span>
+                            <input
+                                id="creditAmount"
+                                type="number"
+                                min="0.01"
+                                step="0.01"
+                                placeholder="0.00"
+                                required
+                            />
+                        </label>
+
+                        <label class="credit-field credit-field--wide">
+                            <span>Reference</span>
+                            <input
+                                id="creditReference"
+                                type="text"
+                                maxlength="160"
+                                placeholder="Competition, voucher, receipt, etc."
+                            />
+                        </label>
+
+                        <label class="credit-field credit-field--wide">
+                            <span>Note</span>
+                            <textarea
+                                id="creditDescription"
+                                rows="3"
+                                maxlength="1000"
+                                placeholder="Optional internal note"
+                            ></textarea>
+                        </label>
+                    </div>
+
+                    <div class="credit-transaction-actions">
+                        <button
+                            id="postCreditTransaction"
+                            class="credit-button"
+                            type="submit"
+                        >
+                            Post transaction
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="credit-history-section">
+                <div class="credit-section-heading">
+                    <div>
+                        <span class="credit-card__eyebrow">Account activity</span>
+                        <h3>Transaction history</h3>
+                    </div>
+                </div>
+
+                <div id="creditTransactionHistory" class="credit-history-list">
+                    <div class="credit-empty">Loading activity...</div>
+                </div>
+            </section>
+
+            <div class="credit-dialog__actions">
+                <span class="credit-dialog__spacer"></span>
+                <button
+                    id="closeCreditAccountButton"
+                    class="credit-button credit-button--secondary"
+                    type="button"
+                >
+                    Close
+                </button>
+            </div>
+        </div>
+    </dialog>
+</body>
+</html>

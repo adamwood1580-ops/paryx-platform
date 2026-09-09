@@ -8,6 +8,18 @@
         { key: "teesheet", label: "Tee Sheet", href: "tee-sheet.html" },
         { key: "members", label: "Members", href: "members.html" },
         {
+            key: "credit",
+            label: "Club Credit",
+            href: "club-credit.html",
+            moduleKey: "member_credit",
+            roles: [
+                "reception",
+                "professional",
+                "manager",
+                "club_admin"
+            ]
+        },
+        {
             key: "staff",
             label: "Staff",
             href: "staff.html",

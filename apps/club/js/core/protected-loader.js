@@ -23,7 +23,8 @@
         teesheet: ["../js/pages/tee-sheet-page.js"],
         staff: ["../js/pages/staff-page.js"],
         stock: ["../js/pages/stock-page.js"],
-        epos: ["../js/pages/epos-page.js"]
+        epos: ["../js/pages/epos-page.js"],
+        credit: ["../js/pages/club-credit-page.js"]
     };
 
     function pageName() {
