@@ -427,10 +427,8 @@
         return Number.isFinite(number) ? number : null;
     }
 
-    async function saveEntry(entryId) {
-        const row = elements.entries.querySelector(`[data-entry-row="${CSS.escape(entryId)}"]`);
-        if (!row) return;
-        const { error } = await client().rpc("competition_save_entry_result", {
+    function entryPayloadFromRow(row, entryId) {
+        return {
             p_entry_id: entryId,
             p_entry_status: rowValue(row, "entry_status") || "entered",
             p_gross_score: rowNumber(row, "gross_score"),
@@ -438,10 +436,83 @@
             p_points: rowNumber(row, "points"),
             p_placing: rowNumber(row, "placing"),
             p_result_text: rowValue(row, "result_text")
-        });
+        };
+    }
+
+    async function persistEntryPayload(payload) {
+        const { error } = await client().rpc(
+            "competition_save_entry_result",
+            payload
+        );
         if (error) throw error;
+    }
+
+    async function saveEntry(entryId) {
+        const row = elements.entries.querySelector(`[data-entry-row="${CSS.escape(entryId)}"]`);
+        if (!row) return;
+        await persistEntryPayload(entryPayloadFromRow(row, entryId));
         await reloadDetailData();
         showSuccess("Entrant result saved.");
+    }
+
+    function collectEntryPayloads() {
+        return Array.from(
+            elements.entries.querySelectorAll("[data-entry-row]")
+        ).map((row) => {
+            const entryId = row.dataset.entryRow;
+            return entryPayloadFromRow(row, entryId);
+        });
+    }
+
+    function validateConfirmationEntries(payloads) {
+        const completedWithPlace = payloads.filter((payload) =>
+            payload.p_entry_status === "completed" &&
+            Number.isInteger(payload.p_placing) &&
+            payload.p_placing >= 1
+        );
+
+        if (!completedWithPlace.length) {
+            throw new Error(
+                "Set at least one entrant to Completed and give them a Place before confirming results."
+            );
+        }
+
+        const seenPlaces = new Set();
+        for (const payload of payloads) {
+            if (payload.p_placing === null) continue;
+
+            if (!Number.isInteger(payload.p_placing) || payload.p_placing < 1) {
+                throw new Error("Every placing must be a whole number of 1 or higher.");
+            }
+
+            if (["withdrawn", "disqualified", "no_return"].includes(payload.p_entry_status)) {
+                throw new Error(
+                    "Withdrawn, disqualified or no-return entrants cannot hold a placing."
+                );
+            }
+
+            if (seenPlaces.has(payload.p_placing)) {
+                throw new Error(`Place ${payload.p_placing} is assigned to more than one entrant.`);
+            }
+            seenPlaces.add(payload.p_placing);
+        }
+    }
+
+    async function saveAllEntriesBeforeConfirmation(payloads) {
+        /*
+         * Clear stored places first. This makes changing/swapping existing
+         * placings safe because the RPC checks for duplicate stored places.
+         */
+        for (const payload of payloads) {
+            await persistEntryPayload({
+                ...payload,
+                p_placing: null
+            });
+        }
+
+        for (const payload of payloads) {
+            await persistEntryPayload(payload);
+        }
     }
 
     async function removeEntry(entryId) {
@@ -502,13 +573,69 @@
 
     async function confirmResults() {
         if (!state.canConfirm || !state.selectedCompetitionId) return;
-        if (!window.confirm("Confirm these as the final competition results? Entrants and prizes will be locked.")) return;
+
+        clearMessages();
+
+        const entryPayloads = collectEntryPayloads();
+        const prizes = collectPrizes();
+
         try {
-            const { error } = await client().rpc("competition_confirm_results", { p_competition_id: state.selectedCompetitionId });
+            validateConfirmationEntries(entryPayloads);
+
+            const seenPrizePlaces = new Set();
+            for (const prize of prizes) {
+                if (prize.placing > 20) {
+                    throw new Error("Prize placing must be between 1 and 20.");
+                }
+                if (seenPrizePlaces.has(prize.placing)) {
+                    throw new Error("Each prize place can only be used once.");
+                }
+                seenPrizePlaces.add(prize.placing);
+            }
+        } catch (error) {
+            showError(error);
+            return;
+        }
+
+        if (!window.confirm(
+            "Confirm these as the final competition results? Current entrant results and prizes will be saved first, then locked."
+        )) return;
+
+        const originalText = elements.confirmButton.textContent;
+        elements.confirmButton.disabled = true;
+        elements.confirmButton.textContent = "Confirming…";
+
+        try {
+            /* Save what is currently on screen before final confirmation. */
+            await saveAllEntriesBeforeConfirmation(entryPayloads);
+
+            const prizeResult = await client().rpc(
+                "competition_save_prizes",
+                {
+                    p_competition_id: state.selectedCompetitionId,
+                    p_prizes: prizes
+                }
+            );
+            if (prizeResult.error) throw prizeResult.error;
+
+            const { error } = await client().rpc(
+                "competition_confirm_results",
+                { p_competition_id: state.selectedCompetitionId }
+            );
             if (error) throw error;
-            await Promise.all([reloadDetailData(), loadSummary(), loadList()]);
-            showSuccess("Competition results confirmed.");
-        } catch (error) { showError(error); }
+
+            await Promise.all([
+                reloadDetailData(),
+                loadSummary(),
+                loadList()
+            ]);
+            showSuccess("Competition results confirmed and completed.");
+        } catch (error) {
+            showError(error);
+        } finally {
+            elements.confirmButton.disabled = false;
+            elements.confirmButton.textContent = originalText;
+        }
     }
 
     async function reopenResults() {
