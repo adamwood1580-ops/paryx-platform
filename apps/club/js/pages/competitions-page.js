@@ -25,13 +25,6 @@
         other: "Other"
     };
 
-    const ENTRY_STATUS_LABELS = {
-        entered: "Entered",
-        completed: "Completed",
-        no_return: "No return",
-        disqualified: "Disqualified",
-        withdrawn: "Withdrawn"
-    };
 
     const state = {
         clubId: null,
@@ -44,6 +37,8 @@
         calendarEvents: [],
         entries: [],
         prizes: [],
+        verifiedResults: [],
+        memberMatches: [],
         memberSearchTimer: null,
         listSearchTimer: null
     };
@@ -55,9 +50,8 @@
         newButton: $("newCompetitionButton"), search: $("competitionSearch"), statusFilter: $("competitionStatusFilter"), fromDate: $("competitionFromDate"), toDate: $("competitionToDate"), refresh: $("competitionRefreshButton"), list: $("competitionList"),
         dialog: $("competitionDialog"), closeDialog: $("closeCompetitionDialog"), dialogTitle: $("competitionDialogTitle"), dialogMeta: $("competitionDialogMeta"),
         form: $("competitionForm"), calendarEvent: $("competitionCalendarEvent"), name: $("competitionName"), date: $("competitionDate"), format: $("competitionFormat"), section: $("competitionSection"), status: $("competitionStatus"), qualifier: $("competitionQualifier"), notes: $("competitionNotes"), save: $("saveCompetitionButton"), deleteButton: $("deleteCompetitionButton"),
-        entrantsSection: $("competitionEntrantsSection"), entryControls: $("competitionEntryControls"), entryCount: $("competitionEntryCount"), memberSearch: $("competitionMemberSearch"), memberResults: $("competitionMemberResults"), manualEntryForm: $("competitionManualEntryForm"), manualName: $("competitionManualName"), entries: $("competitionEntries"),
-        prizesSection: $("competitionPrizesSection"), addPrize: $("addPrizeButton"), prizes: $("competitionPrizes"), savePrizes: $("savePrizesButton"),
-        confirmSection: $("competitionConfirmSection"), confirmTitle: $("competitionConfirmationTitle"), confirmText: $("competitionConfirmationText"), confirmButton: $("confirmResultsButton"), reopenButton: $("reopenResultsButton")
+        resultsSection: $("competitionResultsSection"), resultControls: $("competitionResultControls"), resultCount: $("competitionResultCount"), memberSearch: $("competitionMemberSearch"), memberResults: $("competitionMemberResults"), results: $("competitionVerifiedResults"), saveResults: $("saveVerifiedResultsButton"),
+        confirmSection: $("competitionConfirmSection"), confirmTitle: $("competitionConfirmationTitle"), confirmText: $("competitionConfirmationText"), verificationLabel: $("competitionVerificationLabel"), verifiedCheckbox: $("competitionResultsVerified"), confirmButton: $("confirmResultsButton"), reopenButton: $("reopenResultsButton")
     };
 
     function client() {
@@ -205,8 +199,8 @@
                 <div><strong>${esc(row.name)}</strong><small>${esc(FORMAT_LABELS[row.competition_format] || row.competition_format)} · ${esc(row.section_label)}${row.is_qualifier ? " · Qualifier" : ""}</small></div>
                 <span>${esc(formatDate(row.competition_date))}</span>
                 <span class="competition-state-pill ${statusClass(row.status)}">${esc(STATUS_LABELS[row.status] || row.status)}</span>
-                <span>${Number(row.entry_count || 0)} entrants</span>
-                <span>${Number(row.completed_result_count || 0)} results</span>
+                <span>${Number(row.completed_result_count || 0)} verified place${Number(row.completed_result_count || 0) === 1 ? "" : "s"}</span>
+                <span>Manual verification</span>
                 <span>${esc(formatMoney(row.prize_total, row.currency_code))}</span>
                 <button class="competition-button competition-button--secondary" type="button" data-competition-open="${esc(row.competition_id)}">Open</button>
             </div>`).join("");
@@ -234,18 +228,29 @@
     function applyPermissions() {
         const confirmed = Boolean(state.selectedCompetition?.results_confirmed_at);
         const editable = state.canManage && !confirmed;
+        const hasAwardedCredit = state.prizes.some((prize) => Boolean(prize.credit_transaction_id));
+
         [elements.calendarEvent, elements.format, elements.status, elements.notes].forEach((input) => input.disabled = !editable);
         setLinkedEventState();
         elements.save.hidden = !editable;
         elements.deleteButton.hidden = !(editable && state.selectedCompetitionId);
-        elements.entryControls.hidden = !editable;
-        elements.addPrize.hidden = !editable;
-        elements.savePrizes.hidden = !editable;
+        elements.resultControls.hidden = !editable;
+        elements.saveResults.hidden = !editable;
         elements.confirmSection.hidden = !(state.selectedCompetitionId && state.canConfirm);
         elements.confirmButton.hidden = confirmed;
-        elements.reopenButton.hidden = !confirmed;
-        elements.confirmTitle.textContent = confirmed ? "Results confirmed" : "Confirm final results";
-        elements.confirmText.textContent = confirmed ? "Results are locked. Reopen them before making corrections." : "Confirming results locks entrant results and the prize structure.";
+        elements.verificationLabel.hidden = confirmed;
+        elements.reopenButton.hidden = !(confirmed && !hasAwardedCredit);
+        elements.verifiedCheckbox.disabled = !editable;
+
+        if (confirmed) {
+            elements.confirmTitle.textContent = "Results confirmed";
+            elements.confirmText.textContent = hasAwardedCredit
+                ? "Competition prizes have been posted to Club Credit and the result is locked. Credit corrections should be made through Club Credit."
+                : "The verified result is locked. No Club Credit was awarded, so a Manager or Club Admin may reopen it if required.";
+        } else {
+            elements.confirmTitle.textContent = "Confirm & award credit";
+            elements.confirmText.textContent = "Confirming saves the verified placings, posts every positive prize directly to Club Credit, and locks the competition.";
+        }
     }
 
     function resetDialog() {
@@ -253,8 +258,10 @@
         state.selectedCompetition = null;
         state.entries = [];
         state.prizes = [];
+        state.verifiedResults = [];
+        state.memberMatches = [];
         elements.dialogTitle.textContent = "New competition";
-        elements.dialogMeta.textContent = "Create the competition before adding entrants or prizes.";
+        elements.dialogMeta.textContent = "Create the competition, then verify prize results from HowDidiDo / ClubV1.";
         elements.calendarEvent.value = "";
         elements.name.value = "";
         elements.date.value = dateInputValue(new Date());
@@ -263,16 +270,14 @@
         elements.status.value = "draft";
         elements.qualifier.checked = false;
         elements.notes.value = "";
-        elements.entrantsSection.hidden = true;
-        elements.prizesSection.hidden = true;
+        elements.resultsSection.hidden = true;
         elements.confirmSection.hidden = true;
         elements.memberSearch.value = "";
         elements.memberResults.hidden = true;
         elements.memberResults.innerHTML = "";
-        elements.manualName.value = "";
+        elements.verifiedCheckbox.checked = false;
         renderCalendarOptions();
-        renderEntries();
-        renderPrizes();
+        renderVerifiedResults();
         applyPermissions();
     }
 
@@ -296,6 +301,8 @@
             state.selectedCompetition = detail.competition || {};
             state.entries = Array.isArray(detail.entries) ? detail.entries : [];
             state.prizes = Array.isArray(detail.prizes) ? detail.prizes : [];
+            state.verifiedResults = deriveVerifiedResults();
+            state.memberMatches = [];
             renderCalendarOptions();
             renderDetail();
         } catch (error) {
@@ -307,7 +314,9 @@
     function renderDetail() {
         const c = state.selectedCompetition;
         elements.dialogTitle.textContent = c.name || "Competition";
-        elements.dialogMeta.textContent = c.results_confirmed_at ? `Results confirmed ${formatDate(String(c.results_confirmed_at).slice(0, 10))}` : "Manage setup, entrants, results and prize values.";
+        elements.dialogMeta.textContent = c.results_confirmed_at
+            ? `Results confirmed ${formatDate(String(c.results_confirmed_at).slice(0, 10))}`
+            : "Verify final prize placings from HowDidiDo / ClubV1 and award Club Credit.";
         elements.calendarEvent.value = c.club_event_id || "";
         elements.name.value = c.name || "";
         elements.date.value = c.competition_date || "";
@@ -316,10 +325,9 @@
         elements.status.value = c.status || "draft";
         elements.qualifier.checked = c.is_qualifier === true;
         elements.notes.value = c.notes || "";
-        elements.entrantsSection.hidden = false;
-        elements.prizesSection.hidden = false;
-        renderEntries();
-        renderPrizes();
+        elements.resultsSection.hidden = false;
+        elements.verifiedCheckbox.checked = false;
+        renderVerifiedResults();
         applyPermissions();
     }
 
@@ -330,11 +338,8 @@
         elements.save.disabled = true;
 
         const wasExistingCompetition = Boolean(state.selectedCompetitionId);
-        const pendingEntries = wasExistingCompetition
-            ? collectEntryPayloads()
-            : [];
-        const pendingPrizes = wasExistingCompetition
-            ? collectPrizes()
+        const pendingResults = wasExistingCompetition
+            ? collectVerifiedResults()
             : [];
 
         try {
@@ -356,24 +361,15 @@
             state.selectedCompetitionId = saved.competition_id;
 
             if (wasExistingCompetition) {
-                const resultSave = await client().rpc(
-                    "competition_save_results_batch",
-                    {
-                        p_competition_id: state.selectedCompetitionId,
-                        p_entries: pendingEntries,
-                        p_prizes: pendingPrizes,
-                        p_confirm: false
-                    }
-                );
-                if (resultSave.error) throw resultSave.error;
+                await persistVerifiedResults(false, pendingResults);
             }
 
             await Promise.all([loadSummary(), loadList(), loadCalendarEvents()]);
             await openCompetition(saved.competition_id);
             showSuccess(
                 wasExistingCompetition
-                    ? "Competition and results saved."
-                    : "Competition saved."
+                    ? "Competition and verified results saved."
+                    : "Competition saved. You can now add the verified prize results."
             );
         } catch (error) {
             showError(error);
@@ -384,7 +380,7 @@
 
     async function deleteCompetition() {
         if (!state.canManage || !state.selectedCompetitionId) return;
-        if (!window.confirm("Delete this competition? Entrants, results and prize setup will also be deleted.")) return;
+        if (!window.confirm("Delete this competition? Its verified result setup will also be deleted.")) return;
         clearMessages();
         try {
             const { error } = await client().rpc("competition_delete", { p_competition_id: state.selectedCompetitionId });
@@ -395,209 +391,282 @@
         } catch (error) { showError(error); }
     }
 
+    function deriveVerifiedResults() {
+        const prizeByPlace = new Map(
+            state.prizes.map((prize) => [Number(prize.placing), prize])
+        );
+
+        return state.entries
+            .filter((entry) => entry.membership_id && Number(entry.placing) > 0)
+            .map((entry) => {
+                const placing = Number(entry.placing);
+                const prize = prizeByPlace.get(placing) || {};
+                return {
+                    membership_id: entry.membership_id,
+                    display_name: entry.entrant_name || "Club member",
+                    email: entry.entrant_email || "",
+                    membership_number: entry.membership_number || "",
+                    placing,
+                    amount: Number(prize.amount || 0),
+                    label: prize.label || `${ordinal(placing)} place`,
+                    credit_transaction_id: prize.credit_transaction_id || null
+                };
+            })
+            .sort((a, b) => a.placing - b.placing);
+    }
+
+    function nextAvailablePlace() {
+        const used = new Set(state.verifiedResults.map((result) => Number(result.placing)));
+        let place = 1;
+        while (used.has(place) && place <= 20) place += 1;
+        return Math.min(place, 20);
+    }
+
     async function searchMembers() {
         if (!state.canManage || !state.selectedCompetitionId) return;
         const query = elements.memberSearch.value.trim();
         if (!query) {
+            state.memberMatches = [];
             elements.memberResults.hidden = true;
             elements.memberResults.innerHTML = "";
             return;
         }
-        const { data, error } = await client().rpc("competition_search_members", { p_club_id: state.clubId, p_search: query });
+
+        const { data, error } = await client().rpc(
+            "competition_search_members",
+            { p_club_id: state.clubId, p_search: query }
+        );
         if (error) throw error;
-        renderMemberResults(Array.isArray(data) ? data : []);
+
+        state.memberMatches = Array.isArray(data) ? data : [];
+        renderMemberResults();
     }
 
-    function renderMemberResults(rows) {
+    function renderMemberResults() {
+        const rows = state.memberMatches;
         elements.memberResults.hidden = false;
+
         if (!rows.length) {
             elements.memberResults.innerHTML = '<div class="competition-empty">No active members match.</div>';
             return;
         }
-        const existing = new Set(state.entries.filter((e) => e.membership_id).map((e) => e.membership_id));
+
+        const existing = new Set(
+            state.verifiedResults.map((result) => result.membership_id)
+        );
+        const nextPlace = nextAvailablePlace();
+
         elements.memberResults.innerHTML = rows.map((member) => {
             const added = existing.has(member.membership_id);
             return `<button class="competition-member-result" type="button" data-member-add="${esc(member.membership_id)}" ${added ? "disabled" : ""}>
-                <span><strong>${esc(member.display_name)}</strong><small>${esc([member.membership_number ? `Member ${member.membership_number}` : null, member.email].filter(Boolean).join(" · "))}</small></span>
-                <strong>${added ? "Added" : "Add"}</strong></button>`;
+                <span>
+                    <strong>${esc(member.display_name)}</strong>
+                    <small>${esc([
+                        member.membership_number ? `Member ${member.membership_number}` : null,
+                        member.email
+                    ].filter(Boolean).join(" · "))}</small>
+                </span>
+                <strong>${added ? "Added" : `Add as ${ordinal(nextPlace)}`}</strong>
+            </button>`;
         }).join("");
     }
 
-    async function addMember(membershipId) {
-        const { error } = await client().rpc("competition_add_member_entry", { p_competition_id: state.selectedCompetitionId, p_membership_id: membershipId });
-        if (error) throw error;
-        elements.memberSearch.value = "";
-        elements.memberResults.hidden = true;
-        await reloadDetailData();
-    }
+    function addVerifiedMember(membershipId) {
+        const member = state.memberMatches.find(
+            (item) => item.membership_id === membershipId
+        );
+        if (!member) return;
 
-    async function addManualEntrant(event) {
-        event.preventDefault();
-        if (!state.canManage || !state.selectedCompetitionId) return;
-        const name = elements.manualName.value.trim();
-        if (!name) return;
-        try {
-            const { error } = await client().rpc("competition_add_manual_entry", { p_competition_id: state.selectedCompetitionId, p_entrant_name: name });
-            if (error) throw error;
-            elements.manualName.value = "";
-            await reloadDetailData();
-        } catch (error) { showError(error); }
-    }
-
-    function renderEntries() {
-        elements.entryCount.textContent = `${state.entries.length} entrant${state.entries.length === 1 ? "" : "s"}`;
-        if (!state.entries.length) {
-            elements.entries.innerHTML = '<tr><td colspan="8"><div class="competition-empty">No entrants yet.</div></td></tr>';
+        if (state.verifiedResults.some((result) => result.membership_id === membershipId)) {
             return;
         }
-        const locked = Boolean(state.selectedCompetition?.results_confirmed_at) || !state.canManage;
-        elements.entries.innerHTML = state.entries.map((entry) => `<tr data-entry-row="${esc(entry.entry_id)}">
-            <td><div class="competition-entry-name"><strong>${esc(entry.entrant_name)}</strong><small>${esc(entry.entry_type === "member" ? (entry.membership_number ? `Member ${entry.membership_number}` : "Club member") : "Manual entrant")}</small></div></td>
-            <td><select data-entry-field="entry_status" ${locked ? "disabled" : ""}>${Object.keys(ENTRY_STATUS_LABELS).map((status) => `<option value="${status}" ${entry.entry_status === status ? "selected" : ""}>${ENTRY_STATUS_LABELS[status]}</option>`).join("")}</select></td>
-            <td><input data-entry-field="gross_score" type="number" min="0" step="1" value="${esc(entry.gross_score ?? "")}" ${locked ? "disabled" : ""} /></td>
-            <td><input data-entry-field="nett_score" type="number" min="0" step="1" value="${esc(entry.nett_score ?? "")}" ${locked ? "disabled" : ""} /></td>
-            <td><input data-entry-field="points" type="number" min="0" step="1" value="${esc(entry.points ?? "")}" ${locked ? "disabled" : ""} /></td>
-            <td><input data-entry-field="placing" type="number" min="1" max="999" step="1" value="${esc(entry.placing ?? "")}" ${locked ? "disabled" : ""} /></td>
-            <td><input data-entry-field="result_text" type="text" maxlength="300" value="${esc(entry.result_text ?? "")}" placeholder="Optional" ${locked ? "disabled" : ""} /></td>
-            <td><div class="competition-row-actions">${locked ? "" : `<button class="competition-mini-button" type="button" data-entry-save="${esc(entry.entry_id)}">Save</button><button class="competition-mini-button competition-mini-button--danger" type="button" data-entry-remove="${esc(entry.entry_id)}">Remove</button>`}</div></td>
-        </tr>`).join("");
+
+        const placing = nextAvailablePlace();
+        state.verifiedResults.push({
+            membership_id: member.membership_id,
+            display_name: member.display_name || "Club member",
+            email: member.email || "",
+            membership_number: member.membership_number || "",
+            placing,
+            amount: 0,
+            label: `${ordinal(placing)} place`,
+            credit_transaction_id: null
+        });
+        state.verifiedResults.sort((a, b) => Number(a.placing) - Number(b.placing));
+
+        elements.memberSearch.value = "";
+        state.memberMatches = [];
+        elements.memberResults.hidden = true;
+        elements.memberResults.innerHTML = "";
+        renderVerifiedResults();
     }
 
-    function rowValue(row, field) {
-        const value = row.querySelector(`[data-entry-field="${field}"]`)?.value;
-        return value === undefined || value === null || String(value).trim() === "" ? null : value;
-    }
+    function renderVerifiedResults() {
+        const results = state.verifiedResults;
+        const confirmed = Boolean(state.selectedCompetition?.results_confirmed_at);
+        const locked = confirmed || !state.canManage;
+        const currency = state.selectedCompetition?.currency_code || "GBP";
 
-    function rowNumber(row, field) {
-        const value = rowValue(row, field);
-        if (value === null) return null;
-        const number = Number(value);
-        return Number.isFinite(number) ? number : null;
-    }
+        elements.resultCount.textContent = `${results.length} place${results.length === 1 ? "" : "s"}`;
 
-    function entryPayloadFromRow(row) {
-        return {
-            entry_id: row.dataset.entryRow,
-            entry_status: rowValue(row, "entry_status") || "entered",
-            gross_score: rowNumber(row, "gross_score"),
-            nett_score: rowNumber(row, "nett_score"),
-            points: rowNumber(row, "points"),
-            placing: rowNumber(row, "placing"),
-            result_text: rowValue(row, "result_text")
-        };
-    }
-
-    function collectEntryPayloads() {
-        return Array.from(
-            elements.entries.querySelectorAll("[data-entry-row]")
-        ).map(entryPayloadFromRow);
-    }
-
-    async function persistResultSet(confirmResults = false) {
-        if (!state.selectedCompetitionId) {
-            throw new Error("Save the competition before entering results.");
+        if (!results.length) {
+            elements.results.innerHTML = '<tr><td colspan="6"><div class="competition-empty">No verified prize places yet. Search for the winning member above.</div></td></tr>';
+            return;
         }
 
-        const entries = collectEntryPayloads();
-        const prizes = collectPrizes();
-        const { error } = await client().rpc(
-            "competition_save_results_batch",
+        elements.results.innerHTML = results.map((result, index) => {
+            const awarded = Boolean(result.credit_transaction_id);
+            return `<tr data-result-row="${index}">
+                <td>
+                    <input data-result-field="placing" type="number" min="1" max="20" step="1" value="${esc(result.placing)}" ${locked ? "disabled" : ""} aria-label="Competition placing" />
+                </td>
+                <td>
+                    <div class="competition-entry-name">
+                        <strong>${esc(result.display_name)}</strong>
+                        <small>${esc(result.membership_number ? `Member ${result.membership_number}` : "Club member")}</small>
+                    </div>
+                </td>
+                <td>
+                    <div class="competition-credit-input">
+                        <span>${esc(currency === "GBP" ? "£" : currency)}</span>
+                        <input data-result-field="amount" type="number" min="0" step="0.01" value="${esc(Number(result.amount || 0).toFixed(2))}" ${locked ? "disabled" : ""} aria-label="Club Credit amount" />
+                    </div>
+                </td>
+                <td>
+                    <input data-result-field="label" type="text" maxlength="100" value="${esc(result.label || `${ordinal(result.placing)} place`)}" ${locked ? "disabled" : ""} aria-label="Prize label" />
+                </td>
+                <td>
+                    <span class="competition-state-pill ${awarded ? "competition-state-pill--completed" : ""}">${awarded ? "Credit awarded" : (confirmed ? "Confirmed" : "Pending")}</span>
+                </td>
+                <td>${locked ? "" : `<button class="competition-mini-button competition-mini-button--danger" type="button" data-result-remove="${index}">Remove</button>`}</td>
+            </tr>`;
+        }).join("");
+    }
+
+    function collectVerifiedResults() {
+        const rows = Array.from(elements.results.querySelectorAll("[data-result-row]"));
+        return rows.map((row) => {
+            const index = Number(row.dataset.resultRow);
+            const source = state.verifiedResults[index];
+            const placing = Number(row.querySelector('[data-result-field="placing"]')?.value);
+            const amount = Number(row.querySelector('[data-result-field="amount"]')?.value || 0);
+            const label = String(row.querySelector('[data-result-field="label"]')?.value || "").trim();
+            return {
+                membership_id: source?.membership_id || null,
+                placing,
+                amount,
+                label: label || `${ordinal(placing)} place`
+            };
+        });
+    }
+
+    function validateVerifiedResults(results, forConfirmation = false) {
+        if (forConfirmation && !results.length) {
+            throw new Error("Add at least one verified prize result before confirming.");
+        }
+
+        const places = new Set();
+        const members = new Set();
+
+        for (const result of results) {
+            if (!result.membership_id) {
+                throw new Error("Every result must be assigned to a club member.");
+            }
+            if (!Number.isInteger(result.placing) || result.placing < 1 || result.placing > 20) {
+                throw new Error("Every placing must be a whole number between 1 and 20.");
+            }
+            if (!Number.isFinite(result.amount) || result.amount < 0) {
+                throw new Error("Club Credit values must be zero or greater.");
+            }
+            if (places.has(result.placing)) {
+                throw new Error(`Place ${result.placing} is assigned more than once.`);
+            }
+            if (members.has(result.membership_id)) {
+                throw new Error("The same member cannot occupy more than one place.");
+            }
+            places.add(result.placing);
+            members.add(result.membership_id);
+        }
+    }
+
+    async function persistVerifiedResults(confirmResults = false, suppliedResults = null) {
+        if (!state.selectedCompetitionId) {
+            throw new Error("Save the competition before entering verified results.");
+        }
+
+        const results = suppliedResults || collectVerifiedResults();
+        validateVerifiedResults(results, confirmResults);
+
+        const { data, error } = await client().rpc(
+            "competition_save_verified_awards",
             {
                 p_competition_id: state.selectedCompetitionId,
-                p_entries: entries,
-                p_prizes: prizes,
+                p_results: results,
                 p_confirm: confirmResults === true
             }
         );
         if (error) throw error;
+        return Array.isArray(data) ? data[0] : data;
     }
 
-    async function saveEntry() {
-        clearMessages();
-        await persistResultSet(false);
-        await reloadDetailData();
-        showSuccess("Competition results saved.");
-    }
-
-    async function removeEntry(entryId) {
-        if (!window.confirm("Remove this entrant from the competition?")) return;
-        const { error } = await client().rpc("competition_remove_entry", { p_entry_id: entryId });
-        if (error) throw error;
-        await reloadDetailData();
-    }
-
-    function renderPrizes() {
-        if (!state.prizes.length) {
-            elements.prizes.innerHTML = '<div class="competition-empty">No prize values set.</div>';
-            return;
-        }
-        const locked = Boolean(state.selectedCompetition?.results_confirmed_at) || !state.canManage;
-        elements.prizes.innerHTML = state.prizes.map((prize, index) => `<div class="competition-prize-row" data-prize-index="${index}">
-            <label class="competition-field"><span>Place</span><input data-prize-field="placing" type="number" min="1" max="20" step="1" value="${esc(prize.placing)}" ${locked ? "disabled" : ""} /></label>
-            <label class="competition-field"><span>Label</span><input data-prize-field="label" type="text" maxlength="100" value="${esc(prize.label || `${ordinal(prize.placing)} place`)}" ${locked ? "disabled" : ""} /></label>
-            <label class="competition-field"><span>Value</span><input data-prize-field="amount" type="number" min="0" step="0.01" value="${esc(Number(prize.amount || 0).toFixed(2))}" ${locked ? "disabled" : ""} /></label>
-            ${locked ? "" : `<button class="competition-mini-button competition-mini-button--danger" type="button" data-prize-remove="${index}">Remove</button>`}
-        </div>`).join("");
-    }
-
-    function addPrizeRow() {
-        if (!state.canManage) return;
-        const existing = state.prizes.map((p) => Number(p.placing));
-        let placing = 1; while (existing.includes(placing)) placing += 1;
-        state.prizes.push({ placing, label: `${ordinal(placing)} place`, amount: 0, currency_code: state.selectedCompetition?.currency_code || "GBP" });
-        renderPrizes();
-    }
-
-    function collectPrizes() {
-        return Array.from(elements.prizes.querySelectorAll("[data-prize-index]")).map((row) => ({
-            placing: Number(row.querySelector('[data-prize-field="placing"]')?.value),
-            label: String(row.querySelector('[data-prize-field="label"]')?.value || "").trim(),
-            amount: Number(row.querySelector('[data-prize-field="amount"]')?.value || 0)
-        })).filter((p) => Number.isInteger(p.placing) && p.placing > 0 && Number.isFinite(p.amount) && p.amount >= 0);
-    }
-
-    async function savePrizes() {
+    async function saveVerifiedResults() {
         if (!state.canManage || !state.selectedCompetitionId) return;
         clearMessages();
-        elements.savePrizes.disabled = true;
+        elements.saveResults.disabled = true;
+
         try {
-            await persistResultSet(false);
-            await reloadDetailData();
-            showSuccess("Competition results and prize structure saved.");
-        } catch (error) { showError(error); }
-        finally { elements.savePrizes.disabled = false; }
+            await persistVerifiedResults(false);
+            await Promise.all([reloadDetailData(), loadSummary(), loadList()]);
+            showSuccess("Verified competition results saved. No credit has been awarded yet.");
+        } catch (error) {
+            showError(error);
+        } finally {
+            elements.saveResults.disabled = false;
+        }
     }
 
     async function confirmResults() {
         if (!state.canConfirm || !state.selectedCompetitionId) return;
         clearMessages();
 
-        const entries = collectEntryPayloads();
-        const hasCompletedPlace = entries.some((entry) =>
-            entry.entry_status === "completed" &&
-            Number.isInteger(entry.placing) &&
-            entry.placing >= 1
-        );
-
-        if (!hasCompletedPlace) {
+        if (!elements.verifiedCheckbox.checked) {
             showError(new Error(
-                "Set at least one entrant to Completed and enter a Place before confirming results."
+                "Confirm that you have checked the placings against HowDidiDo / ClubV1 first."
             ));
             return;
         }
 
-        if (!window.confirm(
-            "Confirm these as the final competition results? The current scores and prizes will be saved and then locked."
-        )) return;
+        let results;
+        try {
+            results = collectVerifiedResults();
+            validateVerifiedResults(results, true);
+        } catch (error) {
+            showError(error);
+            return;
+        }
+
+        const total = results.reduce((sum, result) => sum + Number(result.amount || 0), 0);
+        const currency = state.selectedCompetition?.currency_code || "GBP";
+        const creditedMembers = results.filter((result) => Number(result.amount || 0) > 0).length;
+        const confirmationText = creditedMembers
+            ? `Confirm these verified results and award ${formatMoney(total, currency)} of Club Credit across ${creditedMembers} member${creditedMembers === 1 ? "" : "s"}? This cannot be automatically reopened after credit is posted.`
+            : "Confirm these verified results with no Club Credit award?";
+
+        if (!window.confirm(confirmationText)) return;
 
         const originalText = elements.confirmButton.textContent;
         elements.confirmButton.disabled = true;
-        elements.confirmButton.textContent = "Confirming…";
+        elements.confirmButton.textContent = "Awarding credit…";
 
         try {
-            await persistResultSet(true);
+            const result = await persistVerifiedResults(true, results);
             await Promise.all([reloadDetailData(), loadSummary(), loadList()]);
-            showSuccess("Competition results confirmed and completed.");
+            const awarded = Number(result?.awarded_transactions || 0);
+            showSuccess(
+                awarded > 0
+                    ? `Competition completed. Club Credit awarded to ${awarded} member${awarded === 1 ? "" : "s"}.`
+                    : "Competition results confirmed and completed."
+            );
         } catch (error) {
             showError(error);
         } finally {
@@ -613,7 +682,7 @@
             const { error } = await client().rpc("competition_reopen_results", { p_competition_id: state.selectedCompetitionId });
             if (error) throw error;
             await Promise.all([reloadDetailData(), loadSummary(), loadList()]);
-            showSuccess("Competition results reopened.");
+            showSuccess("Verified results reopened for correction.");
         } catch (error) { showError(error); }
     }
 
@@ -624,6 +693,7 @@
         state.selectedCompetition = detail.competition || {};
         state.entries = Array.isArray(detail.entries) ? detail.entries : [];
         state.prizes = Array.isArray(detail.prizes) ? detail.prizes : [];
+        state.verifiedResults = deriveVerifiedResults();
         renderDetail();
     }
 
@@ -649,23 +719,34 @@
         });
         elements.memberResults.addEventListener("click", (event) => {
             const button = event.target.closest("[data-member-add]");
-            if (button && !button.disabled) addMember(button.dataset.memberAdd).catch(showError);
+            if (button && !button.disabled) addVerifiedMember(button.dataset.memberAdd);
         });
-        elements.manualEntryForm.addEventListener("submit", addManualEntrant);
-        elements.entries.addEventListener("click", (event) => {
-            const saveButton = event.target.closest("[data-entry-save]");
-            if (saveButton) { saveEntry().catch(showError); return; }
-            const removeButton = event.target.closest("[data-entry-remove]");
-            if (removeButton) removeEntry(removeButton.dataset.entryRemove).catch(showError);
+        elements.results.addEventListener("input", (event) => {
+            const row = event.target.closest("[data-result-row]");
+            if (!row) return;
+            const index = Number(row.dataset.resultRow);
+            const result = state.verifiedResults[index];
+            if (!result) return;
+
+            if (event.target.matches('[data-result-field="placing"]')) {
+                const placing = Number(event.target.value);
+                result.placing = Number.isFinite(placing) ? placing : null;
+            } else if (event.target.matches('[data-result-field="amount"]')) {
+                const amount = Number(event.target.value);
+                result.amount = Number.isFinite(amount) ? amount : 0;
+            } else if (event.target.matches('[data-result-field="label"]')) {
+                result.label = event.target.value;
+            }
         });
-        elements.addPrize.addEventListener("click", addPrizeRow);
-        elements.prizes.addEventListener("click", (event) => {
-            const button = event.target.closest("[data-prize-remove]");
+        elements.results.addEventListener("click", (event) => {
+            const button = event.target.closest("[data-result-remove]");
             if (!button) return;
-            const index = Number(button.dataset.prizeRemove);
-            if (Number.isInteger(index)) { state.prizes.splice(index, 1); renderPrizes(); }
+            const index = Number(button.dataset.resultRemove);
+            if (!Number.isInteger(index)) return;
+            state.verifiedResults.splice(index, 1);
+            renderVerifiedResults();
         });
-        elements.savePrizes.addEventListener("click", savePrizes);
+        elements.saveResults.addEventListener("click", saveVerifiedResults);
         elements.confirmButton.addEventListener("click", confirmResults);
         elements.reopenButton.addEventListener("click", reopenResults);
     }

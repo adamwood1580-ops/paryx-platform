@@ -80,7 +80,7 @@
                 <div>
                     <span class="competition-eyebrow">Competition</span>
                     <h2 id="competitionDialogTitle">New competition</h2>
-                    <p id="competitionDialogMeta">Create the competition before adding entrants or prizes.</p>
+                    <p id="competitionDialogMeta">Create the competition, then verify prize results from HowDidiDo / ClubV1.</p>
                 </div>
                 <button id="closeCompetitionDialog" class="competition-icon-button" type="button" aria-label="Close competition">×</button>
             </div>
@@ -120,45 +120,64 @@
                 </form>
             </section>
 
-            <section id="competitionEntrantsSection" class="competition-section" hidden>
+            <section id="competitionResultsSection" class="competition-section" hidden>
                 <div class="competition-section__header">
-                    <div><span class="competition-eyebrow">Field</span><h3>Entrants & results</h3></div>
-                    <span id="competitionEntryCount" class="competition-state-pill">0 entrants</span>
+                    <div>
+                        <span class="competition-eyebrow">Verified results</span>
+                        <h3>HowDidiDo / ClubV1 prize results</h3>
+                        <p>Check the final positions in HowDidiDo / ClubV1, then add only the club members receiving a prize or Club Credit. Paryx does not duplicate the full scorecard.</p>
+                    </div>
+                    <span id="competitionResultCount" class="competition-state-pill">0 places</span>
                 </div>
-                <div id="competitionEntryControls">
-                    <div class="competition-entry-add-grid">
-                        <div class="competition-entry-search">
-                            <label class="competition-field"><span>Add club member</span><input id="competitionMemberSearch" type="search" placeholder="Search member name, email or number" autocomplete="off" /></label>
-                            <div id="competitionMemberResults" class="competition-member-results" hidden></div>
-                        </div>
-                        <form id="competitionManualEntryForm">
-                            <label class="competition-field"><span>Add manual entrant</span><span class="competition-inline-input"><input id="competitionManualName" type="text" maxlength="160" placeholder="Visitor / guest name" /><button class="competition-button competition-button--secondary" type="submit">Add</button></span></label>
-                        </form>
+
+                <div id="competitionResultControls" class="competition-result-controls">
+                    <div class="competition-entry-search competition-result-member-search">
+                        <label class="competition-field">
+                            <span>Add placed member</span>
+                            <input id="competitionMemberSearch" type="search" placeholder="Search member name, email or number" autocomplete="off" />
+                            <small>Select the member and Paryx will assign the next available place.</small>
+                        </label>
+                        <div id="competitionMemberResults" class="competition-member-results" hidden></div>
                     </div>
                 </div>
+
                 <div class="competition-results-wrap">
-                    <table class="competition-results-table">
-                        <thead><tr><th>Entrant</th><th>Status</th><th>Gross</th><th>Nett</th><th>Points</th><th>Place</th><th>Result / note</th><th></th></tr></thead>
-                        <tbody id="competitionEntries"><tr><td colspan="8"><div class="competition-empty">No entrants yet.</div></td></tr></tbody>
+                    <table class="competition-results-table competition-awards-table">
+                        <thead>
+                            <tr>
+                                <th>Place</th>
+                                <th>Member</th>
+                                <th>Club Credit</th>
+                                <th>Prize label</th>
+                                <th>Status</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="competitionVerifiedResults">
+                            <tr><td colspan="6"><div class="competition-empty">No verified prize places yet.</div></td></tr>
+                        </tbody>
                     </table>
                 </div>
-            </section>
-
-            <section id="competitionPrizesSection" class="competition-section" hidden>
-                <div class="competition-section__header">
-                    <div><span class="competition-eyebrow">Prize structure</span><h3>Competition prizes</h3><p>Define the value for each placing.</p></div>
-                    <button id="addPrizeButton" class="competition-button competition-button--secondary" type="button">Add prize place</button>
+                <div class="competition-actions">
+                    <span class="competition-actions__spacer"></span>
+                    <button id="saveVerifiedResultsButton" class="competition-button" type="button">Save verified results</button>
                 </div>
-                <div id="competitionPrizes" class="competition-prize-list"><div class="competition-empty">No prize values set.</div></div>
-                <div class="competition-actions"><span class="competition-actions__spacer"></span><button id="savePrizesButton" class="competition-button" type="button">Save prize structure</button></div>
             </section>
 
             <section id="competitionConfirmSection" class="competition-section" hidden>
-                <div class="competition-confirm-card">
-                    <div><span class="competition-eyebrow">Results control</span><h3 id="competitionConfirmationTitle">Confirm final results</h3><p id="competitionConfirmationText">Confirming results locks the entrant results and prize structure.</p></div>
+                <div class="competition-confirm-card competition-confirm-card--award">
+                    <div>
+                        <span class="competition-eyebrow">Results control</span>
+                        <h3 id="competitionConfirmationTitle">Confirm &amp; award credit</h3>
+                        <p id="competitionConfirmationText">Confirming posts each positive prize directly to the member's Club Credit and locks the competition.</p>
+                        <label id="competitionVerificationLabel" class="competition-verification-check">
+                            <input id="competitionResultsVerified" type="checkbox" />
+                            <span>I have checked these placings against HowDidiDo / ClubV1.</span>
+                        </label>
+                    </div>
                     <div class="competition-confirm-actions">
                         <button id="reopenResultsButton" class="competition-button competition-button--secondary" type="button" hidden>Reopen results</button>
-                        <button id="confirmResultsButton" class="competition-button" type="button">Confirm results</button>
+                        <button id="confirmResultsButton" class="competition-button" type="button">Confirm &amp; award credit</button>
                     </div>
                 </div>
             </section>
