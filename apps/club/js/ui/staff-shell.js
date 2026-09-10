@@ -26,6 +26,17 @@
             adminOnly: true
         },
         { key: "calendar", label: "Calendar", href: "calendar.html" },
+        {
+            key: "competitions",
+            label: "Competitions",
+            href: "competitions.html",
+            roles: [
+                "reception",
+                "professional",
+                "manager",
+                "club_admin"
+            ]
+        },
         { key: "courses", label: "Courses", href: "courses.html" },
         {
             key: "stock",

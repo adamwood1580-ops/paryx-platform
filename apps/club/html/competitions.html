@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en" class="auth-protected">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#064831" />
+
+    <link rel="stylesheet" href="../styles/tokens.css" />
+    <link rel="stylesheet" href="../styles/app-shell.css" />
+    <link rel="stylesheet" href="../styles/components.css" />
+    <link rel="stylesheet" href="../styles/staff-shell.css" />
+    <link rel="stylesheet" href="../styles/competitions.css" />
+
+    <link rel="manifest" href="../json/manifest.json" />
+    <link rel="apple-touch-icon" href="../assets/paryx-apple-touch-icon.png" />
+    <link rel="icon" type="image/png" href="../assets/paryx-favicon.png" />
+
+    <meta name="application-name" content="Paryx" />
+    <title>Competitions | Paryx</title>
+
+    <script src="../js/core/protected-loader.js?loader=competitions-v1" defer></script>
+</head>
+<body data-page="competitions">
+    <div class="staff-shell">
+        <aside class="staff-sidebar" data-staff-sidebar></aside>
+        <div class="staff-workspace">
+            <header class="staff-topbar" data-staff-header></header>
+            <main class="app-main competition-page">
+                <section class="competition-intro">
+                    <div>
+                        <p class="page-heading__eyebrow">Golf operations</p>
+                        <h1>Competitions</h1>
+                        <p id="competitionClubName">Loading competition management...</p>
+                    </div>
+                    <button id="newCompetitionButton" class="competition-button" type="button">New competition</button>
+                </section>
+
+                <section id="competitionError" class="admin-error" role="alert" hidden></section>
+                <section id="competitionSuccess" class="competition-success" role="status" aria-live="polite" hidden></section>
+
+                <section class="competition-summary-grid">
+                    <article class="competition-summary-card">
+                        <span>Upcoming</span><strong id="competitionUpcoming">--</strong><small>Active future competitions</small>
+                    </article>
+                    <article class="competition-summary-card">
+                        <span>Open for entries</span><strong id="competitionOpen">--</strong><small>Currently accepting entrants</small>
+                    </article>
+                    <article class="competition-summary-card">
+                        <span>Results pending</span><strong id="competitionPending">--</strong><small>Closed / awaiting confirmation</small>
+                    </article>
+                    <article class="competition-summary-card">
+                        <span>Completed</span><strong id="competitionCompleted">--</strong><small>Confirmed in the last 30 days</small>
+                    </article>
+                </section>
+
+                <section class="competition-card">
+                    <div class="competition-card__header">
+                        <div><span class="competition-eyebrow">Competition database</span><h2>Competition list</h2></div>
+                    </div>
+                    <div class="competition-filter-grid">
+                        <label class="competition-field"><span>Search</span><input id="competitionSearch" type="search" placeholder="Competition name" autocomplete="off" /></label>
+                        <label class="competition-field"><span>Status</span><select id="competitionStatusFilter">
+                            <option value="">All statuses</option><option value="draft">Draft</option><option value="open">Open</option>
+                            <option value="closed">Closed</option><option value="results_pending">Results pending</option>
+                            <option value="completed">Completed</option><option value="cancelled">Cancelled</option>
+                        </select></label>
+                        <label class="competition-field"><span>From</span><input id="competitionFromDate" type="date" /></label>
+                        <label class="competition-field"><span>To</span><input id="competitionToDate" type="date" /></label>
+                        <button id="competitionRefreshButton" class="competition-button competition-button--secondary" type="button">Refresh</button>
+                    </div>
+                    <div id="competitionList" class="competition-list"><div class="competition-empty">Loading competitions...</div></div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <dialog id="competitionDialog" class="competition-dialog">
+        <div class="competition-dialog__panel">
+            <div class="competition-dialog__header">
+                <div>
+                    <span class="competition-eyebrow">Competition</span>
+                    <h2 id="competitionDialogTitle">New competition</h2>
+                    <p id="competitionDialogMeta">Create the competition before adding entrants or prizes.</p>
+                </div>
+                <button id="closeCompetitionDialog" class="competition-icon-button" type="button" aria-label="Close competition">×</button>
+            </div>
+
+            <section class="competition-section">
+                <div class="competition-section__header"><div><span class="competition-eyebrow">Setup</span><h3>Competition details</h3></div></div>
+                <form id="competitionForm">
+                    <div class="competition-form-grid">
+                        <label class="competition-field competition-field--wide">
+                            <span>Linked calendar event</span>
+                            <select id="competitionCalendarEvent"><option value="">Not linked to calendar</option></select>
+                            <small>Link an existing Calendar competition to keep its name, date, section and qualifier status aligned.</small>
+                        </label>
+                        <label class="competition-field competition-field--wide"><span>Competition name</span><input id="competitionName" type="text" maxlength="160" required /></label>
+                        <label class="competition-field"><span>Date</span><input id="competitionDate" type="date" required /></label>
+                        <label class="competition-field"><span>Format</span><select id="competitionFormat" required>
+                            <option value="stableford">Stableford</option><option value="stroke_play">Stroke play</option><option value="match_play">Match play</option>
+                            <option value="fourball">Fourball</option><option value="greensomes">Greensomes</option><option value="texas_scramble">Texas Scramble</option><option value="other">Other</option>
+                        </select></label>
+                        <label class="competition-field"><span>Section</span><select id="competitionSection" required>
+                            <option value="club">Club</option><option value="mens">Men</option><option value="seniors">Seniors</option><option value="ladies">Ladies</option>
+                        </select></label>
+                        <label class="competition-field"><span>Status</span><select id="competitionStatus" required>
+                            <option value="draft">Draft</option><option value="open">Open for entries</option><option value="closed">Closed</option>
+                            <option value="results_pending">Results pending</option><option value="completed" disabled>Completed (confirmed)</option><option value="cancelled">Cancelled</option>
+                        </select></label>
+                        <label class="competition-check"><input id="competitionQualifier" type="checkbox" /><span>Qualifier</span></label>
+                        <label class="competition-field competition-field--wide"><span>Notes</span><textarea id="competitionNotes" rows="3" maxlength="2000" placeholder="Optional competition notes"></textarea></label>
+                    </div>
+                    <div class="competition-actions">
+                        <button id="deleteCompetitionButton" class="competition-button competition-button--danger-secondary" type="button" hidden>Delete competition</button>
+                        <span class="competition-actions__spacer"></span>
+                        <button id="saveCompetitionButton" class="competition-button" type="submit">Save competition</button>
+                    </div>
+                </form>
+            </section>
+
+            <section id="competitionEntrantsSection" class="competition-section" hidden>
+                <div class="competition-section__header">
+                    <div><span class="competition-eyebrow">Field</span><h3>Entrants & results</h3></div>
+                    <span id="competitionEntryCount" class="competition-state-pill">0 entrants</span>
+                </div>
+                <div id="competitionEntryControls">
+                    <div class="competition-entry-add-grid">
+                        <div class="competition-entry-search">
+                            <label class="competition-field"><span>Add club member</span><input id="competitionMemberSearch" type="search" placeholder="Search member name, email or number" autocomplete="off" /></label>
+                            <div id="competitionMemberResults" class="competition-member-results" hidden></div>
+                        </div>
+                        <form id="competitionManualEntryForm">
+                            <label class="competition-field"><span>Add manual entrant</span><span class="competition-inline-input"><input id="competitionManualName" type="text" maxlength="160" placeholder="Visitor / guest name" /><button class="competition-button competition-button--secondary" type="submit">Add</button></span></label>
+                        </form>
+                    </div>
+                </div>
+                <div class="competition-results-wrap">
+                    <table class="competition-results-table">
+                        <thead><tr><th>Entrant</th><th>Status</th><th>Gross</th><th>Nett</th><th>Points</th><th>Place</th><th>Result / note</th><th></th></tr></thead>
+                        <tbody id="competitionEntries"><tr><td colspan="8"><div class="competition-empty">No entrants yet.</div></td></tr></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="competitionPrizesSection" class="competition-section" hidden>
+                <div class="competition-section__header">
+                    <div><span class="competition-eyebrow">Prize structure</span><h3>Competition prizes</h3><p>Define the value for each placing.</p></div>
+                    <button id="addPrizeButton" class="competition-button competition-button--secondary" type="button">Add prize place</button>
+                </div>
+                <div id="competitionPrizes" class="competition-prize-list"><div class="competition-empty">No prize values set.</div></div>
+                <div class="competition-actions"><span class="competition-actions__spacer"></span><button id="savePrizesButton" class="competition-button" type="button">Save prize structure</button></div>
+            </section>
+
+            <section id="competitionConfirmSection" class="competition-section" hidden>
+                <div class="competition-confirm-card">
+                    <div><span class="competition-eyebrow">Results control</span><h3 id="competitionConfirmationTitle">Confirm final results</h3><p id="competitionConfirmationText">Confirming results locks the entrant results and prize structure.</p></div>
+                    <div class="competition-confirm-actions">
+                        <button id="reopenResultsButton" class="competition-button competition-button--secondary" type="button" hidden>Reopen results</button>
+                        <button id="confirmResultsButton" class="competition-button" type="button">Confirm results</button>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </dialog>
+</body>
+</html>

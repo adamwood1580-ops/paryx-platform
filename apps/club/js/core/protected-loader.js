@@ -20,6 +20,7 @@
         settings: ["../js/pages/settings-page.js"],
         courses: ["../js/pages/courses-page.js"],
         calendar: ["../js/pages/calendar-page.js"],
+        competitions: ["../js/pages/competitions-page.js"],
         teesheet: ["../js/pages/tee-sheet-page.js"],
         staff: ["../js/pages/staff-page.js"],
         stock: ["../js/pages/stock-page.js"],
