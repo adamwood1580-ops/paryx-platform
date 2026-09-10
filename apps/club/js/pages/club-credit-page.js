@@ -11,6 +11,14 @@
             "club_admin"
         ]);
 
+    const SPEND_ROLES =
+        new Set([
+            "reception",
+            "professional",
+            "manager",
+            "club_admin"
+        ]);
+
     const ROLE_LABELS = {
         reception: "Reception",
         professional: "Professional",
@@ -21,7 +29,7 @@
     const TYPE_LABELS = {
         competition_prize: "Competition prize",
         manual_credit: "Manual credit",
-        manual_debit: "Manual debit",
+        manual_debit: "Credit spent",
         epos_purchase: "EPOS purchase",
         refund: "Refund",
         adjustment: "Adjustment"
@@ -32,6 +40,7 @@
         clubName: null,
         role: null,
         canManage: false,
+        canSpend: false,
         moduleEnabled: false,
         summary: null,
         searchResults: [],
@@ -60,6 +69,14 @@
         accountName: document.getElementById("creditAccountName"),
         accountMeta: document.getElementById("creditAccountMeta"),
         accountBalance: document.getElementById("creditAccountBalance"),
+
+        spendSection: document.getElementById("creditSpendSection"),
+        spendForm: document.getElementById("creditSpendForm"),
+        spendAmount: document.getElementById("creditSpendAmount"),
+        spendReference: document.getElementById("creditSpendReference"),
+        spendDescription: document.getElementById("creditSpendDescription"),
+        spendButton: document.getElementById("spendCreditButton"),
+
         transactionFormSection: document.getElementById("creditTransactionFormSection"),
         transactionForm: document.getElementById("creditTransactionForm"),
         transactionType: document.getElementById("creditTransactionType"),
@@ -338,8 +355,15 @@
         elements.accountBalance.textContent =
             formatMoney(member.balance, member.currency_code);
 
+        elements.spendSection.hidden =
+            !state.canSpend;
+
         elements.transactionFormSection.hidden =
             !state.canManage;
+
+        elements.spendAmount.value = "";
+        elements.spendReference.value = "";
+        elements.spendDescription.value = "";
 
         elements.amount.value = "";
         elements.reference.value = "";
@@ -448,6 +472,166 @@
                 .join("");
     }
 
+    async function refreshAfterBalanceChange(
+        newBalance
+    ) {
+        state.activeMember.balance =
+            newBalance;
+
+        const searchMember =
+            memberById(
+                state.activeMember.membership_id
+            );
+
+        if (searchMember) {
+            searchMember.balance =
+                newBalance;
+
+            searchMember.transaction_count =
+                Number(
+                    searchMember.transaction_count || 0
+                ) + 1;
+        }
+
+        elements.accountBalance.textContent =
+            formatMoney(
+                newBalance,
+                state.activeMember.currency_code
+            );
+
+        await Promise.all([
+            loadTransactions(),
+            loadSummary()
+        ]);
+
+        renderSearchResults();
+    }
+
+    async function spendCredit(event) {
+        event.preventDefault();
+
+        if (
+            !state.canSpend ||
+            !state.activeMember
+        ) {
+            return;
+        }
+
+        const amount =
+            Number(
+                elements.spendAmount.value
+            );
+
+        if (
+            !Number.isFinite(amount) ||
+            amount <= 0
+        ) {
+            showError(
+                new Error(
+                    "Enter an amount greater than zero."
+                )
+            );
+
+            return;
+        }
+
+        const currentBalance =
+            Number(
+                state.activeMember.balance || 0
+            );
+
+        if (amount > currentBalance) {
+            showError(
+                new Error(
+                    `This member only has ${formatMoney(
+                        currentBalance,
+                        state.activeMember.currency_code
+                    )} available.`
+                )
+            );
+
+            return;
+        }
+
+        clearMessages();
+
+        elements.spendButton.disabled =
+            true;
+
+        try {
+            const {
+                data,
+                error
+            } =
+                await getClient().rpc(
+                    "club_credit_spend",
+                    {
+                        p_club_id:
+                            state.clubId,
+
+                        p_membership_id:
+                            state.activeMember.membership_id,
+
+                        p_amount:
+                            amount,
+
+                        p_reference:
+                            elements.spendReference.value ||
+                            null,
+
+                        p_description:
+                            elements.spendDescription.value ||
+                            null
+                    }
+                );
+
+            if (error) {
+                throw error;
+            }
+
+            const result =
+                Array.isArray(data)
+                    ? data[0] || null
+                    : data;
+
+            const newBalance =
+                Number(
+                    result?.balance_after
+                );
+
+            if (!Number.isFinite(newBalance)) {
+                throw new Error(
+                    "Paryx did not return the updated Club Credit balance."
+                );
+            }
+
+            elements.spendAmount.value =
+                "";
+
+            elements.spendReference.value =
+                "";
+
+            elements.spendDescription.value =
+                "";
+
+            await refreshAfterBalanceChange(
+                newBalance
+            );
+
+            showSuccess(
+                `${formatMoney(
+                    amount,
+                    state.activeMember.currency_code
+                )} deducted from the member's Club Credit.`
+            );
+        } catch (error) {
+            showError(error);
+        } finally {
+            elements.spendButton.disabled =
+                false;
+        }
+    }
+
     async function postTransaction(event) {
         event.preventDefault();
 
@@ -517,36 +701,13 @@
                     0
                 );
 
-            state.activeMember.balance =
-                newBalance;
-
-            const searchMember =
-                memberById(
-                    state.activeMember.membership_id
-                );
-
-            if (searchMember) {
-                searchMember.balance = newBalance;
-                searchMember.transaction_count =
-                    Number(searchMember.transaction_count || 0) + 1;
-            }
-
-            elements.accountBalance.textContent =
-                formatMoney(
-                    newBalance,
-                    state.activeMember.currency_code
-                );
-
             elements.amount.value = "";
             elements.reference.value = "";
             elements.description.value = "";
 
-            await Promise.all([
-                loadTransactions(),
-                loadSummary()
-            ]);
-
-            renderSearchResults();
+            await refreshAfterBalanceChange(
+                newBalance
+            );
 
             showSuccess(
                 transactionType === "competition_prize"
@@ -611,6 +772,11 @@
             closeAccount
         );
 
+        elements.spendForm.addEventListener(
+            "submit",
+            spendCredit
+        );
+
         elements.transactionForm.addEventListener(
             "submit",
             postTransaction
@@ -648,6 +814,9 @@
             state.role = activeClub.role || null;
             state.canManage =
                 MANAGE_ROLES.has(state.role);
+
+            state.canSpend =
+                SPEND_ROLES.has(state.role);
 
             elements.clubName.textContent =
                 state.clubName;

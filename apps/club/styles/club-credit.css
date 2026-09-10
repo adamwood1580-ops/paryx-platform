@@ -500,3 +500,43 @@
         width: 100%;
     }
 }
+
+
+/* =========================================================
+   MEMBER CLUB CREDIT V1.2 — SPEND WORKFLOW
+   ========================================================= */
+
+.credit-spend-section {
+    margin: 1rem 1.4rem 0;
+    border: 1px solid #d8e4de;
+    border-radius: 0.9rem;
+    background: #fbfdfc;
+    overflow: hidden;
+}
+
+.credit-spend-section .credit-section-heading {
+    padding-top: 1rem;
+}
+
+.credit-section-note {
+    margin: 0.3rem 0 0;
+    color: #6d7b75;
+    font-size: 0.8rem;
+    line-height: 1.45;
+}
+
+.credit-button--spend {
+    background: #173c30;
+    border-color: #173c30;
+}
+
+.credit-button--spend:hover:not(:disabled) {
+    background: #0f3126;
+    filter: none;
+}
+
+@media (max-width: 720px) {
+    .credit-spend-section {
+        margin-inline: 1rem;
+    }
+}

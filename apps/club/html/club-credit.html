@@ -69,8 +69,8 @@
                     <span class="credit-card__eyebrow">Optional module</span>
                     <h2>Member Club Credit is not enabled</h2>
                     <p>
-                        Ask your Paryx platform admin to enable the Member Club Credit module for this club
-                        in  configuration.
+                        Enable the Member Club Credit module for this club
+                        in Paryx platform configuration.
                     </p>
                 </section>
 
@@ -188,13 +188,84 @@
             </section>
 
             <section
+                id="creditSpendSection"
+                class="credit-spend-section"
+            >
+                <div class="credit-section-heading">
+                    <div>
+                        <span class="credit-card__eyebrow">
+                            Use club credit
+                        </span>
+
+                        <h3>
+                            Spend club credit
+                        </h3>
+
+                        <p class="credit-section-note">
+                            Deduct money when the member uses their
+                            club-account balance.
+                        </p>
+                    </div>
+                </div>
+
+                <form id="creditSpendForm">
+                    <div class="credit-form-grid">
+                        <label class="credit-field">
+                            <span>Amount to spend</span>
+
+                            <input
+                                id="creditSpendAmount"
+                                type="number"
+                                min="0.01"
+                                step="0.01"
+                                placeholder="0.00"
+                                required
+                            />
+                        </label>
+
+                        <label class="credit-field">
+                            <span>Reference</span>
+
+                            <input
+                                id="creditSpendReference"
+                                type="text"
+                                maxlength="160"
+                                placeholder="Till receipt, shop sale, bar, etc."
+                            />
+                        </label>
+
+                        <label class="credit-field credit-field--wide">
+                            <span>Note</span>
+
+                            <textarea
+                                id="creditSpendDescription"
+                                rows="2"
+                                maxlength="1000"
+                                placeholder="Optional note"
+                            ></textarea>
+                        </label>
+                    </div>
+
+                    <div class="credit-transaction-actions">
+                        <button
+                            id="spendCreditButton"
+                            class="credit-button credit-button--spend"
+                            type="submit"
+                        >
+                            Deduct from balance
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <section
                 id="creditTransactionFormSection"
                 class="credit-transaction-form-section"
             >
                 <div class="credit-section-heading">
                     <div>
                         <span class="credit-card__eyebrow">New transaction</span>
-                        <h3>Credit or debit account</h3>
+                        <h3>Credit or adjust account</h3>
                     </div>
                 </div>
 
@@ -205,7 +276,6 @@
                             <select id="creditTransactionType" required>
                                 <option value="competition_prize">Competition prize</option>
                                 <option value="manual_credit">Manual credit</option>
-                                <option value="manual_debit">Manual debit</option>
                                 <option value="refund">Refund</option>
                                 <option value="adjustment_credit">Credit adjustment</option>
                                 <option value="adjustment_debit">Debit adjustment</option>

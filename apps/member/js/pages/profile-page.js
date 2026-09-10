@@ -565,7 +565,7 @@
     const CREDIT_TYPE_LABELS = {
         competition_prize: "Competition prize",
         manual_credit: "Club credit",
-        manual_debit: "Club debit",
+        manual_debit: "Credit spent",
         epos_purchase: "Club purchase",
         refund: "Refund",
         adjustment: "Adjustment"
