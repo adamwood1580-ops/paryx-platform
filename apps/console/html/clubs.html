@@ -12,7 +12,7 @@
     <link rel="apple-touch-icon" href="../../club/assets/paryx-apple-touch-icon.png" />
     <link rel="icon" type="image/png" href="../../club/assets/paryx-favicon.png" />
 
-    <script src="../js/core/console-loader.js?loader=2" defer></script>
+    <script src="../js/core/console-loader.js?loader=modules-v1" defer></script>
 </head>
 <body data-page="clubs">
     <div class="console-shell">
@@ -60,6 +60,100 @@
                 <input id="newClubTimezone" type="text" value="Europe/London" required />
             </div>
         </div>
+
+        <section class="console-module-config">
+            <div class="console-module-config__heading">
+                <div>
+                    <span class="console-eyebrow">
+                        Provisioning
+                    </span>
+
+                    <h3>
+                        Optional modules
+                    </h3>
+
+                    <p>
+                        Core ClubHub remains available. Enable only the
+                        additional modules this club requires.
+                    </p>
+                </div>
+            </div>
+
+            <div class="console-module-grid">
+                <label class="console-module-card">
+                    <span class="console-module-card__body">
+                        <strong>
+                            Stock Inventory
+                        </strong>
+
+                        <small>
+                            Products, stock levels, valuation and movement audit.
+                        </small>
+                    </span>
+
+                    <span class="console-switch">
+                        <input
+                            id="newModuleStock"
+                            type="checkbox"
+                        />
+
+                        <span
+                            class="console-switch__track"
+                            aria-hidden="true"
+                        ></span>
+                    </span>
+                </label>
+
+                <label class="console-module-card">
+                    <span class="console-module-card__body">
+                        <strong>
+                            Member Club Credit
+                        </strong>
+
+                        <small>
+                            Club-specific balances, prizes, credits and debits.
+                        </small>
+                    </span>
+
+                    <span class="console-switch">
+                        <input
+                            id="newModuleCredit"
+                            type="checkbox"
+                        />
+
+                        <span
+                            class="console-switch__track"
+                            aria-hidden="true"
+                        ></span>
+                    </span>
+                </label>
+
+                <label class="console-module-card">
+                    <span class="console-module-card__body">
+                        <strong>
+                            EPOS Integration
+                        </strong>
+
+                        <small>
+                            Product mapping and sales/refund integration.
+                            Requires Stock Inventory.
+                        </small>
+                    </span>
+
+                    <span class="console-switch">
+                        <input
+                            id="newModuleEpos"
+                            type="checkbox"
+                        />
+
+                        <span
+                            class="console-switch__track"
+                            aria-hidden="true"
+                        ></span>
+                    </span>
+                </label>
+            </div>
+        </section>
 
         <div class="console-actions" style="margin-top: .9rem;">
             <button id="createClubButton" class="console-button" type="submit">
@@ -228,6 +322,134 @@
         <section class="console-account-section">
             <div class="console-panel__header">
                 <div>
+                    <h2>
+                        Platform modules
+                    </h2>
+
+                    <small>
+                        Optional services enabled for this tenant.
+                        Core ClubHub is always available.
+                    </small>
+                </div>
+            </div>
+
+            <div class="console-module-grid console-module-grid--detail">
+                <label class="console-module-card">
+                    <span class="console-module-card__body">
+                        <span class="console-module-card__title-line">
+                            <strong>
+                                Stock Inventory
+                            </strong>
+
+                            <span
+                                id="detailModuleStockState"
+                                class="console-module-state"
+                            >
+                                Disabled
+                            </span>
+                        </span>
+
+                        <small>
+                            Product database, stock movement audit,
+                            stock levels and valuation.
+                        </small>
+                    </span>
+
+                    <span class="console-switch">
+                        <input
+                            id="detailModuleStock"
+                            type="checkbox"
+                        />
+
+                        <span
+                            class="console-switch__track"
+                            aria-hidden="true"
+                        ></span>
+                    </span>
+                </label>
+
+                <label class="console-module-card">
+                    <span class="console-module-card__body">
+                        <span class="console-module-card__title-line">
+                            <strong>
+                                Member Club Credit
+                            </strong>
+
+                            <span
+                                id="detailModuleCreditState"
+                                class="console-module-state"
+                            >
+                                Disabled
+                            </span>
+                        </span>
+
+                        <small>
+                            Member-specific club balances, prizes,
+                            adjustments and transaction history.
+                        </small>
+                    </span>
+
+                    <span class="console-switch">
+                        <input
+                            id="detailModuleCredit"
+                            type="checkbox"
+                        />
+
+                        <span
+                            class="console-switch__track"
+                            aria-hidden="true"
+                        ></span>
+                    </span>
+                </label>
+
+                <label class="console-module-card">
+                    <span class="console-module-card__body">
+                        <span class="console-module-card__title-line">
+                            <strong>
+                                EPOS Integration
+                            </strong>
+
+                            <span
+                                id="detailModuleEposState"
+                                class="console-module-state"
+                            >
+                                Disabled
+                            </span>
+                        </span>
+
+                        <small>
+                            Provider-neutral EPOS mapping and sync.
+                            Requires Stock Inventory.
+                        </small>
+                    </span>
+
+                    <span class="console-switch">
+                        <input
+                            id="detailModuleEpos"
+                            type="checkbox"
+                        />
+
+                        <span
+                            class="console-switch__track"
+                            aria-hidden="true"
+                        ></span>
+                    </span>
+                </label>
+            </div>
+
+            <div
+                id="clubModuleReadOnlyNote"
+                class="console-account-note"
+                hidden
+            >
+                Platform Support can inspect module configuration
+                but cannot change it.
+            </div>
+        </section>
+
+        <section class="console-account-section">
+            <div class="console-panel__header">
+                <div>
                     <h2>Operational overview</h2>
                     <small>
                         Live platform figures for this club.
@@ -325,7 +547,7 @@
                 class="console-button"
                 type="submit"
             >
-                Save club details
+                Save configuration
             </button>
         </div>
     </form>

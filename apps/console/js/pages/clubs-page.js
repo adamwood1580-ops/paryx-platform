@@ -65,6 +65,21 @@
                 "newClubTimezone"
             ),
 
+        newModuleStock:
+            document.getElementById(
+                "newModuleStock"
+            ),
+
+        newModuleCredit:
+            document.getElementById(
+                "newModuleCredit"
+            ),
+
+        newModuleEpos:
+            document.getElementById(
+                "newModuleEpos"
+            ),
+
         dialog:
             document.getElementById(
                 "clubDetailDialog"
@@ -133,6 +148,41 @@
         detailTimezone:
             document.getElementById(
                 "clubDetailTimezone"
+            ),
+
+        detailModuleStock:
+            document.getElementById(
+                "detailModuleStock"
+            ),
+
+        detailModuleCredit:
+            document.getElementById(
+                "detailModuleCredit"
+            ),
+
+        detailModuleEpos:
+            document.getElementById(
+                "detailModuleEpos"
+            ),
+
+        detailModuleStockState:
+            document.getElementById(
+                "detailModuleStockState"
+            ),
+
+        detailModuleCreditState:
+            document.getElementById(
+                "detailModuleCreditState"
+            ),
+
+        detailModuleEposState:
+            document.getElementById(
+                "detailModuleEposState"
+            ),
+
+        moduleReadOnly:
+            document.getElementById(
+                "clubModuleReadOnlyNote"
             ),
 
         metricMembers:
@@ -656,6 +706,106 @@
         }
     }
 
+    function moduleMap(rows) {
+        const result = {
+            stock_inventory: false,
+            member_credit: false,
+            epos_integration: false
+        };
+
+        (Array.isArray(rows)
+            ? rows
+            : []
+        ).forEach(
+            function (row) {
+                if (
+                    Object.prototype
+                        .hasOwnProperty
+                        .call(
+                            result,
+                            row.module_key
+                        )
+                ) {
+                    result[
+                        row.module_key
+                    ] =
+                        row.is_enabled ===
+                        true;
+                }
+            }
+        );
+
+        return result;
+    }
+
+    function updateModuleStateLabel(
+        element,
+        enabled
+    ) {
+        element.textContent =
+            enabled
+                ? "Enabled"
+                : "Disabled";
+
+        element.className =
+            `console-module-state ${
+                enabled
+                    ? "console-module-state--enabled"
+                    : ""
+            }`;
+    }
+
+    function renderDetailModules(rows) {
+        const modules =
+            moduleMap(rows);
+
+        elements.detailModuleStock.checked =
+            modules.stock_inventory;
+
+        elements.detailModuleCredit.checked =
+            modules.member_credit;
+
+        elements.detailModuleEpos.checked =
+            modules.epos_integration;
+
+        updateModuleStateLabel(
+            elements.detailModuleStockState,
+            modules.stock_inventory
+        );
+
+        updateModuleStateLabel(
+            elements.detailModuleCreditState,
+            modules.member_credit
+        );
+
+        updateModuleStateLabel(
+            elements.detailModuleEposState,
+            modules.epos_integration
+        );
+    }
+
+    function enforceEposDependency(
+        stockInput,
+        eposInput,
+        changedInput
+    ) {
+        if (
+            changedInput === eposInput &&
+            eposInput.checked
+        ) {
+            stockInput.checked =
+                true;
+        }
+
+        if (
+            changedInput === stockInput &&
+            !stockInput.checked
+        ) {
+            eposInput.checked =
+                false;
+        }
+    }
+
     function setMetric(
         element,
         value
@@ -674,7 +824,10 @@
     function applyDetailEditState() {
         [
             elements.detailName,
-            elements.detailTimezone
+            elements.detailTimezone,
+            elements.detailModuleStock,
+            elements.detailModuleCredit,
+            elements.detailModuleEpos
         ].forEach(
             function (input) {
                 input.disabled =
@@ -686,6 +839,9 @@
             !state.canManage;
 
         elements.detailReadOnly.hidden =
+            state.canManage;
+
+        elements.moduleReadOnly.hidden =
             state.canManage;
     }
 
@@ -810,28 +966,46 @@
             "Loading…";
 
         try {
-            const {
-                data,
-                error
-            } =
-                await window
-                    .supabaseClient
-                    .rpc(
-                        "platform_get_club_detail",
-                        {
-                            p_club_id:
-                                clubId
-                        }
-                    );
+            const [
+                detailResponse,
+                moduleResponse
+            ] =
+                await Promise.all([
+                    window
+                        .supabaseClient
+                        .rpc(
+                            "platform_get_club_detail",
+                            {
+                                p_club_id:
+                                    clubId
+                            }
+                        ),
 
-            if (error) {
-                throw error;
+                    window
+                        .supabaseClient
+                        .rpc(
+                            "platform_get_club_modules",
+                            {
+                                p_club_id:
+                                    clubId
+                            }
+                        )
+                ]);
+
+            if (detailResponse.error) {
+                throw detailResponse.error;
+            }
+
+            if (moduleResponse.error) {
+                throw moduleResponse.error;
             }
 
             const detail =
-                Array.isArray(data)
-                    ? data[0]
-                    : data;
+                Array.isArray(
+                    detailResponse.data
+                )
+                    ? detailResponse.data[0]
+                    : detailResponse.data;
 
             if (!detail) {
                 throw new Error(
@@ -841,6 +1015,10 @@
 
             renderClubDetail(
                 detail
+            );
+
+            renderDetailModules(
+                moduleResponse.data
             );
         } catch (error) {
             elements.dialog.close();
@@ -881,21 +1059,38 @@
                 await window
                     .supabaseClient
                     .rpc(
-                        "platform_update_club_details",
+                        "platform_update_club_configuration",
                         {
                             p_club_id:
                                 state.selectedClub
                                     .club_id,
+
                             p_name:
                                 elements
                                     .detailName
                                     .value
                                     .trim(),
+
                             p_timezone:
                                 elements
                                     .detailTimezone
                                     .value
-                                    .trim()
+                                    .trim(),
+
+                            p_stock_inventory:
+                                elements
+                                    .detailModuleStock
+                                    .checked,
+
+                            p_member_credit:
+                                elements
+                                    .detailModuleCredit
+                                    .checked,
+
+                            p_epos_integration:
+                                elements
+                                    .detailModuleEpos
+                                    .checked
                         }
                     );
 
@@ -905,7 +1100,7 @@
 
             showMessage(
                 elements.success,
-                "Club details updated."
+                "Club configuration updated."
             );
 
             await loadClubs();
@@ -926,7 +1121,7 @@
                 false;
 
             elements.detailSave.textContent =
-                "Save club details";
+                "Save configuration";
         }
     }
 
@@ -1052,23 +1247,40 @@
                     await window
                         .supabaseClient
                         .rpc(
-                            "platform_create_club",
+                            "platform_create_club_configured",
                             {
                                 p_name:
                                     elements
                                         .name
                                         .value
                                         .trim(),
+
                                 p_slug:
                                     elements
                                         .slug
                                         .value
                                         .trim(),
+
                                 p_timezone:
                                     elements
                                         .timezone
                                         .value
-                                        .trim()
+                                        .trim(),
+
+                                p_stock_inventory:
+                                    elements
+                                        .newModuleStock
+                                        .checked,
+
+                                p_member_credit:
+                                    elements
+                                        .newModuleCredit
+                                        .checked,
+
+                                p_epos_integration:
+                                    elements
+                                        .newModuleEpos
+                                        .checked
                             }
                         );
 
@@ -1094,6 +1306,15 @@
                 elements.timezone.value =
                     "Europe/London";
 
+                elements.newModuleStock.checked =
+                    false;
+
+                elements.newModuleCredit.checked =
+                    false;
+
+                elements.newModuleEpos.checked =
+                    false;
+
                 slugWasEdited =
                     false;
 
@@ -1114,6 +1335,63 @@
             }
         }
     );
+
+    [
+        elements.newModuleStock,
+        elements.newModuleEpos
+    ].forEach(
+        function (input) {
+            input.addEventListener(
+                "change",
+                function () {
+                    enforceEposDependency(
+                        elements.newModuleStock,
+                        elements.newModuleEpos,
+                        input
+                    );
+                }
+            );
+        }
+    );
+
+    [
+        elements.detailModuleStock,
+        elements.detailModuleEpos
+    ].forEach(
+        function (input) {
+            input.addEventListener(
+                "change",
+                function () {
+                    enforceEposDependency(
+                        elements.detailModuleStock,
+                        elements.detailModuleEpos,
+                        input
+                    );
+
+                    updateModuleStateLabel(
+                        elements.detailModuleStockState,
+                        elements.detailModuleStock.checked
+                    );
+
+                    updateModuleStateLabel(
+                        elements.detailModuleEposState,
+                        elements.detailModuleEpos.checked
+                    );
+                }
+            );
+        }
+    );
+
+    elements.detailModuleCredit
+        .addEventListener(
+            "change",
+            function () {
+                updateModuleStateLabel(
+                    elements.detailModuleCreditState,
+                    elements.detailModuleCredit.checked
+                );
+            }
+        );
 
     elements.detailForm
         .addEventListener(
