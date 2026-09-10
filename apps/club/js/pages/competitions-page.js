@@ -50,7 +50,7 @@
 
     const $ = (id) => document.getElementById(id);
     const elements = {
-        clubName: $("competitionClubName"), error: $("competitionError"), success: $("competitionSuccess"),
+        clubName: $("competitionClubName"), error: $("competitionError"), success: $("competitionSuccess"), dialogError: $("competitionDialogError"), dialogSuccess: $("competitionDialogSuccess"),
         upcoming: $("competitionUpcoming"), open: $("competitionOpen"), pending: $("competitionPending"), completed: $("competitionCompleted"),
         newButton: $("newCompetitionButton"), search: $("competitionSearch"), statusFilter: $("competitionStatusFilter"), fromDate: $("competitionFromDate"), toDate: $("competitionToDate"), refresh: $("competitionRefreshButton"), list: $("competitionList"),
         dialog: $("competitionDialog"), closeDialog: $("closeCompetitionDialog"), dialogTitle: $("competitionDialogTitle"), dialogMeta: $("competitionDialogMeta"),
@@ -70,19 +70,39 @@
     }
 
     function clearMessages() {
-        elements.error.hidden = true; elements.error.textContent = "";
-        elements.success.hidden = true; elements.success.textContent = "";
+        [elements.error, elements.dialogError].forEach((item) => {
+            if (!item) return;
+            item.hidden = true;
+            item.textContent = "";
+        });
+        [elements.success, elements.dialogSuccess].forEach((item) => {
+            if (!item) return;
+            item.hidden = true;
+            item.textContent = "";
+        });
+    }
+
+    function activeMessageTarget(pageElement, dialogElement) {
+        return elements.dialog?.open && dialogElement
+            ? dialogElement
+            : pageElement;
     }
 
     function showError(error) {
         console.error("Paryx Competitions error:", error);
-        elements.error.hidden = false;
-        elements.error.textContent = error?.message || error?.details || "Competition management could not complete this action.";
+        const target = activeMessageTarget(elements.error, elements.dialogError);
+        if (!target) return;
+        target.hidden = false;
+        target.textContent = error?.message || error?.details || "Competition management could not complete this action.";
+        target.scrollIntoView({ block: "nearest" });
     }
 
     function showSuccess(message) {
-        elements.success.hidden = false;
-        elements.success.textContent = message;
+        const target = activeMessageTarget(elements.success, elements.dialogSuccess);
+        if (!target) return;
+        target.hidden = false;
+        target.textContent = message;
+        target.scrollIntoView({ block: "nearest" });
     }
 
     function dateInputValue(date) {
@@ -308,6 +328,15 @@
         if (!state.canManage) return;
         clearMessages();
         elements.save.disabled = true;
+
+        const wasExistingCompetition = Boolean(state.selectedCompetitionId);
+        const pendingEntries = wasExistingCompetition
+            ? collectEntryPayloads()
+            : [];
+        const pendingPrizes = wasExistingCompetition
+            ? collectPrizes()
+            : [];
+
         try {
             const { data, error } = await client().rpc("competition_save", {
                 p_club_id: state.clubId,
@@ -322,11 +351,30 @@
                 p_notes: elements.notes.value.trim() || null
             });
             if (error) throw error;
+
             const saved = Array.isArray(data) ? data[0] : data;
             state.selectedCompetitionId = saved.competition_id;
+
+            if (wasExistingCompetition) {
+                const resultSave = await client().rpc(
+                    "competition_save_results_batch",
+                    {
+                        p_competition_id: state.selectedCompetitionId,
+                        p_entries: pendingEntries,
+                        p_prizes: pendingPrizes,
+                        p_confirm: false
+                    }
+                );
+                if (resultSave.error) throw resultSave.error;
+            }
+
             await Promise.all([loadSummary(), loadList(), loadCalendarEvents()]);
             await openCompetition(saved.competition_id);
-            showSuccess("Competition saved.");
+            showSuccess(
+                wasExistingCompetition
+                    ? "Competition and results saved."
+                    : "Competition saved."
+            );
         } catch (error) {
             showError(error);
         } finally {
@@ -427,92 +475,48 @@
         return Number.isFinite(number) ? number : null;
     }
 
-    function entryPayloadFromRow(row, entryId) {
+    function entryPayloadFromRow(row) {
         return {
-            p_entry_id: entryId,
-            p_entry_status: rowValue(row, "entry_status") || "entered",
-            p_gross_score: rowNumber(row, "gross_score"),
-            p_nett_score: rowNumber(row, "nett_score"),
-            p_points: rowNumber(row, "points"),
-            p_placing: rowNumber(row, "placing"),
-            p_result_text: rowValue(row, "result_text")
+            entry_id: row.dataset.entryRow,
+            entry_status: rowValue(row, "entry_status") || "entered",
+            gross_score: rowNumber(row, "gross_score"),
+            nett_score: rowNumber(row, "nett_score"),
+            points: rowNumber(row, "points"),
+            placing: rowNumber(row, "placing"),
+            result_text: rowValue(row, "result_text")
         };
-    }
-
-    async function persistEntryPayload(payload) {
-        const { error } = await client().rpc(
-            "competition_save_entry_result",
-            payload
-        );
-        if (error) throw error;
-    }
-
-    async function saveEntry(entryId) {
-        const row = elements.entries.querySelector(`[data-entry-row="${CSS.escape(entryId)}"]`);
-        if (!row) return;
-        await persistEntryPayload(entryPayloadFromRow(row, entryId));
-        await reloadDetailData();
-        showSuccess("Entrant result saved.");
     }
 
     function collectEntryPayloads() {
         return Array.from(
             elements.entries.querySelectorAll("[data-entry-row]")
-        ).map((row) => {
-            const entryId = row.dataset.entryRow;
-            return entryPayloadFromRow(row, entryId);
-        });
+        ).map(entryPayloadFromRow);
     }
 
-    function validateConfirmationEntries(payloads) {
-        const completedWithPlace = payloads.filter((payload) =>
-            payload.p_entry_status === "completed" &&
-            Number.isInteger(payload.p_placing) &&
-            payload.p_placing >= 1
+    async function persistResultSet(confirmResults = false) {
+        if (!state.selectedCompetitionId) {
+            throw new Error("Save the competition before entering results.");
+        }
+
+        const entries = collectEntryPayloads();
+        const prizes = collectPrizes();
+        const { error } = await client().rpc(
+            "competition_save_results_batch",
+            {
+                p_competition_id: state.selectedCompetitionId,
+                p_entries: entries,
+                p_prizes: prizes,
+                p_confirm: confirmResults === true
+            }
         );
-
-        if (!completedWithPlace.length) {
-            throw new Error(
-                "Set at least one entrant to Completed and give them a Place before confirming results."
-            );
-        }
-
-        const seenPlaces = new Set();
-        for (const payload of payloads) {
-            if (payload.p_placing === null) continue;
-
-            if (!Number.isInteger(payload.p_placing) || payload.p_placing < 1) {
-                throw new Error("Every placing must be a whole number of 1 or higher.");
-            }
-
-            if (["withdrawn", "disqualified", "no_return"].includes(payload.p_entry_status)) {
-                throw new Error(
-                    "Withdrawn, disqualified or no-return entrants cannot hold a placing."
-                );
-            }
-
-            if (seenPlaces.has(payload.p_placing)) {
-                throw new Error(`Place ${payload.p_placing} is assigned to more than one entrant.`);
-            }
-            seenPlaces.add(payload.p_placing);
-        }
+        if (error) throw error;
     }
 
-    async function saveAllEntriesBeforeConfirmation(payloads) {
-        /*
-         * Clear stored places first. This makes changing/swapping existing
-         * placings safe because the RPC checks for duplicate stored places.
-         */
-        for (const payload of payloads) {
-            await persistEntryPayload({
-                ...payload,
-                p_placing: null
-            });
-        }
-
-        for (const payload of payloads) {
-            await persistEntryPayload(payload);
-        }
+    async function saveEntry() {
+        clearMessages();
+        await persistResultSet(false);
+        await reloadDetailData();
+        showSuccess("Competition results saved.");
     }
 
     async function removeEntry(entryId) {
@@ -554,51 +558,36 @@
 
     async function savePrizes() {
         if (!state.canManage || !state.selectedCompetitionId) return;
-        const prizes = collectPrizes();
-        const seen = new Set();
-        for (const prize of prizes) {
-            if (prize.placing > 20) { showError(new Error("Prize placing must be between 1 and 20.")); return; }
-            if (seen.has(prize.placing)) { showError(new Error("Each prize place can only be used once.")); return; }
-            seen.add(prize.placing);
-        }
+        clearMessages();
         elements.savePrizes.disabled = true;
         try {
-            const { error } = await client().rpc("competition_save_prizes", { p_competition_id: state.selectedCompetitionId, p_prizes: prizes });
-            if (error) throw error;
+            await persistResultSet(false);
             await reloadDetailData();
-            showSuccess("Prize structure saved.");
+            showSuccess("Competition results and prize structure saved.");
         } catch (error) { showError(error); }
         finally { elements.savePrizes.disabled = false; }
     }
 
     async function confirmResults() {
         if (!state.canConfirm || !state.selectedCompetitionId) return;
-
         clearMessages();
 
-        const entryPayloads = collectEntryPayloads();
-        const prizes = collectPrizes();
+        const entries = collectEntryPayloads();
+        const hasCompletedPlace = entries.some((entry) =>
+            entry.entry_status === "completed" &&
+            Number.isInteger(entry.placing) &&
+            entry.placing >= 1
+        );
 
-        try {
-            validateConfirmationEntries(entryPayloads);
-
-            const seenPrizePlaces = new Set();
-            for (const prize of prizes) {
-                if (prize.placing > 20) {
-                    throw new Error("Prize placing must be between 1 and 20.");
-                }
-                if (seenPrizePlaces.has(prize.placing)) {
-                    throw new Error("Each prize place can only be used once.");
-                }
-                seenPrizePlaces.add(prize.placing);
-            }
-        } catch (error) {
-            showError(error);
+        if (!hasCompletedPlace) {
+            showError(new Error(
+                "Set at least one entrant to Completed and enter a Place before confirming results."
+            ));
             return;
         }
 
         if (!window.confirm(
-            "Confirm these as the final competition results? Current entrant results and prizes will be saved first, then locked."
+            "Confirm these as the final competition results? The current scores and prizes will be saved and then locked."
         )) return;
 
         const originalText = elements.confirmButton.textContent;
@@ -606,29 +595,8 @@
         elements.confirmButton.textContent = "Confirming…";
 
         try {
-            /* Save what is currently on screen before final confirmation. */
-            await saveAllEntriesBeforeConfirmation(entryPayloads);
-
-            const prizeResult = await client().rpc(
-                "competition_save_prizes",
-                {
-                    p_competition_id: state.selectedCompetitionId,
-                    p_prizes: prizes
-                }
-            );
-            if (prizeResult.error) throw prizeResult.error;
-
-            const { error } = await client().rpc(
-                "competition_confirm_results",
-                { p_competition_id: state.selectedCompetitionId }
-            );
-            if (error) throw error;
-
-            await Promise.all([
-                reloadDetailData(),
-                loadSummary(),
-                loadList()
-            ]);
+            await persistResultSet(true);
+            await Promise.all([reloadDetailData(), loadSummary(), loadList()]);
             showSuccess("Competition results confirmed and completed.");
         } catch (error) {
             showError(error);
@@ -686,7 +654,7 @@
         elements.manualEntryForm.addEventListener("submit", addManualEntrant);
         elements.entries.addEventListener("click", (event) => {
             const saveButton = event.target.closest("[data-entry-save]");
-            if (saveButton) { saveEntry(saveButton.dataset.entrySave).catch(showError); return; }
+            if (saveButton) { saveEntry().catch(showError); return; }
             const removeButton = event.target.closest("[data-entry-remove]");
             if (removeButton) removeEntry(removeButton.dataset.entryRemove).catch(showError);
         });
