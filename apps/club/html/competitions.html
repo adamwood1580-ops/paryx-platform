@@ -18,7 +18,7 @@
     <meta name="application-name" content="Paryx" />
     <title>Competitions | Paryx</title>
 
-    <script src="../js/core/protected-loader.js?loader=competitions-v1" defer></script>
+    <script src="../js/core/protected-loader.js?loader=competitions-api-ready-v1" defer></script>
 </head>
 <body data-page="competitions">
     <div class="staff-shell">
@@ -30,9 +30,9 @@
                     <div>
                         <p class="page-heading__eyebrow">Golf operations</p>
                         <h1>Competitions</h1>
-                        <p id="competitionClubName">Loading competition management...</p>
+                        <p id="competitionClubName">Loading competitions...</p>
                     </div>
-                    <button id="newCompetitionButton" class="competition-button" type="button">New competition</button>
+                    <button id="competitionSyncCalendarButton" class="competition-button competition-button--secondary" type="button">Sync calendar</button>
                 </section>
 
                 <section id="competitionError" class="admin-error" role="alert" hidden></section>
@@ -40,35 +40,65 @@
 
                 <section class="competition-summary-grid">
                     <article class="competition-summary-card">
-                        <span>Upcoming</span><strong id="competitionUpcoming">--</strong><small>Active future competitions</small>
+                        <span>Current window</span><strong id="competitionCurrentCount">--</strong><small>Competitions in the selected working range</small>
                     </article>
                     <article class="competition-summary-card">
-                        <span>Open for entries</span><strong id="competitionOpen">--</strong><small>Currently accepting entrants</small>
+                        <span>Awaiting results</span><strong id="competitionAwaitingCount">--</strong><small>External result not imported yet</small>
                     </article>
                     <article class="competition-summary-card">
-                        <span>Results pending</span><strong id="competitionPending">--</strong><small>Closed / awaiting confirmation</small>
+                        <span>Results ready</span><strong id="competitionReadyCount">--</strong><small>Imported / ready for prize allocation</small>
                     </article>
                     <article class="competition-summary-card">
-                        <span>Completed</span><strong id="competitionCompleted">--</strong><small>Confirmed in the last 30 days</small>
+                        <span>Completed</span><strong id="competitionCompletedCount">--</strong><small>Confirmed in this working range</small>
                     </article>
                 </section>
 
                 <section class="competition-card">
-                    <div class="competition-card__header">
-                        <div><span class="competition-eyebrow">Competition database</span><h2>Competition list</h2></div>
+                    <div class="competition-card__header competition-card__header--range">
+                        <div>
+                            <span class="competition-eyebrow">Operational view</span>
+                            <h2>Competition list</h2>
+                            <p id="competitionRangeLabel">Showing competitions around today</p>
+                        </div>
+                        <div class="competition-range-buttons" role="group" aria-label="Competition range">
+                            <button id="competitionRangeCurrent" class="competition-chip is-active" type="button">Current ±3 days</button>
+                            <button id="competitionRangePrevious" class="competition-chip" type="button">Previous</button>
+                            <button id="competitionRangeFuture" class="competition-chip" type="button">Future</button>
+                        </div>
                     </div>
-                    <div class="competition-filter-grid">
-                        <label class="competition-field"><span>Search</span><input id="competitionSearch" type="search" placeholder="Competition name" autocomplete="off" /></label>
-                        <label class="competition-field"><span>Status</span><select id="competitionStatusFilter">
-                            <option value="">All statuses</option><option value="draft">Draft</option><option value="open">Open</option>
-                            <option value="closed">Closed</option><option value="results_pending">Results pending</option>
-                            <option value="completed">Completed</option><option value="cancelled">Cancelled</option>
-                        </select></label>
+
+                    <div class="competition-filter-grid competition-filter-grid--api">
+                        <label class="competition-field competition-field--search">
+                            <span>Search</span>
+                            <input id="competitionSearch" type="search" placeholder="Competition name" autocomplete="off" />
+                        </label>
+                        <label class="competition-field">
+                            <span>Status</span>
+                            <select id="competitionStatusFilter">
+                                <option value="">All statuses</option>
+                                <option value="draft">Scheduled</option>
+                                <option value="open">Today / open</option>
+                                <option value="results_pending">Results pending</option>
+                                <option value="completed">Completed</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                        </label>
                         <label class="competition-field"><span>From</span><input id="competitionFromDate" type="date" /></label>
                         <label class="competition-field"><span>To</span><input id="competitionToDate" type="date" /></label>
                         <button id="competitionRefreshButton" class="competition-button competition-button--secondary" type="button">Refresh</button>
                     </div>
-                    <div id="competitionList" class="competition-list"><div class="competition-empty">Loading competitions...</div></div>
+
+                    <div id="competitionProviderBanner" class="competition-provider-banner">
+                        <div>
+                            <strong id="competitionProviderTitle">External results</strong>
+                            <span id="competitionProviderText">Checking result-provider configuration...</span>
+                        </div>
+                        <span id="competitionProviderState" class="competition-state-pill">Checking</span>
+                    </div>
+
+                    <div id="competitionList" class="competition-list">
+                        <div class="competition-empty">Loading competitions...</div>
+                    </div>
                 </section>
             </main>
         </div>
@@ -79,100 +109,182 @@
             <div class="competition-dialog__header">
                 <div>
                     <span class="competition-eyebrow">Competition</span>
-                    <h2 id="competitionDialogTitle">New competition</h2>
-                    <p id="competitionDialogMeta">Create the competition, then verify prize results from HowDidiDo / ClubV1.</p>
+                    <h2 id="competitionDialogTitle">Competition</h2>
+                    <p id="competitionDialogMeta"></p>
                 </div>
                 <button id="closeCompetitionDialog" class="competition-icon-button" type="button" aria-label="Close competition">×</button>
             </div>
+
             <section id="competitionDialogError" class="admin-error competition-dialog-message" role="alert" hidden></section>
             <section id="competitionDialogSuccess" class="competition-success competition-dialog-message" role="status" aria-live="polite" hidden></section>
 
             <section class="competition-section">
-                <div class="competition-section__header"><div><span class="competition-eyebrow">Setup</span><h3>Competition details</h3></div></div>
+                <div class="competition-section__header">
+                    <div>
+                        <span class="competition-eyebrow">Calendar record</span>
+                        <h3>Competition details</h3>
+                        <p>Calendar competitions are created automatically. Name, date, section and qualifier status stay linked to the Calendar.</p>
+                    </div>
+                </div>
                 <form id="competitionForm">
                     <div class="competition-form-grid">
                         <label class="competition-field competition-field--wide">
                             <span>Linked calendar event</span>
-                            <select id="competitionCalendarEvent"><option value="">Not linked to calendar</option></select>
-                            <small>Link an existing Calendar competition to keep its name, date, section and qualifier status aligned.</small>
+                            <select id="competitionCalendarEvent" disabled><option value="">Calendar event</option></select>
                         </label>
-                        <label class="competition-field competition-field--wide"><span>Competition name</span><input id="competitionName" type="text" maxlength="160" required /></label>
-                        <label class="competition-field"><span>Date</span><input id="competitionDate" type="date" required /></label>
-                        <label class="competition-field"><span>Format</span><select id="competitionFormat" required>
-                            <option value="stableford">Stableford</option><option value="stroke_play">Stroke play</option><option value="match_play">Match play</option>
-                            <option value="fourball">Fourball</option><option value="greensomes">Greensomes</option><option value="texas_scramble">Texas Scramble</option><option value="other">Other</option>
+                        <label class="competition-field competition-field--wide"><span>Competition name</span><input id="competitionName" type="text" disabled /></label>
+                        <label class="competition-field"><span>Date</span><input id="competitionDate" type="date" disabled /></label>
+                        <label class="competition-field"><span>Format</span><select id="competitionFormat">
+                            <option value="stableford">Stableford</option>
+                            <option value="stroke_play">Stroke play</option>
+                            <option value="match_play">Match play</option>
+                            <option value="fourball">Fourball</option>
+                            <option value="greensomes">Greensomes</option>
+                            <option value="texas_scramble">Texas Scramble</option>
+                            <option value="other">Other</option>
                         </select></label>
-                        <label class="competition-field"><span>Section</span><select id="competitionSection" required>
+                        <label class="competition-field"><span>Section</span><select id="competitionSection" disabled>
                             <option value="club">Club</option><option value="mens">Men</option><option value="seniors">Seniors</option><option value="ladies">Ladies</option>
                         </select></label>
-                        <label class="competition-field"><span>Status</span><select id="competitionStatus" required>
-                            <option value="draft">Draft</option><option value="open">Open for entries</option><option value="closed">Closed</option>
-                            <option value="results_pending">Results pending</option><option value="completed" disabled>Completed (confirmed)</option><option value="cancelled">Cancelled</option>
+                        <label class="competition-field"><span>Status</span><select id="competitionStatus">
+                            <option value="draft">Scheduled</option><option value="open">Open</option><option value="closed">Closed</option>
+                            <option value="results_pending">Results pending</option><option value="completed" disabled>Completed</option><option value="cancelled">Cancelled</option>
                         </select></label>
-                        <label class="competition-check"><input id="competitionQualifier" type="checkbox" /><span>Qualifier</span></label>
-                        <label class="competition-field competition-field--wide"><span>Notes</span><textarea id="competitionNotes" rows="3" maxlength="2000" placeholder="Optional competition notes"></textarea></label>
+                        <label class="competition-check"><input id="competitionQualifier" type="checkbox" disabled /><span>Qualifier</span></label>
+                        <label class="competition-field competition-field--wide"><span>Notes</span><textarea id="competitionNotes" rows="3" maxlength="1000"></textarea></label>
                     </div>
                     <div class="competition-actions">
-                        <button id="deleteCompetitionButton" class="competition-button competition-button--danger-secondary" type="button" hidden>Delete competition</button>
                         <span class="competition-actions__spacer"></span>
-                        <button id="saveCompetitionButton" class="competition-button" type="submit">Save competition</button>
+                        <button id="saveCompetitionButton" class="competition-button competition-button--secondary" type="submit">Save competition details</button>
                     </div>
                 </form>
             </section>
 
-            <section id="competitionResultsSection" class="competition-section" hidden>
+            <section id="competitionExternalResultsSection" class="competition-section">
                 <div class="competition-section__header">
                     <div>
-                        <span class="competition-eyebrow">Verified results</span>
-                        <h3>HowDidiDo / ClubV1 prize results</h3>
-                        <p>Check the final positions in HowDidiDo / ClubV1, then add only the club members receiving a prize or Club Credit. Paryx does not duplicate the full scorecard.</p>
+                        <span class="competition-eyebrow">Official result</span>
+                        <h3 id="competitionExternalResultsTitle">ClubV1 result feed</h3>
+                        <p id="competitionExternalResultsText">Paryx is ready to display imported finishing positions when the result-provider API is connected.</p>
                     </div>
-                    <span id="competitionResultCount" class="competition-state-pill">0 places</span>
+                    <span id="competitionExternalResultsState" class="competition-state-pill">Not connected</span>
                 </div>
 
-                <div id="competitionResultControls" class="competition-result-controls">
+                <div id="competitionExternalResultsWrap" class="competition-results-wrap" hidden>
+                    <table class="competition-results-table competition-api-results-table">
+                        <thead>
+                            <tr>
+                                <th>Place</th>
+                                <th>Player</th>
+                                <th>Result</th>
+                                <th>Paryx match</th>
+                                <th>Prize type</th>
+                                <th>Club Credit</th>
+                            </tr>
+                        </thead>
+                        <tbody id="competitionExternalResults"></tbody>
+                    </table>
+                </div>
+
+                <div id="competitionExternalEmpty" class="competition-empty">
+                    No external result has been imported for this competition yet.
+                </div>
+
+                <div id="competitionExternalMatchPanel" class="competition-match-panel" hidden>
+                    <div class="competition-match-panel__header">
+                        <div>
+                            <span class="competition-eyebrow">Member matching</span>
+                            <strong id="competitionExternalMatchTarget">Match imported player</strong>
+                        </div>
+                        <button id="competitionExternalMatchCancel" class="competition-mini-button" type="button">Cancel</button>
+                    </div>
+                    <div class="competition-entry-search">
+                        <label class="competition-field">
+                            <span>Find Paryx member</span>
+                            <input id="competitionExternalMatchSearch" type="search" placeholder="Search member name, email or number" autocomplete="off" />
+                        </label>
+                        <div id="competitionExternalMatchResults" class="competition-member-results" hidden></div>
+                    </div>
+                    <small>This creates a durable provider-player link so the same ClubV1 player can match automatically on future imports.</small>
+                </div>
+            </section>
+
+            <section id="competitionManualResultsSection" class="competition-section">
+                <div class="competition-section__header">
+                    <div>
+                        <span class="competition-eyebrow">Fallback</span>
+                        <h3>Manual finishing places</h3>
+                        <p>Use this only while an external result is unavailable. Once ClubV1 results are imported, finishing positions are read-only from the provider.</p>
+                    </div>
+                    <span id="competitionManualResultCount" class="competition-state-pill">0 places</span>
+                </div>
+
+                <div class="competition-result-controls">
                     <div class="competition-entry-search competition-result-member-search">
                         <label class="competition-field">
                             <span>Add placed member</span>
                             <input id="competitionMemberSearch" type="search" placeholder="Search member name, email or number" autocomplete="off" />
-                            <small>Select the member and Paryx will assign the next available place.</small>
                         </label>
                         <div id="competitionMemberResults" class="competition-member-results" hidden></div>
                     </div>
                 </div>
 
                 <div class="competition-results-wrap">
-                    <table class="competition-results-table competition-awards-table">
-                        <thead>
-                            <tr>
-                                <th>Place</th>
-                                <th>Member</th>
-                                <th>Club Credit</th>
-                                <th>Prize label</th>
-                                <th>Status</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody id="competitionVerifiedResults">
-                            <tr><td colspan="6"><div class="competition-empty">No verified prize places yet.</div></td></tr>
-                        </tbody>
+                    <table class="competition-results-table competition-manual-results-table">
+                        <thead><tr><th>Place</th><th>Member</th><th>Prize type</th><th>Club Credit</th><th></th></tr></thead>
+                        <tbody id="competitionManualResults"></tbody>
                     </table>
-                </div>
-                <div class="competition-actions">
-                    <span class="competition-actions__spacer"></span>
-                    <button id="saveVerifiedResultsButton" class="competition-button" type="button">Save verified results</button>
                 </div>
             </section>
 
-            <section id="competitionConfirmSection" class="competition-section" hidden>
+            <section id="competitionSpecialPrizesSection" class="competition-section">
+                <div class="competition-section__header">
+                    <div>
+                        <span class="competition-eyebrow">Additional prizes</span>
+                        <h3>Manual special prizes</h3>
+                        <p>Nearest the pin, longest drive, two's, division prizes and other awards stay under ClubHub admin control.</p>
+                    </div>
+                    <span id="competitionSpecialPrizeCount" class="competition-state-pill">0 prizes</span>
+                </div>
+
+                <div class="competition-result-controls">
+                    <div class="competition-entry-search competition-result-member-search">
+                        <label class="competition-field">
+                            <span>Add prize recipient</span>
+                            <input id="competitionSpecialMemberSearch" type="search" placeholder="Search member name, email or number" autocomplete="off" />
+                        </label>
+                        <div id="competitionSpecialMemberResults" class="competition-member-results" hidden></div>
+                    </div>
+                </div>
+
+                <div class="competition-results-wrap">
+                    <table class="competition-results-table competition-special-results-table">
+                        <thead><tr><th>Prize type</th><th>Member</th><th>Club Credit</th><th></th></tr></thead>
+                        <tbody id="competitionSpecialPrizes"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="competitionSaveAwardsSection" class="competition-section">
+                <div class="competition-actions competition-actions--awards">
+                    <div>
+                        <strong id="competitionAwardTotal">£0.00 total Club Credit</strong>
+                        <small>Saving does not award credit. Credit is posted only when results are confirmed.</small>
+                    </div>
+                    <span class="competition-actions__spacer"></span>
+                    <button id="saveCompetitionAwardsButton" class="competition-button competition-button--secondary" type="button">Save prize allocation</button>
+                </div>
+            </section>
+
+            <section id="competitionConfirmSection" class="competition-section">
                 <div class="competition-confirm-card competition-confirm-card--award">
                     <div>
-                        <span class="competition-eyebrow">Results control</span>
-                        <h3 id="competitionConfirmationTitle">Confirm &amp; award credit</h3>
-                        <p id="competitionConfirmationText">Confirming posts each positive prize directly to the member's Club Credit and locks the competition.</p>
+                        <span class="competition-eyebrow">Final verification</span>
+                        <h3 id="competitionConfirmationTitle">Confirm results &amp; award credit</h3>
+                        <p id="competitionConfirmationText">Check the official result in HowDidiDo / ClubV1 before posting Club Credit.</p>
                         <label id="competitionVerificationLabel" class="competition-verification-check">
                             <input id="competitionResultsVerified" type="checkbox" />
-                            <span>I have checked these placings against HowDidiDo / ClubV1.</span>
+                            <span>I have checked these results against HowDidiDo / ClubV1 and the prize allocation is correct.</span>
                         </label>
                     </div>
                     <div class="competition-confirm-actions">
