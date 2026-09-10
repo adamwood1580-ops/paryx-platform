@@ -90,10 +90,13 @@
 
                     <div id="competitionProviderBanner" class="competition-provider-banner">
                         <div>
-                            <strong id="competitionProviderTitle">External results</strong>
+                            <strong id="competitionProviderTitle">ClubV1 results</strong>
                             <span id="competitionProviderText">Checking result-provider configuration...</span>
                         </div>
-                        <span id="competitionProviderState" class="competition-state-pill">Checking</span>
+                        <div class="competition-provider-banner__actions">
+                            <span id="competitionProviderState" class="competition-state-pill">Checking</span>
+                            <button id="competitionBridgeConfigButton" class="competition-mini-button" type="button" hidden>Create Windows Bridge config</button>
+                        </div>
                     </div>
 
                     <div id="competitionList" class="competition-list">
@@ -188,6 +191,19 @@
 
                 <div id="competitionExternalEmpty" class="competition-empty">
                     No external result has been imported for this competition yet.
+                </div>
+
+                <div id="competitionCsvImportPanel" class="competition-csv-import">
+                    <div>
+                        <span class="competition-eyebrow">ClubV1 CSV fallback</span>
+                        <strong>Import the official result export</strong>
+                        <small>Use this when the ClubV1 API is unavailable. The same normalized result store is used by both CSV and future API imports.</small>
+                    </div>
+                    <input id="competitionCsvFile" type="file" accept=".csv,text/csv,text/plain" hidden />
+                    <div class="competition-csv-import__actions">
+                        <button id="competitionCsvChooseButton" class="competition-button competition-button--secondary" type="button">Import ClubV1 CSV</button>
+                        <span id="competitionCsvStatus" class="competition-csv-status"></span>
+                    </div>
                 </div>
 
                 <div id="competitionExternalMatchPanel" class="competition-match-panel" hidden>

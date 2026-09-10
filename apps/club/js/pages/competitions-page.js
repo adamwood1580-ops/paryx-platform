@@ -147,7 +147,12 @@
         verificationLabel: $("competitionVerificationLabel"),
         verifiedCheckbox: $("competitionResultsVerified"),
         confirmButton: $("confirmResultsButton"),
-        reopenButton: $("reopenResultsButton")
+        reopenButton: $("reopenResultsButton"),
+        csvImportPanel: $("competitionCsvImportPanel"),
+        csvFile: $("competitionCsvFile"),
+        csvChooseButton: $("competitionCsvChooseButton"),
+        csvStatus: $("competitionCsvStatus"),
+        bridgeConfigButton: $("competitionBridgeConfigButton")
     };
 
     function client() {
@@ -375,19 +380,19 @@
     function renderProviderBanner() {
         const integration = state.integration || {};
         const enabled = integration.enabled === true;
-        const provider = providerName(integration.provider);
 
         elements.providerBanner.classList.toggle("competition-provider-banner--connected", enabled);
-        elements.providerTitle.textContent = enabled ? `${provider} result connection` : "External result connection";
-        elements.providerState.textContent = enabled ? "API ready" : "Not connected";
-        elements.providerState.className = `competition-state-pill ${enabled ? "competition-state-pill--open" : ""}`;
+        elements.providerTitle.textContent = "ClubV1 results";
+        elements.providerState.textContent = enabled ? "CSV / API ready" : "CSV ready";
+        elements.providerState.className = "competition-state-pill competition-state-pill--open";
+        elements.providerText.textContent = enabled
+            ? (integration.last_sync_at
+                ? `ClubV1 result import is enabled. Last result sync ${formatDateTime(integration.last_sync_at)}. CSV and future API results use the same import engine.`
+                : "ClubV1 result import is enabled. CSV is available now; an official API adapter can use the same result engine later.")
+            : "ClubV1 CSV import is available now. The same result engine is ready for official API access later.";
 
-        if (enabled) {
-            elements.providerText.textContent = integration.last_sync_at
-                ? `Provider enabled. Last sync ${formatDateTime(integration.last_sync_at)}.`
-                : "Provider enabled. Paryx is ready for the server-side result adapter.";
-        } else {
-            elements.providerText.textContent = "No external provider is enabled yet. Calendar automation and manual result verification remain available.";
+        if (elements.bridgeConfigButton) {
+            elements.bridgeConfigButton.hidden = state.role !== "club_admin";
         }
     }
 
@@ -573,6 +578,8 @@
         elements.reopenButton.hidden = !(confirmed && state.canConfirm && !hasCredit);
 
         elements.manualSection.hidden = state.externalResults.length > 0;
+        if (elements.csvImportPanel) elements.csvImportPanel.hidden = !state.canConfirm || confirmed;
+        if (elements.csvChooseButton) elements.csvChooseButton.disabled = !state.canConfirm || confirmed;
 
         if (confirmed) {
             elements.confirmTitle.textContent = "Competition completed";
@@ -992,6 +999,122 @@
         }
     }
 
+    function functionsClient() {
+        const supabase = client();
+        if (!supabase.functions || typeof supabase.functions.invoke !== "function") {
+            throw new Error("The Paryx result-import service is unavailable.");
+        }
+        return supabase.functions;
+    }
+
+    async function importClubV1Csv(file) {
+        if (!file || !state.selectedCompetitionId || !state.canConfirm) return;
+        clearMessages();
+
+        if (!/\.csv$/i.test(file.name || "")) {
+            showError(new Error("Choose a ClubV1 CSV export."));
+            return;
+        }
+        if (file.size > 2 * 1024 * 1024) {
+            showError(new Error("The CSV is larger than the 2 MB competition-import limit."));
+            return;
+        }
+
+        const originalText = elements.csvChooseButton.textContent;
+        elements.csvChooseButton.disabled = true;
+        elements.csvChooseButton.textContent = "Importing…";
+        elements.csvStatus.textContent = file.name;
+
+        try {
+            const csvText = await file.text();
+            const { data, error } = await functionsClient().invoke(
+                "competition-result-ingest",
+                {
+                    body: {
+                        action: "import_csv",
+                        competition_id: state.selectedCompetitionId,
+                        filename: file.name,
+                        csv_text: csvText
+                    }
+                }
+            );
+            if (error) throw error;
+            if (!data || data.ok !== true) {
+                throw new Error(data?.error || "ClubV1 CSV import failed.");
+            }
+
+            await Promise.all([reloadDetail(), loadList(), loadIntegration()]);
+            const matched = Number(data.matched_count || 0);
+            const total = Number(data.result_count || 0);
+            showSuccess(`ClubV1 CSV imported: ${total} result${total === 1 ? "" : "s"}, ${matched} matched to Paryx members.`);
+            elements.csvStatus.textContent = `Imported ${file.name}`;
+        } catch (error) {
+            showError(error);
+            elements.csvStatus.textContent = "Import failed";
+        } finally {
+            elements.csvChooseButton.disabled = false;
+            elements.csvChooseButton.textContent = originalText;
+            elements.csvFile.value = "";
+        }
+    }
+
+    function downloadJson(filename, value) {
+        const blob = new Blob([JSON.stringify(value, null, 2) + "\n"], {
+            type: "application/json"
+        });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    async function createBridgeConfig() {
+        if (state.role !== "club_admin" || !state.clubId) return;
+        clearMessages();
+
+        const deviceName = window.prompt(
+            "Name this Windows Bridge device:",
+            `${state.clubName || "Club"} ClubV1 Results PC`
+        );
+        if (!deviceName || !deviceName.trim()) return;
+
+        if (!window.confirm(
+            "Paryx will create a revocable device credential. It is downloaded once in the config file and should be installed on the authorised club PC only. Continue?"
+        )) return;
+
+        const originalText = elements.bridgeConfigButton.textContent;
+        elements.bridgeConfigButton.disabled = true;
+        elements.bridgeConfigButton.textContent = "Creating…";
+        try {
+            const { data, error } = await functionsClient().invoke(
+                "competition-result-ingest",
+                {
+                    body: {
+                        action: "create_bridge_device",
+                        club_id: state.clubId,
+                        device_name: deviceName.trim()
+                    }
+                }
+            );
+            if (error) throw error;
+            if (!data || data.ok !== true || !data.config) {
+                throw new Error(data?.error || "Bridge configuration could not be created.");
+            }
+            downloadJson("paryx-bridge-config.json", data.config);
+            await loadIntegration();
+            showSuccess("Windows Bridge config created. Treat the downloaded file as a secret and delete the download after installation.");
+        } catch (error) {
+            showError(error);
+        } finally {
+            elements.bridgeConfigButton.disabled = false;
+            elements.bridgeConfigButton.textContent = originalText;
+        }
+    }
+
     async function saveCompetitionDetails(event) {
         event.preventDefault();
         if (!state.canManage || !state.selectedCompetitionId || state.selectedCompetition?.results_confirmed_at) return;
@@ -1230,6 +1353,13 @@
             renderSpecialAwards();
             renderAwardTotal();
         });
+
+        elements.csvChooseButton.addEventListener("click", () => elements.csvFile.click());
+        elements.csvFile.addEventListener("change", () => {
+            const file = elements.csvFile.files && elements.csvFile.files[0];
+            if (file) importClubV1Csv(file);
+        });
+        elements.bridgeConfigButton.addEventListener("click", createBridgeConfig);
 
         elements.saveAwards.addEventListener("click", saveAwards);
         elements.confirmButton.addEventListener("click", confirmResults);

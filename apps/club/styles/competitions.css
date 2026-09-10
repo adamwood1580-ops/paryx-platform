@@ -213,3 +213,70 @@
     color: #6f7d76;
     font-size: .7rem;
 }
+
+
+/* =========================================================
+   CLUBV1 CSV + WINDOWS BRIDGE
+   ========================================================= */
+.competition-provider-banner__actions {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    flex-wrap: wrap;
+}
+
+.competition-csv-import {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin: .9rem 1.15rem 1rem;
+    padding: .9rem 1rem;
+    border: 1px dashed #b8c9c0;
+    border-radius: .8rem;
+    background: #f8faf9;
+}
+
+.competition-csv-import strong,
+.competition-csv-import small {
+    display: block;
+}
+
+.competition-csv-import strong {
+    margin-top: .15rem;
+    color: #183f31;
+}
+
+.competition-csv-import small {
+    margin-top: .25rem;
+    max-width: 50rem;
+    color: #6f7d76;
+    font-size: .72rem;
+    line-height: 1.45;
+}
+
+.competition-csv-import__actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: .6rem;
+    flex-wrap: wrap;
+}
+
+.competition-csv-status {
+    max-width: 18rem;
+    color: #64736c;
+    font-size: .72rem;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 760px) {
+    .competition-csv-import,
+    .competition-provider-banner__actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+    .competition-csv-import__actions {
+        align-items: stretch;
+    }
+}
