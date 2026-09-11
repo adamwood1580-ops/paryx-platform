@@ -24,7 +24,7 @@
     iframe.loading = "lazy";
     iframe.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
     iframe.style.width = "100%";
-    iframe.style.height = "760px";
+    iframe.style.height = "620px";
     iframe.style.border = "0";
     iframe.style.display = "block";
     iframe.style.background = "transparent";
@@ -40,7 +40,7 @@
             return;
         }
 
-        const height = Math.max(420, Math.min(1800, Number(event.data.height || 0)));
+        const height = Math.max(420, Math.min(1300, Number(event.data.height || 0)));
         if (Number.isFinite(height)) {
             iframe.style.height = `${height}px`;
         }

@@ -604,7 +604,9 @@
                 const source =
                     row.booking_source === "staff"
                         ? "Staff"
-                        : "Player";
+                        : row.booking_source === "website"
+                            ? "Website visitor"
+                            : "Player";
 
                 const checkIn =
                     row.staff_checked_in_at
@@ -1044,11 +1046,22 @@
                 };
             }),
             ...state.booking.guests.map(function (guest, index) {
+                const websiteMeta = guest.is_party_lead
+                    ? [
+                        "Website visitor",
+                        guest.contact_email || "",
+                        guest.contact_number || "",
+                        guest.booking_reference
+                            ? `Ref ${guest.booking_reference}`
+                            : ""
+                    ].filter(Boolean).join(" · ")
+                    : "Guest · 1 place";
+
                 return {
                     type: "guest",
                     key: String(index),
                     name: String(guest.guest_name || "Guest"),
-                    meta: "Guest · 1 place"
+                    meta: websiteMeta
                 };
             })
         ];
@@ -1287,10 +1300,11 @@
             );
 
         const source =
-            state.booking.bookingSource ===
-            "staff"
+            state.booking.bookingSource === "staff"
                 ? "Staff booking"
-                : "Player booking";
+                : state.booking.bookingSource === "website"
+                    ? "Website visitor booking"
+                    : "Player booking";
 
         if (elements.bookingDialogEyebrow) {
             elements.bookingDialogEyebrow

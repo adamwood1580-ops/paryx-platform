@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
     <meta name="theme-color" content="#064831">
     <title>Book golf | Paryx</title>
-    <link rel="stylesheet" href="widget.css?v=0.27.0">
+    <link rel="stylesheet" href="widget.css?v=0.27.1">
 </head>
 <body>
     <main class="widget-shell" id="widgetShell">
@@ -25,7 +25,7 @@
 
         <section id="widgetError" class="widget-notice widget-notice--error" hidden></section>
         <section id="widgetDisabled" class="widget-notice" hidden>
-            Online tee-time availability is not currently enabled for this club.
+            Online tee-time booking is not currently enabled for this club.
         </section>
 
         <div id="widgetContent" hidden>
@@ -45,23 +45,95 @@
                     <div>
                         <p class="widget-eyebrow">Availability</p>
                         <h2 id="availabilityHeading">Tee times</h2>
+                        <p id="availabilitySummary" class="widget-availability-summary"></p>
                     </div>
                     <button id="refreshButton" class="widget-link-button" type="button">Refresh</button>
                 </div>
-                <div id="teeTimes" class="widget-tee-list">
+
+                <div class="widget-availability-toolbar">
+                    <div id="periodTabs" class="widget-period-tabs" aria-label="Time of day"></div>
+                    <label class="widget-toggle">
+                        <input id="showUnavailable" type="checkbox">
+                        <span>Show full / closed</span>
+                    </label>
+                </div>
+
+                <div id="teeTimes" class="widget-time-grid">
                     <div class="widget-empty">Loading tee times…</div>
                 </div>
             </section>
         </div>
 
         <footer class="widget-footer">
-            <span>Booking completes securely in Paryx.</span>
+            <span>Visitors can book here without creating a Paryx account.</span>
             <span id="clubContact"></span>
         </footer>
     </main>
 
+    <dialog id="guestBookingDialog" class="widget-dialog">
+        <form id="guestBookingForm" class="widget-dialog-panel">
+            <div class="widget-dialog-head">
+                <div>
+                    <p class="widget-eyebrow">Visitor booking</p>
+                    <h2>Book this tee time</h2>
+                    <p id="guestBookingMeta" class="widget-dialog-meta"></p>
+                </div>
+                <button id="closeGuestBooking" class="widget-dialog-close" type="button" aria-label="Close">×</button>
+            </div>
+
+            <div id="guestBookingError" class="widget-notice widget-notice--error" hidden></div>
+
+            <div class="widget-form-grid">
+                <label class="widget-field widget-field--full">
+                    <span>Lead player name</span>
+                    <input id="guestName" name="guestName" type="text" minlength="2" maxlength="100" autocomplete="name" required>
+                </label>
+
+                <label class="widget-field">
+                    <span>Email</span>
+                    <input id="guestEmail" name="guestEmail" type="email" maxlength="254" autocomplete="email" required>
+                </label>
+
+                <label class="widget-field">
+                    <span>Mobile number <small>(optional)</small></span>
+                    <input id="guestPhone" name="guestPhone" type="tel" maxlength="40" autocomplete="tel">
+                </label>
+
+                <label class="widget-field widget-field--full">
+                    <span>Players in your party</span>
+                    <select id="guestPartySize" name="guestPartySize"></select>
+                </label>
+            </div>
+
+            <label class="widget-consent">
+                <input id="guestConsent" type="checkbox" required>
+                <span>I agree that the club may use these details to manage this tee-time booking.</span>
+            </label>
+
+            <div class="widget-dialog-actions">
+                <button id="confirmGuestBooking" class="widget-primary-button" type="submit">Confirm visitor booking</button>
+                <a id="continueWithParyx" class="widget-secondary-button" href="#" target="_blank" rel="noopener">Use my Paryx account instead</a>
+            </div>
+        </form>
+    </dialog>
+
+    <dialog id="bookingSuccessDialog" class="widget-dialog">
+        <div class="widget-dialog-panel widget-success-panel">
+            <div class="widget-success-icon" aria-hidden="true">✓</div>
+            <p class="widget-eyebrow">Booking confirmed</p>
+            <h2>Your tee time is booked</h2>
+            <p id="bookingSuccessMeta" class="widget-dialog-meta"></p>
+            <div class="widget-reference">
+                <span>Booking reference</span>
+                <strong id="bookingReference">—</strong>
+            </div>
+            <p class="widget-help-copy">Keep this reference. To change or cancel the booking, contact the golf club directly.</p>
+            <button id="closeBookingSuccess" class="widget-primary-button" type="button">Done</button>
+        </div>
+    </dialog>
+
     <script src="config.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="widget.js?v=0.27.0"></script>
+    <script src="widget.js?v=0.27.1"></script>
 </body>
 </html>
