@@ -11,7 +11,9 @@
         loading: false,
         searchTimer: null,
         selected: null,
-        canEditEntitlements: false
+        canEditEntitlements: false,
+        canDeleteAccounts: false,
+        currentUserId: null
     };
 
     const elements = {
@@ -38,6 +40,11 @@
         count:
             document.getElementById(
                 "accountResultCount"
+            ),
+
+        retentionPolicy:
+            document.getElementById(
+                "accountRetentionPolicy"
             ),
 
         table:
@@ -148,6 +155,31 @@
         save:
             document.getElementById(
                 "saveEntitlement"
+            ),
+
+        deleteSection:
+            document.getElementById(
+                "accountDeleteSection"
+            ),
+
+        deleteReason:
+            document.getElementById(
+                "accountDeleteReason"
+            ),
+
+        deleteBlocked:
+            document.getElementById(
+                "accountDeleteBlocked"
+            ),
+
+        deleteStatus:
+            document.getElementById(
+                "accountDeleteStatus"
+            ),
+
+        deleteButton:
+            document.getElementById(
+                "accountDeleteButton"
             )
     };
 
@@ -188,6 +220,25 @@
 
         elements.entitlementStatus.hidden =
             true;
+    }
+
+
+    function clearDeleteStatus() {
+        if (!elements.deleteStatus) {
+            return;
+        }
+
+        elements.deleteStatus.textContent = "";
+        elements.deleteStatus.hidden = true;
+    }
+
+    function showDeleteStatus(message) {
+        if (!elements.deleteStatus) {
+            return;
+        }
+
+        elements.deleteStatus.textContent = message;
+        elements.deleteStatus.hidden = false;
     }
 
     function showEntitlementStatus(
@@ -487,6 +538,51 @@
             state.total;
     }
 
+    async function loadRetentionPolicy() {
+        if (!elements.retentionPolicy) {
+            return;
+        }
+
+        try {
+            const {
+                data,
+                error
+            } =
+                await window.supabaseClient
+                    .rpc(
+                        "platform_get_account_retention_policy"
+                    );
+
+            if (error) {
+                throw error;
+            }
+
+            const policy =
+                Array.isArray(data)
+                    ? data[0]
+                    : data;
+
+            if (!policy) {
+                elements.retentionPolicy.textContent =
+                    "Retention policy unavailable.";
+                return;
+            }
+
+            elements.retentionPolicy.textContent =
+                policy.auto_delete_enabled
+                    ? `Automatic deletion: ${Number(policy.inactive_months || 12)} months without Paryx activity. Active Console/staff accounts and live paid entitlements are excluded.`
+                    : "Automatic inactive-account deletion is currently disabled.";
+        } catch (error) {
+            console.warn(
+                "Paryx retention policy could not be loaded:",
+                error
+            );
+
+            elements.retentionPolicy.textContent =
+                "Retention policy unavailable.";
+        }
+    }
+
     async function loadAccounts(
         reset = true
     ) {
@@ -638,6 +734,52 @@
             state.canEditEntitlements;
     }
 
+
+    function applyDeleteState(row) {
+        if (!elements.deleteSection) {
+            return;
+        }
+
+        elements.deleteSection.hidden =
+            !state.canDeleteAccounts;
+
+        if (!state.canDeleteAccounts) {
+            return;
+        }
+
+        elements.deleteReason.value = "";
+        clearDeleteStatus();
+        elements.deleteBlocked.hidden = true;
+        elements.deleteBlocked.textContent = "";
+
+        let blockedReason = "";
+
+        if (
+            row?.user_id &&
+            row.user_id === state.currentUserId
+        ) {
+            blockedReason =
+                "You cannot delete your own Paryx account from Console.";
+        } else if (row?.console_active === true) {
+            blockedReason =
+                "Remove this account's active Paryx Console access before deleting it.";
+        } else if (
+            Number(row?.staff_club_count || 0) > 0
+        ) {
+            blockedReason =
+                "Remove this account's active ClubHub staff access before deleting it.";
+        }
+
+        elements.deleteButton.disabled =
+            Boolean(blockedReason);
+
+        if (blockedReason) {
+            elements.deleteBlocked.hidden = false;
+            elements.deleteBlocked.textContent =
+                blockedReason;
+        }
+    }
+
     function fillAccount(
         row
     ) {
@@ -700,6 +842,7 @@
             );
 
         applyEntitlementEditState();
+        applyDeleteState(row);
     }
 
     function membershipLabel(row) {
@@ -1062,6 +1205,131 @@
         }
     }
 
+    async function deleteSelectedAccount() {
+        if (
+            !state.canDeleteAccounts ||
+            !state.selected ||
+            elements.deleteButton.disabled
+        ) {
+            return;
+        }
+
+        const reason =
+            String(
+                elements.deleteReason.value || ""
+            ).trim();
+
+        if (!reason) {
+            showDeleteStatus(
+                "Enter an audit reason before deleting the account."
+            );
+            elements.deleteReason.focus();
+            return;
+        }
+
+        const account =
+            state.selected;
+
+        const confirmationText =
+            String(
+                account.email ||
+                account.user_id
+            ).trim();
+
+        const firstConfirmation =
+            window.confirm(
+                `PERMANENT ACCOUNT DELETION\n\nDelete ${displayName(account)} from Paryx?\n\nThis removes the global login, profile, entitlements and private Paryx identity links. Club-owned membership records and historical club records are retained.\n\nThis action cannot be undone.`
+            );
+
+        if (!firstConfirmation) {
+            return;
+        }
+
+        const typedConfirmation =
+            window.prompt(
+                `SECOND CONFIRMATION\n\nType the account email exactly to permanently delete this user:\n\n${confirmationText}`,
+                ""
+            );
+
+        if (typedConfirmation === null) {
+            return;
+        }
+
+        if (
+            typedConfirmation.trim().toLowerCase() !==
+            confirmationText.toLowerCase()
+        ) {
+            showDeleteStatus(
+                "Deletion cancelled: the confirmation did not match the account."
+            );
+            return;
+        }
+
+        clearMessages();
+        clearEntitlementStatus();
+        clearDeleteStatus();
+
+        elements.deleteButton.disabled = true;
+        elements.deleteButton.textContent =
+            "Deleting…";
+
+        try {
+            const {
+                data,
+                error
+            } =
+                await window.supabaseClient
+                    .rpc(
+                        "platform_delete_account",
+                        {
+                            p_user_id:
+                                account.user_id,
+                            p_confirmation:
+                                typedConfirmation.trim(),
+                            p_reason:
+                                reason
+                        }
+                    );
+
+            if (error) {
+                throw error;
+            }
+
+            const result =
+                Array.isArray(data)
+                    ? data[0]
+                    : data;
+
+            elements.dialog.close();
+            state.selected = null;
+
+            await loadAccounts(true);
+
+            showMessage(
+                elements.success,
+                `Paryx account deleted permanently${result?.email ? `: ${result.email}` : "."}`
+            );
+        } catch (error) {
+            console.error(
+                "Paryx account deletion failed:",
+                error
+            );
+
+            showDeleteStatus(
+                readableError(error)
+            );
+        } finally {
+            elements.deleteButton.textContent =
+                "Delete account permanently";
+
+            if (state.selected) {
+                applyDeleteState(
+                    state.selected
+                );
+            }
+        }
+    }
+
     function bind() {
         elements.search.addEventListener(
             "input",
@@ -1178,11 +1446,26 @@
                         "";
                 }
             );
+
+        elements.deleteButton
+            ?.addEventListener(
+                "click",
+                deleteSelectedAccount
+            );
     }
 
     async function initialise() {
         const context =
             await window.ParyxConsole.ready;
+
+        state.currentUserId =
+            context
+                ?.user
+                ?.id ||
+            context
+                ?.access
+                ?.userId ||
+            null;
 
         state.canEditEntitlements =
             [
@@ -1194,11 +1477,22 @@
                     ?.role
             );
 
+        state.canDeleteAccounts =
+            context
+                ?.access
+                ?.role ===
+            "platform_owner";
+
         applyEntitlementEditState();
 
-        await loadAccounts(
-            true
-        );
+        if (elements.deleteSection) {
+            elements.deleteSection.hidden = true;
+        }
+
+        await Promise.all([
+            loadRetentionPolicy(),
+            loadAccounts(true)
+        ]);
     }
 
     bind();

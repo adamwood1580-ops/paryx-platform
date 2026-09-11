@@ -672,6 +672,40 @@ body {
     line-height: 1.45;
 }
 
+
+.console-danger-zone {
+    display: grid;
+    gap: .85rem;
+    padding: 1rem;
+    border: 1px solid rgba(166, 53, 53, .34);
+    border-radius: .85rem;
+    background: #fff7f7;
+}
+
+.console-danger-zone > p {
+    margin: 0;
+    color: #6f2d2d;
+    font-size: .82rem;
+    line-height: 1.5;
+}
+
+.console-danger-zone .console-field textarea {
+    width: 100%;
+    min-height: 5.5rem;
+    box-sizing: border-box;
+    resize: vertical;
+    padding: .68rem .75rem;
+    border: 1px solid var(--color-border);
+    border-radius: .65rem;
+    background: #fff;
+    color: var(--color-text);
+    font: inherit;
+}
+
+.console-danger-zone .console-button--danger {
+    justify-self: start;
+}
+
 .console-account-clubs {
     display: grid;
     gap: .65rem;

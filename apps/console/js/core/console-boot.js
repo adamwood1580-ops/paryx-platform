@@ -128,6 +128,22 @@
                 return;
             }
 
+            try {
+                await window.supabaseClient
+                    .rpc(
+                        "touch_my_paryx_activity",
+                        {
+                            p_source:
+                                "console"
+                        }
+                    );
+            } catch (activityError) {
+                console.warn(
+                    "Paryx activity tracking warning:",
+                    activityError
+                );
+            }
+
             const {
                 data,
                 error

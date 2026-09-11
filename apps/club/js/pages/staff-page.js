@@ -803,7 +803,7 @@
             showSuccess(
                 data?.invited
                     ? `Invitation sent to ${email}.`
-                    : `${email} already has a Paryx account and has been linked to ClubHub.`
+                    : `${email} already has a sign-in and has been linked to ClubHub.`
             );
 
             await loadStaff();

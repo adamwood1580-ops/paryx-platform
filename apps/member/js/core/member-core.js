@@ -183,11 +183,28 @@
                 );
             }
 
+            try {
+                await rpc(
+                    "touch_my_paryx_activity",
+                    {
+                        p_source:
+                            "player"
+                    }
+                );
+            } catch (
+                activityError
+            ) {
+                console.warn(
+                    "Paryx activity tracking warning:",
+                    activityError
+                );
+            }
+
             /*
-             * A club may already have created this player's
-             * global Paryx Auth account through CSV import.
-             * On first authenticated use, promote any invited
-             * or pending club memberships to active.
+             * Legacy releases could leave invited/pending memberships
+             * attached to an authenticated Player. Keep first-use activation
+             * for backwards compatibility; Identity v2 imports no longer
+             * create Player accounts.
              */
             try {
                 await rpc(

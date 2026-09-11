@@ -47,6 +47,13 @@
                             Search a Paryx identity, inspect its club links
                             and manage Player scoring entitlements.
                         </p>
+
+                        <p
+                            id="accountRetentionPolicy"
+                            class="console-subtitle"
+                        >
+                            Retention policy: loading…
+                        </p>
                     </div>
 
                     <span class="console-badge">
@@ -104,7 +111,7 @@
                                     <th>Paryx access</th>
                                     <th>Member clubs</th>
                                     <th>Visitor clubs</th>
-                                    <th>Last sign-in</th>
+                                    <th>Last activity</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
@@ -314,6 +321,64 @@
                                 <div class="console-empty">
                                     Loading club relationships…
                                 </div>
+                            </div>
+                        </section>
+
+
+                        <section
+                            id="accountDeleteSection"
+                            class="console-account-section"
+                            hidden
+                        >
+                            <div class="console-panel__header">
+                                <div>
+                                    <h2>Delete Paryx account</h2>
+                                    <small>
+                                        Platform Owner only · permanent action
+                                    </small>
+                                </div>
+                            </div>
+
+                            <div class="console-danger-zone">
+                                <p>
+                                    This permanently removes the global Paryx login,
+                                    profile, entitlements and private account links.
+                                    Club-owned membership records, booking history,
+                                    competition history and Club Credit remain with
+                                    each club and are detached from the deleted account.
+                                </p>
+
+                                <label class="console-field">
+                                    <span>Audit reason</span>
+                                    <textarea
+                                        id="accountDeleteReason"
+                                        rows="3"
+                                        maxlength="500"
+                                        placeholder="Why is this account being permanently deleted?"
+                                    ></textarea>
+                                </label>
+
+                                <div
+                                    id="accountDeleteBlocked"
+                                    class="console-account-note"
+                                    hidden
+                                ></div>
+
+                                <div
+                                    id="accountDeleteStatus"
+                                    class="console-error"
+                                    role="status"
+                                    aria-live="polite"
+                                    hidden
+                                ></div>
+
+                                <button
+                                    id="accountDeleteButton"
+                                    class="console-button console-button--danger"
+                                    type="button"
+                                >
+                                    Delete account permanently
+                                </button>
                             </div>
                         </section>
                     </div>

@@ -419,7 +419,8 @@
         const required = [
             "first_name",
             "last_name",
-            "email"
+            "email",
+            "membership_number"
         ];
 
         const missingHeaders =
@@ -497,7 +498,13 @@
                 )
             ) {
                 row.errors.push(
-                    "Valid email required."
+                    "Valid club contact email required."
+                );
+            }
+
+            if (!row.membershipNumber) {
+                row.errors.push(
+                    "Membership number is required."
                 );
             }
 
@@ -529,18 +536,10 @@
             rows.push(row);
         }
 
-        const emailCounts = new Map();
         const membershipCounts = new Map();
 
         rows.forEach(
             function (row) {
-                if (row.email) {
-                    emailCounts.set(
-                        row.email,
-                        (emailCounts.get(row.email) || 0) + 1
-                    );
-                }
-
                 const memberNumber =
                     row.membershipNumber
                         .trim()
@@ -557,15 +556,6 @@
 
         rows.forEach(
             function (row) {
-                if (
-                    row.email &&
-                    emailCounts.get(row.email) > 1
-                ) {
-                    row.errors.push(
-                        "Duplicate email in CSV."
-                    );
-                }
-
                 const memberNumber =
                     row.membershipNumber
                         .trim()
@@ -829,17 +819,6 @@
         batchId,
         isFinalChunk
     ) {
-        /*
-         * Imported golfers are global Paryx Player accounts.
-         * Activate them in the player app rather than in the
-         * ClubHub staff workspace.
-         */
-        const redirectTo =
-            new URL(
-                "../../member/html/set-password.html",
-                window.location.href
-            ).href;
-
         const {
             data,
             error
@@ -854,8 +833,7 @@
                     batchId,
                     rows:
                         rows.map(toFunctionRow),
-                    isFinalChunk,
-                    redirectTo
+                    isFinalChunk
                 }
             }
         );
@@ -887,7 +865,7 @@
         }
 
         const confirmed = window.confirm(
-            `Import ${state.validRows.length} members and send invitations to new email addresses?`
+            `Import ${state.validRows.length} club members? This updates club membership records only and sends no invitations.`
         );
 
         if (!confirmed) {

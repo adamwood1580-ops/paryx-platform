@@ -1016,6 +1016,22 @@
                 return;
             }
 
+            try {
+                await getSupabaseClient()
+                    .rpc(
+                        "touch_my_paryx_activity",
+                        {
+                            p_source:
+                                "clubhub"
+                        }
+                    );
+            } catch (activityError) {
+                console.warn(
+                    "Paryx activity tracking warning:",
+                    activityError
+                );
+            }
+
             /*
              * A newly created session can occasionally become
              * available slightly before all related profile

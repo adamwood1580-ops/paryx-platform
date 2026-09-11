@@ -1634,7 +1634,7 @@
 
         if (
             !window.confirm(
-                `Remove ${name} from this club?\n\nTheir member access will be removed, but their global Paryx account and historical booking records remain.`
+                `Remove ${name} from this club?\n\nTheir access to this club will be removed. Historical club booking records will be retained.`
             )
         ) {
             return;
