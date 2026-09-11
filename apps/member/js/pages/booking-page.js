@@ -19,7 +19,10 @@
             ? requestedDate
             : P.isoDate(new Date()),
         timer: null,
-        deepLinkHandled: false
+        deepLinkHandled: false,
+        period: "morning",
+        showUnavailable: false,
+        visibleLimit: 15
     };
 
     const elements = {
@@ -29,6 +32,9 @@
         course: document.getElementById("courseSelect"),
         dateStrip: document.getElementById("dateStrip"),
         teeHeading: document.getElementById("teeHeading"),
+        teeSummary: document.getElementById("teeSummary"),
+        periodTabs: document.getElementById("periodTabs"),
+        showUnavailable: document.getElementById("showUnavailable"),
         message: document.getElementById("message"),
         tees: document.getElementById("teeTimes"),
         bookings: document.getElementById("bookings"),
@@ -225,65 +231,179 @@
         renderAlerts();
     }
 
+    function periodFor(row) {
+        const hour = Number(P.shortTime(row.start_time).split(":")[0] || 0);
+        if (hour < 12) return "morning";
+        if (hour < 17) return "afternoon";
+        return "evening";
+    }
+
+    function periodLabel(period) {
+        if (period === "morning") return "Morning";
+        if (period === "afternoon") return "Afternoon";
+        return "Evening";
+    }
+
+    function rowsInPeriod(period) {
+        return state.tees.filter(function (row) {
+            return periodFor(row) === period;
+        });
+    }
+
+    function isPrimaryVisible(row) {
+        if (row.current_user_role) return true;
+        if (row.operational_status !== "open") return false;
+        if (!row.booking_id) return Number(row.spaces_remaining || 0) > 0;
+        return row.booking_type === "joinable" && Number(row.spaces_remaining || 0) > 0;
+    }
+
+    function primaryRows(period) {
+        return rowsInPeriod(period).filter(isPrimaryVisible);
+    }
+
+    function ensurePeriod() {
+        const periods = ["morning", "afternoon", "evening"];
+        const currentRows = state.showUnavailable
+            ? rowsInPeriod(state.period)
+            : primaryRows(state.period);
+
+        if (currentRows.length) return;
+
+        const next = periods.find(function (period) {
+            return (state.showUnavailable ? rowsInPeriod(period) : primaryRows(period)).length > 0;
+        });
+
+        state.period = next || periods.find(function (period) {
+            return rowsInPeriod(period).length > 0;
+        }) || "morning";
+    }
+
+    function renderPeriods() {
+        ensurePeriod();
+        const periods = ["morning", "afternoon", "evening"];
+        const visible = periods.filter(function (period) {
+            return rowsInPeriod(period).length > 0;
+        });
+
+        elements.periodTabs.innerHTML = visible.map(function (period) {
+            const count = primaryRows(period).length;
+            return `
+                <button type="button" class="player-period-tab ${period === state.period ? "active" : ""}" data-period="${period}">
+                    ${periodLabel(period)} <span>${count}</span>
+                </button>
+            `;
+        }).join("");
+    }
+
+    function slotDetails(row) {
+        if (row.current_user_role) {
+            return {
+                label: row.current_user_role === "lead" ? "Your booking" : "Joined",
+                className: " player-time-slot--mine",
+                attributes: "data-view"
+            };
+        }
+
+        if (row.operational_status !== "open") {
+            return {
+                label: closedStatus(row),
+                className: " player-time-slot--unavailable",
+                attributes: "disabled"
+            };
+        }
+
+        if (!row.booking_id) {
+            const spaces = Number(row.spaces_remaining || row.max_players || 0);
+            return {
+                label: `${spaces} ${spaces === 1 ? "space" : "spaces"}`,
+                className: "",
+                attributes: `data-book="${P.escapeHtml(row.tee_time_id)}"`
+            };
+        }
+
+        if (row.booking_type === "joinable" && Number(row.spaces_remaining || 0) > 0) {
+            const spaces = Number(row.spaces_remaining || 0);
+            return {
+                label: `${spaces} ${spaces === 1 ? "space" : "spaces"} · join`,
+                className: " player-time-slot--joinable",
+                attributes: `data-join="${P.escapeHtml(row.booking_id)}"`
+            };
+        }
+
+        const alert = activeAlertForTee(row.tee_time_id);
+        return {
+            label: alert ? "Watching" : (row.booking_type === "private" ? "Private · alert" : "Full · alert"),
+            className: alert ? " player-time-slot--watching" : " player-time-slot--unavailable player-time-slot--alertable",
+            attributes: alert ? "disabled" : `data-alert="${P.escapeHtml(row.tee_time_id)}"`
+        };
+    }
+
     function renderTees() {
         renderDates();
-        elements.teeHeading.textContent = `Tee times · ${P.formatDay(state.date)}`;
+        elements.teeHeading.textContent = `${P.formatDay(state.date)} tee times`;
+        elements.showUnavailable.checked = state.showUnavailable;
 
         if (!state.courseId) {
+            elements.teeSummary.textContent = "";
+            elements.periodTabs.innerHTML = "";
             elements.tees.innerHTML = '<div class="empty">Choose a club and course.</div>';
             return;
         }
 
         if (!state.tees.length) {
+            elements.teeSummary.textContent = "";
+            elements.periodTabs.innerHTML = "";
             elements.tees.innerHTML = '<div class="empty">No generated tee times for this date.</div>';
             return;
         }
 
-        elements.tees.innerHTML = state.tees.map(function (row) {
-            let title = "";
-            let meta = "";
-            let action = "";
+        renderPeriods();
 
-            if (row.current_user_role) {
-                title = row.current_user_role === "lead" ? "Your booking" : "Booking joined";
-                meta = (row.player_names || []).join(", ");
-                action = '<button class="secondary" type="button" data-view>View</button>';
-            } else if (row.operational_status !== "open") {
-                title = closedStatus(row);
-                meta = row.event_title || "";
-                action = '<button disabled>Closed</button>';
-            } else if (!row.booking_id) {
-                title = `${row.spaces_remaining} places available`;
-                meta = "Open tee time";
-                action = `<button type="button" data-book="${P.escapeHtml(row.tee_time_id)}">Book</button>`;
-            } else if (row.booking_type === "joinable" && row.spaces_remaining > 0) {
-                title = (row.player_names || []).join(", ") || "Joinable booking";
-                meta = `${row.spaces_remaining} places available`;
-                action = `<button type="button" data-join="${P.escapeHtml(row.booking_id)}">Join</button>`;
-            } else if (row.booking_type === "private") {
-                const alert = activeAlertForTee(row.tee_time_id);
-                title = "Private booking";
-                meta = "Unavailable right now";
-                action = alert
-                    ? '<button class="secondary" disabled>Watching</button>'
-                    : `<button class="secondary" type="button" data-alert="${P.escapeHtml(row.tee_time_id)}">Alert me</button>`;
-            } else {
-                const alert = activeAlertForTee(row.tee_time_id);
-                title = "Fully booked";
-                meta = (row.player_names || []).join(", ");
-                action = alert
-                    ? '<button class="secondary" disabled>Watching</button>'
-                    : `<button class="secondary" type="button" data-alert="${P.escapeHtml(row.tee_time_id)}">Alert me</button>`;
-            }
+        let rows = rowsInPeriod(state.period);
+        if (!state.showUnavailable) {
+            rows = rows.filter(isPrimaryVisible);
+        }
 
+        const bookableCount = state.tees.filter(function (row) {
+            return !row.current_user_role && isPrimaryVisible(row);
+        }).length;
+        const ownCount = state.tees.filter(function (row) {
+            return Boolean(row.current_user_role);
+        }).length;
+        const visibleCount = Math.min(rows.length, state.visibleLimit);
+        const periodName = periodLabel(state.period).toLowerCase();
+        const summaryBits = [];
+        summaryBits.push(`${bookableCount} bookable`);
+        if (ownCount) summaryBits.push(`${ownCount} yours`);
+        summaryBits.push(`showing ${visibleCount} ${periodName}`);
+        elements.teeSummary.textContent = summaryBits.join(" · ");
+
+        if (!rows.length) {
+            elements.tees.innerHTML = state.showUnavailable
+                ? '<div class="empty player-time-grid__empty">No tee times fall within this part of the day.</div>'
+                : '<div class="empty player-time-grid__empty">No available tee times in this part of the day. Choose another tab or show full / closed times to create an alert.</div>';
+            return;
+        }
+
+        const visibleRows = rows.slice(0, state.visibleLimit);
+        const remaining = Math.max(0, rows.length - visibleRows.length);
+
+        elements.tees.innerHTML = visibleRows.map(function (row) {
+            const slot = slotDetails(row);
             return `
-                <article class="tee">
-                    <div class="tee-time">${P.escapeHtml(P.shortTime(row.start_time))}</div>
-                    <div><strong>${P.escapeHtml(title)}</strong><span>${P.escapeHtml(meta)}</span></div>
-                    ${action}
-                </article>
+                <button type="button" class="player-time-slot${slot.className}" ${slot.attributes}>
+                    <strong>${P.escapeHtml(P.shortTime(row.start_time))}</strong>
+                    <span>${P.escapeHtml(slot.label)}</span>
+                </button>
             `;
-        }).join("");
+        }).join("") + (remaining > 0
+            ? `
+                <button type="button" class="player-more-times" data-show-more>
+                    Show ${Math.min(15, remaining)} more ${P.escapeHtml(periodName)} times
+                    <span>${remaining} remaining</span>
+                </button>
+            `
+            : "");
     }
 
     async function loadTees() {
@@ -505,24 +625,45 @@
         });
         elements.course.addEventListener("change", function () {
             state.courseId = elements.course.value || null;
+            state.period = "morning";
+            state.visibleLimit = 15;
             loadTees();
         });
         elements.dateStrip.addEventListener("click", function (event) {
             const button = event.target.closest("[data-date]");
             if (button) {
                 state.date = button.dataset.date;
+                state.period = "morning";
+                state.visibleLimit = 15;
                 loadTees();
             }
+        });
+        elements.periodTabs.addEventListener("click", function (event) {
+            const button = event.target.closest("[data-period]");
+            if (!button) return;
+            state.period = button.dataset.period;
+            state.visibleLimit = 15;
+            renderTees();
+        });
+        elements.showUnavailable.addEventListener("change", function () {
+            state.showUnavailable = elements.showUnavailable.checked;
+            state.visibleLimit = 15;
+            renderTees();
         });
         elements.tees.addEventListener("click", function (event) {
             const book = event.target.closest("[data-book]");
             const join = event.target.closest("[data-join]");
             const view = event.target.closest("[data-view]");
             const alert = event.target.closest("[data-alert]");
+            const more = event.target.closest("[data-show-more]");
             if (book) openBooking("create", book.dataset.book);
             else if (join) openBooking("join", join.dataset.join);
             else if (alert) openAlert(alert.dataset.alert);
             else if (view) document.getElementById("my-bookings").scrollIntoView({ behavior: "smooth" });
+            else if (more) {
+                state.visibleLimit += 15;
+                renderTees();
+            }
         });
         elements.bookingForm.addEventListener("submit", submitBooking);
         [elements.closeBooking, elements.backBooking].forEach(function (button) {

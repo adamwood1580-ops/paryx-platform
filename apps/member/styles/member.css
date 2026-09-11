@@ -1491,3 +1491,235 @@
         justify-content: flex-start;
     }
 }
+
+
+/* =========================================================
+   v0.28.1 — Compact Player booking UI + mobile home card fix
+   ========================================================= */
+
+/* Home feature cards are anchors. Make them true block cards rather than
+   inline anchors containing block children; mobile browsers otherwise split
+   the border/background into fragmented inline boxes. */
+.home-feature-card {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.home-feature-card .kicker,
+.home-feature-card h3,
+.home-feature-card .meta {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+}
+
+.player-availability-head {
+    align-items: flex-start;
+    margin-bottom: 8px;
+}
+
+.player-availability-head .eyebrow {
+    margin-bottom: 3px;
+}
+
+.player-availability-summary {
+    margin: 4px 0 0;
+    color: var(--muted);
+    font-size: .7rem;
+    line-height: 1.35;
+}
+
+.player-availability-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.player-period-tabs {
+    display: inline-grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, auto);
+    gap: 4px;
+    padding: 4px;
+    border-radius: 13px;
+    background: #e9efeb;
+}
+
+.player-period-tab {
+    min-height: 34px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--muted);
+    font-size: .7rem;
+    font-weight: 800;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.player-period-tab span {
+    display: inline-grid;
+    place-items: center;
+    min-width: 18px;
+    height: 18px;
+    margin-left: 3px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: rgba(6,72,49,.08);
+    color: inherit;
+    font-size: .6rem;
+}
+
+.player-period-tab.active {
+    background: #fff;
+    color: var(--green);
+    box-shadow: 0 2px 8px rgba(20,50,38,.06);
+}
+
+.player-availability-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--muted);
+    font-size: .68rem;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.player-availability-toggle input {
+    accent-color: var(--green);
+}
+
+.player-time-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.player-time-slot {
+    min-width: 0;
+    min-height: 70px;
+    padding: 9px 6px;
+    border: 1px solid var(--border);
+    border-radius: 13px;
+    background: #fff;
+    color: var(--text);
+    text-align: center;
+    cursor: pointer;
+}
+
+.player-time-slot strong,
+.player-time-slot span {
+    display: block;
+}
+
+.player-time-slot strong {
+    color: var(--green-dark);
+    font-size: .94rem;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+}
+
+.player-time-slot span {
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: .61rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.player-time-slot--joinable {
+    border-color: rgba(6,72,49,.28);
+    background: var(--green-soft);
+}
+
+.player-time-slot--mine {
+    border-color: rgba(229,196,95,.65);
+    background: #fffaf0;
+}
+
+.player-time-slot--mine span {
+    color: #79621c;
+}
+
+.player-time-slot--unavailable {
+    background: #f7f8f7;
+}
+
+.player-time-slot--alertable {
+    border-style: dashed;
+    color: var(--green);
+}
+
+.player-time-slot--watching,
+.player-time-slot:disabled {
+    cursor: default;
+    opacity: .72;
+}
+
+.player-time-slot--watching {
+    border-color: rgba(6,72,49,.18);
+    background: #f1f5f2;
+}
+
+.player-more-times {
+    grid-column: 1 / -1;
+    min-height: 48px;
+    padding: 8px 12px;
+    border: 1px dashed #cbd7cf;
+    border-radius: 13px;
+    background: #fff;
+    color: var(--green);
+    font-size: .72rem;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.player-more-times span {
+    display: block;
+    margin-top: 2px;
+    color: var(--muted);
+    font-size: .61rem;
+    font-weight: 700;
+}
+
+.player-time-grid__empty {
+    grid-column: 1 / -1;
+}
+
+@media (max-width: 500px) {
+    .player-availability-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 7px;
+    }
+
+    .player-period-tabs {
+        width: 100%;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-auto-flow: row;
+    }
+
+    .player-period-tab {
+        padding: 0 5px;
+    }
+
+    .player-availability-toggle {
+        padding: 2px 4px;
+    }
+
+    .player-time-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 360px) {
+    .player-time-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
