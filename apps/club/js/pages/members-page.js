@@ -1634,7 +1634,7 @@
 
         if (
             !window.confirm(
-                `Remove ${name} from this club?\n\nTheir access to this club will be removed. Historical club booking records will be retained.`
+                `Remove ${name} from this club?\n\nTheir club access will end immediately. Their historical club record, bookings, results and Club Credit history will be retained.`
             )
         ) {
             return;
@@ -1664,7 +1664,7 @@
             }
 
             showSuccess(
-                "Member access removed from this club."
+                "Member removed from active club membership. Historical record retained as Cancelled."
             );
 
             await Promise.all([
