@@ -135,8 +135,8 @@
 
                 <p class="profile-access-note">
                     Club membership and Paryx scorecard access
-                    are separate. A club can link you as a
-                    member without changing your Paryx tier.
+                    are separate. Linking a club membership does
+                    not change your Paryx tier.
                 </p>
             </div>
         </section>
@@ -183,6 +183,41 @@
                 class="profile-renewal-notices"
                 aria-live="polite"
             ></div>
+        </section>
+
+        <section class="section">
+            <div class="section-head">
+                <h2>Club services</h2>
+            </div>
+
+            <div class="profile-service-links">
+                <a class="card profile-account-link" href="clubs.html">
+                    <div class="profile-account-link__icon">♣</div>
+                    <div class="profile-account-link__body">
+                        <strong>My clubs</strong>
+                        <span>Link memberships, cards and club information</span>
+                    </div>
+                    <span class="profile-account-link__chevron" aria-hidden="true">›</span>
+                </a>
+
+                <a class="card profile-account-link" href="results.html">
+                    <div class="profile-account-link__icon">🏆</div>
+                    <div class="profile-account-link__body">
+                        <strong>Competition results</strong>
+                        <span>Official confirmed results from your clubs</span>
+                    </div>
+                    <span class="profile-account-link__chevron" aria-hidden="true">›</span>
+                </a>
+
+                <a class="card profile-account-link" href="credit.html">
+                    <div class="profile-account-link__icon">£</div>
+                    <div class="profile-account-link__body">
+                        <strong>Club Credit</strong>
+                        <span>Balances and transaction history</span>
+                    </div>
+                    <span class="profile-account-link__chevron" aria-hidden="true">›</span>
+                </a>
+            </div>
         </section>
 
         <section class="section">
@@ -253,6 +288,6 @@
     <script src="../js/core/supabase.js"></script>
     <script src="../js/core/member-core.js"></script>
     <script src="../js/core/member-shell.js"></script>
-    <script src="../js/pages/profile-page.js?v=0.17.0-member-credit"></script>
+    <script src="../js/pages/profile-page.js?v=0.26.0"></script>
 </body>
 </html>

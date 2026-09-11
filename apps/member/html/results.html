@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+    <meta name="theme-color" content="#064831">
+    <title>Results | Paryx</title>
+    <link rel="stylesheet" href="../styles/member.css">
+    <link rel="manifest" href="../json/manifest.json">
+    <link rel="apple-touch-icon" href="../assets/paryx-apple-touch-icon.png">
+</head>
+<body data-page="home">
+    <main class="member-app">
+        <header class="topbar">
+            <div class="brand">
+                <img src="../assets/branding/paryx-mark.png" alt="">
+                <strong>Results</strong>
+            </div>
+            <a class="link-btn" href="clubs.html">My clubs</a>
+        </header>
+
+        <section class="hero">
+            <p class="eyebrow">Competitions</p>
+            <h1 class="title">Official results</h1>
+            <p class="subtitle">Confirmed competition results from your linked clubs.</p>
+        </section>
+
+        <section class="section">
+            <label class="field">
+                <span>Club</span>
+                <select id="resultsClubFilter">
+                    <option value="">All linked clubs</option>
+                </select>
+            </label>
+        </section>
+
+        <div id="resultsMessage" class="notice" hidden></div>
+
+        <section class="section">
+            <div class="section-head">
+                <div>
+                    <h2>Recent results</h2>
+                    <p id="resultsCount" class="profile-section-meta">Loading…</p>
+                </div>
+            </div>
+            <div id="resultsList" class="results-list">
+                <div class="empty">Loading confirmed results…</div>
+            </div>
+        </section>
+    </main>
+
+    <div data-member-shell></div>
+
+    <dialog id="resultDialog" class="dialog result-dialog">
+        <div class="dialog-panel">
+            <div class="dialog-head">
+                <div>
+                    <p id="resultDialogClub" class="eyebrow">Competition result</p>
+                    <h2 id="resultDialogTitle">Result</h2>
+                    <p id="resultDialogMeta"></p>
+                </div>
+                <button id="closeResultDialog" class="close" type="button" aria-label="Close">×</button>
+            </div>
+
+            <div id="resultPlayerSummary"></div>
+
+            <section class="result-dialog-section">
+                <div class="section-head"><h3>Leaderboard</h3></div>
+                <div id="resultLeaderboard" class="leaderboard-list">
+                    <div class="empty">Loading leaderboard…</div>
+                </div>
+            </section>
+
+            <section id="resultAwardsSection" class="result-dialog-section" hidden>
+                <div class="section-head"><h3>Awards</h3></div>
+                <div id="resultAwards" class="result-awards"></div>
+            </section>
+        </div>
+    </dialog>
+
+    <script src="../js/core/config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/core/supabase.js"></script>
+    <script src="../js/core/member-core.js"></script>
+    <script src="../js/core/member-shell.js"></script>
+    <script src="../js/pages/results-page.js?v=0.26.0"></script>
+</body>
+</html>

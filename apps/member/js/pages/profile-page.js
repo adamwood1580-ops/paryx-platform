@@ -316,7 +316,7 @@
             elements.clubs.innerHTML = `
                 <div class="empty">
                     No linked club memberships yet.
-                    You can request member access from Book.
+                    <a href="clubs.html">Link your club membership</a>.
                 </div>
             `;
 
@@ -333,7 +333,7 @@
                             );
 
                         return `
-                            <article class="club profile-club">
+                            <a class="club profile-club" href="clubs.html">
                                 <div
                                     class="club-logo"
                                     aria-hidden="true"
@@ -376,7 +376,7 @@
                                         Member
                                     </span>
                                 </div>
-                            </article>
+                            </a>
                         `;
                     }
                 )

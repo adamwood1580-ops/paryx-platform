@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+    <meta name="theme-color" content="#064831">
+    <title>My Clubs | Paryx</title>
+    <link rel="stylesheet" href="../styles/member.css">
+    <link rel="manifest" href="../json/manifest.json">
+    <link rel="apple-touch-icon" href="../assets/paryx-apple-touch-icon.png">
+</head>
+<body data-page="profile">
+    <main class="member-app">
+        <header class="topbar">
+            <div class="brand">
+                <img src="../assets/branding/paryx-mark.png" alt="">
+                <strong>My Clubs</strong>
+            </div>
+            <button id="openClubSearch" class="link-btn" type="button">Add club</button>
+        </header>
+
+        <section class="hero">
+            <p class="eyebrow">Memberships</p>
+            <h1 class="title">Your golf clubs</h1>
+            <p class="subtitle">Link an existing club membership privately to your Paryx account.</p>
+        </section>
+
+        <div id="clubsMessage" class="notice" hidden></div>
+
+        <section class="section">
+            <div class="section-head">
+                <div>
+                    <h2>Linked clubs</h2>
+                    <p id="linkedClubCount" class="profile-section-meta">Loading…</p>
+                </div>
+            </div>
+            <div id="linkedClubs" class="club-services-list">
+                <div class="empty">Loading your clubs…</div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-head">
+                <div>
+                    <h2>Add another club</h2>
+                    <p class="profile-section-meta">Search any active Paryx club</p>
+                </div>
+            </div>
+            <label class="field">
+                <span>Club or town</span>
+                <input id="clubSearch" type="search" placeholder="Search clubs" autocomplete="off">
+            </label>
+            <div id="clubSearchResults" class="club-list club-search-results" style="margin-top:12px">
+                <div class="empty">Start typing or browse all clubs below.</div>
+            </div>
+        </section>
+    </main>
+
+    <div data-member-shell></div>
+
+    <dialog id="claimDialog" class="dialog">
+        <form id="claimForm" class="dialog-panel">
+            <div class="dialog-head">
+                <div>
+                    <p class="eyebrow">Member verification</p>
+                    <h2 id="claimClubName">Link membership</h2>
+                    <p>Use the membership number held by this club.</p>
+                </div>
+                <button id="closeClaimDialog" class="close" type="button" aria-label="Close">×</button>
+            </div>
+
+            <div class="stack">
+                <label class="field">
+                    <span>Membership number</span>
+                    <input id="claimMembershipNumber" type="text" maxlength="80" autocomplete="off" required>
+                </label>
+
+                <div class="notice membership-claim-note">
+                    For automatic verification, the email on your Paryx account must match the email held by the club. Paryx handles this check privately.
+                </div>
+
+                <div id="claimMessage" class="notice" hidden></div>
+            </div>
+
+            <div class="dialog-actions">
+                <button id="cancelClaim" class="button secondary" type="button">Back</button>
+                <button id="submitClaim" class="button" type="submit">Link membership</button>
+            </div>
+        </form>
+    </dialog>
+
+    <dialog id="cardDialog" class="dialog membership-card-dialog">
+        <div class="dialog-panel">
+            <div class="dialog-head">
+                <div>
+                    <p class="eyebrow">Digital membership card</p>
+                    <h2 id="cardDialogTitle">Membership card</h2>
+                </div>
+                <button id="closeCardDialog" class="close" type="button" aria-label="Close">×</button>
+            </div>
+            <div id="membershipCard"><div class="empty">Loading card…</div></div>
+        </div>
+    </dialog>
+
+    <dialog id="clubInfoDialog" class="dialog">
+        <div class="dialog-panel">
+            <div class="dialog-head">
+                <div>
+                    <p class="eyebrow">Club information</p>
+                    <h2 id="clubInfoTitle">Club</h2>
+                </div>
+                <button id="closeClubInfoDialog" class="close" type="button" aria-label="Close">×</button>
+            </div>
+            <div id="clubInfoContent"><div class="empty">Loading club information…</div></div>
+        </div>
+    </dialog>
+
+    <script src="../js/core/config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/core/supabase.js"></script>
+    <script src="../js/core/member-core.js"></script>
+    <script src="../js/core/member-shell.js"></script>
+    <script src="../js/pages/clubs-page.js?v=0.26.0"></script>
+</body>
+</html>
