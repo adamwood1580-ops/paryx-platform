@@ -57,6 +57,7 @@
         calendarEvents: [],
         selectedCompetitionId: null,
         selectedCompetition: null,
+        playerEntrySettings: null,
         externalResults: [],
         awards: [],
         manualPlaceAwards: [],
@@ -115,6 +116,11 @@
         status: $("competitionStatus"),
         qualifier: $("competitionQualifier"),
         notes: $("competitionNotes"),
+        playerEntryEnabled: $("competitionPlayerEntryEnabled"),
+        playerEntryOpenDate: $("competitionPlayerEntryOpenDate"),
+        playerEntryCloseDate: $("competitionPlayerEntryCloseDate"),
+        playerEntryMax: $("competitionPlayerEntryMax"),
+        playerEntryHint: $("competitionPlayerEntryHint"),
         saveCompetition: $("saveCompetitionButton"),
         externalSection: $("competitionExternalResultsSection"),
         externalTitle: $("competitionExternalResultsTitle"),
@@ -495,6 +501,14 @@
 
             state.selectedCompetitionId = competitionId;
             state.selectedCompetition = detail.competition || {};
+
+            const { data: entrySettingsData, error: entrySettingsError } =
+                await client().rpc("competition_get_player_entry_settings", {
+                    p_competition_id: competitionId
+                });
+            if (entrySettingsError) throw entrySettingsError;
+            state.playerEntrySettings = normaliseRpcObject(entrySettingsData);
+
             state.externalResults = Array.isArray(detail.external_results) ? detail.external_results : [];
             state.awards = Array.isArray(detail.awards) ? detail.awards : [];
             state.manualPlaceAwards = state.awards
@@ -534,6 +548,29 @@
         };
     }
 
+    function isTeamEntryFormat(format) {
+        return ["fourball", "greensomes", "texas_scramble"].includes(String(format || ""));
+    }
+
+    function syncPlayerEntryAvailability() {
+        const confirmed = Boolean(state.selectedCompetition?.results_confirmed_at);
+        const editable = state.canManage && !confirmed;
+        const teamFormat = isTeamEntryFormat(elements.format.value);
+
+        if (teamFormat) {
+            elements.playerEntryEnabled.checked = false;
+            elements.playerEntryHint.textContent = "Team-format entry is managed in ClubHub. Player self-entry is currently available for individual competitions only.";
+        } else {
+            elements.playerEntryHint.textContent = "Allow linked club members to enter this competition from Paryx Player. The competition must also have status Open.";
+        }
+
+        elements.playerEntryEnabled.disabled = !editable || teamFormat;
+        const detailEnabled = editable && !teamFormat;
+        elements.playerEntryOpenDate.disabled = !detailEnabled;
+        elements.playerEntryCloseDate.disabled = !detailEnabled;
+        elements.playerEntryMax.disabled = !detailEnabled;
+    }
+
     function renderDetail() {
         const competition = state.selectedCompetition;
         const confirmed = Boolean(competition.results_confirmed_at);
@@ -551,6 +588,13 @@
         elements.status.value = competition.status || "draft";
         elements.qualifier.checked = competition.is_qualifier === true;
         elements.notes.value = competition.notes || "";
+
+        const entrySettings = state.playerEntrySettings || {};
+        elements.playerEntryEnabled.checked = entrySettings.self_entry_enabled === true;
+        elements.playerEntryOpenDate.value = entrySettings.entry_open_date || "";
+        elements.playerEntryCloseDate.value = entrySettings.entry_close_date || "";
+        elements.playerEntryMax.value = entrySettings.max_entries || "";
+
         elements.verifiedCheckbox.checked = false;
 
         renderExternalResults();
@@ -576,6 +620,8 @@
         elements.verificationLabel.hidden = confirmed || !state.canConfirm;
         elements.verifiedCheckbox.disabled = !editable;
         elements.reopenButton.hidden = !(confirmed && state.canConfirm && !hasCredit);
+
+        syncPlayerEntryAvailability();
 
         elements.manualSection.hidden = state.externalResults.length > 0;
         if (elements.csvImportPanel) elements.csvImportPanel.hidden = !state.canConfirm || confirmed;
@@ -1134,9 +1180,22 @@
                 p_notes: elements.notes.value.trim() || null
             });
             if (error) throw error;
+
+            const maxEntriesText = elements.playerEntryMax.value.trim();
+            const { data: playerEntryData, error: playerEntryError } =
+                await client().rpc("competition_save_player_entry_settings", {
+                    p_competition_id: state.selectedCompetitionId,
+                    p_self_entry_enabled: elements.playerEntryEnabled.checked,
+                    p_entry_open_date: elements.playerEntryOpenDate.value || null,
+                    p_entry_close_date: elements.playerEntryCloseDate.value || null,
+                    p_max_entries: maxEntriesText ? Number(maxEntriesText) : null
+                });
+            if (playerEntryError) throw playerEntryError;
+
             state.selectedCompetition.competition_format = elements.format.value;
             state.selectedCompetition.status = elements.status.value;
             state.selectedCompetition.notes = elements.notes.value.trim() || null;
+            state.playerEntrySettings = normaliseRpcObject(playerEntryData);
             await loadList();
             showSuccess("Competition details saved. Prize allocation has not been changed.");
         } catch (error) {
@@ -1255,6 +1314,7 @@
 
     function bind() {
         elements.closeDialog.addEventListener("click", () => elements.dialog.close());
+        elements.format.addEventListener("change", syncPlayerEntryAvailability);
         elements.form.addEventListener("submit", saveCompetitionDetails);
         elements.syncCalendar.addEventListener("click", async () => {
             clearMessages();

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width,initial-scale=1,viewport-fit=cover"
+    >
+    <meta name="theme-color" content="#064831">
+    <title>Competitions | Paryx</title>
+
+    <link
+        rel="stylesheet"
+        href="../styles/member.css?v=0.29.0"
+    >
+    <link
+        rel="manifest"
+        href="../json/manifest.json"
+    >
+</head>
+
+<body data-page="calendar">
+    <main class="member-app">
+        <header class="topbar">
+            <div class="brand">
+                <img
+                    src="../assets/branding/paryx-mark.png"
+                    alt=""
+                >
+                <strong>Competitions</strong>
+            </div>
+
+            <a
+                class="pill competition-results-link"
+                href="results.html"
+            >
+                Results
+            </a>
+        </header>
+
+        <section class="hero">
+            <p class="eyebrow">Club golf</p>
+            <h1 class="title">Competition entry</h1>
+            <p class="subtitle">
+                Enter open individual competitions at your linked clubs.
+            </p>
+        </section>
+
+        <section
+            id="competitionNoMembership"
+            class="section"
+            hidden
+        >
+            <div class="empty">
+                Competition entry becomes available when you link a
+                genuine membership in My Clubs.
+            </div>
+        </section>
+
+        <div id="competitionContent">
+            <section class="section competition-player-controls">
+                <label class="field">
+                    <span>Member club</span>
+                    <select id="competitionClub"></select>
+                </label>
+
+                <div
+                    id="competitionFilters"
+                    class="segments competition-player-segments"
+                    aria-label="Competition entry filter"
+                >
+                    <button
+                        class="active"
+                        type="button"
+                        data-filter="upcoming"
+                    >
+                        Upcoming
+                    </button>
+                    <button
+                        type="button"
+                        data-filter="open"
+                    >
+                        Open
+                    </button>
+                    <button
+                        type="button"
+                        data-filter="entered"
+                    >
+                        Entered
+                    </button>
+                </div>
+            </section>
+
+            <section class="section">
+                <div
+                    id="competitionMessage"
+                    class="notice"
+                    hidden
+                    aria-live="polite"
+                ></div>
+
+                <div class="section-head">
+                    <h2>Upcoming competitions</h2>
+                    <span
+                        id="competitionCount"
+                        class="competition-player-count"
+                    ></span>
+                </div>
+
+                <div
+                    id="competitionList"
+                    class="competition-player-list"
+                >
+                    <div class="empty">Loading competitions…</div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <div data-member-shell></div>
+
+    <script src="../js/core/config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/core/supabase.js"></script>
+    <script src="../js/core/member-core.js"></script>
+    <script src="../js/core/member-shell.js?v=0.29.0"></script>
+    <script src="../js/pages/competitions-page.js?v=0.29.0"></script>
+</body>
+</html>

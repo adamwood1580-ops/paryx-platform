@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="../styles/app-shell.css" />
     <link rel="stylesheet" href="../styles/components.css" />
     <link rel="stylesheet" href="../styles/staff-shell.css" />
-    <link rel="stylesheet" href="../styles/competitions.css" />
+    <link rel="stylesheet" href="../styles/competitions.css?v=0.29.0" />
 
     <link rel="manifest" href="../json/manifest.json" />
     <link rel="apple-touch-icon" href="../assets/paryx-apple-touch-icon.png" />
@@ -156,6 +156,36 @@
                         <label class="competition-check"><input id="competitionQualifier" type="checkbox" disabled /><span>Qualifier</span></label>
                         <label class="competition-field competition-field--wide"><span>Notes</span><textarea id="competitionNotes" rows="3" maxlength="1000"></textarea></label>
                     </div>
+
+                    <div class="competition-player-entry-settings">
+                        <div class="competition-player-entry-settings__heading">
+                            <div>
+                                <span class="competition-eyebrow">Player app</span>
+                                <strong>Competition entry</strong>
+                                <small id="competitionPlayerEntryHint">Allow linked club members to enter this competition from Paryx Player.</small>
+                            </div>
+                            <label class="competition-check competition-player-entry-toggle">
+                                <input id="competitionPlayerEntryEnabled" type="checkbox" />
+                                <span>Allow Player entry</span>
+                            </label>
+                        </div>
+
+                        <div class="competition-form-grid competition-player-entry-grid">
+                            <label class="competition-field">
+                                <span>Entry opens</span>
+                                <input id="competitionPlayerEntryOpenDate" type="date" />
+                            </label>
+                            <label class="competition-field">
+                                <span>Entry closes</span>
+                                <input id="competitionPlayerEntryCloseDate" type="date" />
+                            </label>
+                            <label class="competition-field">
+                                <span>Maximum entries</span>
+                                <input id="competitionPlayerEntryMax" type="number" min="1" max="500" placeholder="Unlimited" />
+                            </label>
+                        </div>
+                    </div>
+
                     <div class="competition-actions">
                         <span class="competition-actions__spacer"></span>
                         <button id="saveCompetitionButton" class="competition-button competition-button--secondary" type="submit">Save competition details</button>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+    <meta name="theme-color" content="#064831">
+    <title>Find a Game | Paryx</title>
+    <link rel="stylesheet" href="../styles/member.css?v=0.29.0">
+    <link rel="manifest" href="../json/manifest.json">
+</head>
+<body data-page="book">
+    <main class="member-app">
+        <header class="topbar">
+            <div class="brand">
+                <img src="../assets/branding/paryx-mark.png" alt="">
+                <strong>Find a Game</strong>
+            </div>
+            <a class="link-btn" href="booking.html">Tee booking</a>
+        </header>
+
+        <section class="hero">
+            <p class="eyebrow">Play with others</p>
+            <h1 class="title">Find a Game</h1>
+            <p class="subtitle">Discover joinable tee times with space and join them from any Paryx club.</p>
+        </section>
+
+        <section id="findGameMessage" class="notice" hidden></section>
+
+        <section class="section find-game-filters">
+            <div class="find-game-filter-grid">
+                <label class="field">
+                    <span>Club</span>
+                    <select id="findGameClub"><option value="">Any Paryx club</option></select>
+                </label>
+                <label class="field">
+                    <span>Places needed</span>
+                    <select id="findGamePartySize">
+                        <option value="1">1 place</option>
+                        <option value="2">2 places</option>
+                        <option value="3">3 places</option>
+                        <option value="4">4 places</option>
+                    </select>
+                </label>
+            </div>
+            <div id="findGameRange" class="segments find-game-range" aria-label="Date range">
+                <button type="button" data-days="1">Today</button>
+                <button type="button" data-days="3">3 days</button>
+                <button class="active" type="button" data-days="7">7 days</button>
+                <button type="button" data-days="14">14 days</button>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="section-head">
+                <div>
+                    <h2>Joinable games</h2>
+                    <p id="findGameSummary" class="profile-section-meta">Looking for available games…</p>
+                </div>
+                <button id="refreshFindGame" class="link-btn" type="button">Refresh</button>
+            </div>
+            <div id="findGameResults" class="find-game-grid"><div class="empty find-game-grid__empty">Loading games…</div></div>
+        </section>
+    </main>
+
+    <div data-member-shell></div>
+
+    <dialog id="joinGameDialog" class="dialog">
+        <form id="joinGameForm" class="dialog-panel">
+            <div class="dialog-head">
+                <div>
+                    <h2>Join this game?</h2>
+                    <p id="joinGameMeta"></p>
+                </div>
+                <button id="closeJoinGame" class="close" type="button">×</button>
+            </div>
+            <input id="joinGameBookingId" type="hidden">
+            <p id="joinGameDetail" class="notice"></p>
+            <div class="dialog-actions">
+                <button id="backJoinGame" class="button secondary" type="button">Back</button>
+                <button id="confirmJoinGame" class="button" type="submit">Join game</button>
+            </div>
+        </form>
+    </dialog>
+
+    <script src="../js/core/config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/core/supabase.js"></script>
+    <script src="../js/core/member-core.js?v=0.29.0"></script>
+    <script src="../js/core/member-shell.js?v=0.29.0"></script>
+    <script src="../js/pages/find-game-page.js?v=0.29.0"></script>
+</body>
+</html>
