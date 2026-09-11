@@ -30,7 +30,7 @@ type ImportRow = {
     firstName: string;
     lastName: string;
     email: string;
-    membershipNumber?: string | null;
+    membershipNumber: string;
     membershipType?: string | null;
     handicapIndex?: number | null;
 };
@@ -40,30 +40,25 @@ type ImportResult = {
     email: string;
     status: "imported" | "existing" | "failed";
     message: string;
-    profileId?: string | null;
     membershipId?: string | null;
 };
 
-function responseJson(
-    body: unknown,
-    status = 200
-) {
-    return new Response(
-        JSON.stringify(body),
-        {
-            status,
-            headers: {
-                ...corsHeaders,
-                "Content-Type": "application/json"
-            }
+function responseJson(body: unknown, status = 200) {
+    return new Response(JSON.stringify(body), {
+        status,
+        headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json"
         }
-    );
+    });
 }
 
 function normaliseEmail(value: unknown) {
-    return String(value || "")
-        .trim()
-        .toLowerCase();
+    return String(value || "").trim().toLowerCase();
+}
+
+function normaliseMembershipNumber(value: unknown) {
+    return String(value || "").trim().toLowerCase();
 }
 
 function cleanText(value: unknown) {
@@ -72,8 +67,7 @@ function cleanText(value: unknown) {
 }
 
 function getSecretKey() {
-    const secretMap =
-        Deno.env.get("SUPABASE_SECRET_KEYS");
+    const secretMap = Deno.env.get("SUPABASE_SECRET_KEYS");
 
     if (secretMap) {
         try {
@@ -84,12 +78,11 @@ function getSecretKey() {
                 return key.trim();
             }
         } catch {
-            // Fall back to the legacy environment variable below.
+            // Fall through to legacy service-role environment variable.
         }
     }
 
-    const legacy =
-        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const legacy = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
     if (legacy && legacy.trim()) {
         return legacy.trim();
@@ -101,25 +94,20 @@ function getSecretKey() {
 }
 
 function getBearerToken(request: Request) {
-    const header =
-        request.headers.get("Authorization") || "";
-
-    const match =
-        header.match(/^Bearer\s+(.+)$/i);
-
+    const header = request.headers.get("Authorization") || "";
+    const match = header.match(/^Bearer\s+(.+)$/i);
     return match?.[1]?.trim() || "";
 }
 
 function validateImportRow(row: ImportRow) {
     const errors: string[] = [];
-
     const email = normaliseEmail(row.email);
     const firstName = cleanText(row.firstName);
     const lastName = cleanText(row.lastName);
-    const membershipType =
-        String(row.membershipType || "member")
-            .trim()
-            .toLowerCase();
+    const membershipNumber = cleanText(row.membershipNumber);
+    const membershipType = String(row.membershipType || "member")
+        .trim()
+        .toLowerCase();
 
     if (!firstName) {
         errors.push("First name is required.");
@@ -129,29 +117,31 @@ function validateImportRow(row: ImportRow) {
         errors.push("Last name is required.");
     }
 
-    if (
-        !email ||
-        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-    ) {
-        errors.push("A valid email address is required.");
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        errors.push("A valid club contact email is required.");
+    }
+
+    if (!membershipNumber) {
+        errors.push("Membership number is required.");
     }
 
     if (!ALLOWED_MEMBERSHIP_TYPES.has(membershipType)) {
-        errors.push(
-            `Unsupported membership type: ${membershipType}.`
-        );
+        errors.push(`Unsupported membership type: ${membershipType}.`);
     }
+
+    let handicapIndex: number | null = null;
 
     if (
         row.handicapIndex !== null &&
-        row.handicapIndex !== undefined
+        row.handicapIndex !== undefined &&
+        String(row.handicapIndex).trim() !== ""
     ) {
-        const handicap = Number(row.handicapIndex);
+        handicapIndex = Number(row.handicapIndex);
 
         if (
-            !Number.isFinite(handicap) ||
-            handicap < -10 ||
-            handicap > 54
+            !Number.isFinite(handicapIndex) ||
+            handicapIndex < -10 ||
+            handicapIndex > 54
         ) {
             errors.push(
                 "Handicap Index must be between -10.0 and 54.0."
@@ -164,346 +154,31 @@ function validateImportRow(row: ImportRow) {
         email,
         firstName,
         lastName,
+        membershipNumber,
         membershipType,
-        membershipNumber:
-            cleanText(row.membershipNumber),
-        handicapIndex:
-            row.handicapIndex === null ||
-            row.handicapIndex === undefined ||
-            String(row.handicapIndex).trim() === ""
-                ? null
-                : Number(row.handicapIndex)
+        handicapIndex
     };
-}
-
-async function listAllAuthUsers(admin: any) {
-    const users: any[] = [];
-    let page = 1;
-    const perPage = 1000;
-
-    while (true) {
-        const {
-            data,
-            error
-        } = await admin.auth.admin.listUsers({
-            page,
-            perPage
-        });
-
-        if (error) {
-            throw error;
-        }
-
-        const pageUsers = data?.users || [];
-        users.push(...pageUsers);
-
-        if (pageUsers.length < perPage) {
-            break;
-        }
-
-        page += 1;
-
-        if (page > 25) {
-            throw new Error(
-                "The Auth user directory is too large for this import operation."
-            );
-        }
-    }
-
-    return users;
-}
-
-async function ensureProfile(
-    admin: any,
-    userId: string,
-    firstName: string,
-    lastName: string
-) {
-    const {
-        data: current,
-        error: readError
-    } = await admin
-        .from("profiles")
-        .select(
-            "id, first_name, last_name, display_name"
-        )
-        .eq("id", userId)
-        .maybeSingle();
-
-    if (readError) {
-        throw readError;
-    }
-
-    const displayName =
-        `${firstName} ${lastName}`.trim();
-
-    if (!current) {
-        const {
-            error: insertError
-        } = await admin
-            .from("profiles")
-            .insert({
-                id: userId,
-                first_name: firstName,
-                last_name: lastName,
-                display_name: displayName
-            });
-
-        if (insertError) {
-            throw insertError;
-        }
-
-        return;
-    }
-
-    const patch: Record<string, unknown> = {};
-
-    if (!cleanText(current.first_name)) {
-        patch.first_name = firstName;
-    }
-
-    if (!cleanText(current.last_name)) {
-        patch.last_name = lastName;
-    }
-
-    if (!cleanText(current.display_name)) {
-        patch.display_name = displayName;
-    }
-
-    if (!Object.keys(patch).length) {
-        return;
-    }
-
-    patch.updated_at = new Date().toISOString();
-
-    const {
-        error: updateError
-    } = await admin
-        .from("profiles")
-        .update(patch)
-        .eq("id", userId);
-
-    if (updateError) {
-        throw updateError;
-    }
-}
-
-async function ensureHandicap(
-    admin: any,
-    userId: string,
-    handicapIndex: number | null
-) {
-    if (handicapIndex === null) {
-        return "";
-    }
-
-    const {
-        data: existing,
-        error: readError
-    } = await admin
-        .from("player_handicaps")
-        .select(
-            "id, verification_status"
-        )
-        .eq("profile_id", userId)
-        .maybeSingle();
-
-    if (readError) {
-        throw readError;
-    }
-
-    if (
-        existing?.verification_status ===
-        "verified"
-    ) {
-        return " Verified handicap preserved.";
-    }
-
-    const now = new Date().toISOString();
-
-    if (existing) {
-        const {
-            error: updateError
-        } = await admin
-            .from("player_handicaps")
-            .update({
-                handicap_index: handicapIndex,
-                governing_body: "manual",
-                verification_status: "pending",
-                last_checked_at: now,
-                updated_at: now
-            })
-            .eq("id", existing.id);
-
-        if (updateError) {
-            throw updateError;
-        }
-
-        return " Handicap awaiting verification.";
-    }
-
-    const {
-        error: insertError
-    } = await admin
-        .from("player_handicaps")
-        .insert({
-            profile_id: userId,
-            governing_body: "manual",
-            handicap_index: handicapIndex,
-            verification_status: "pending",
-            last_checked_at: now
-        });
-
-    if (insertError) {
-        throw insertError;
-    }
-
-    return " Handicap awaiting verification.";
-}
-
-async function ensureMembership(
-    admin: any,
-    clubId: string,
-    user: any,
-    membershipNumber: string | null,
-    membershipType: string,
-    existingMembership: any | null
-) {
-    const accountIsConfirmed = Boolean(
-        user?.email_confirmed_at ||
-        user?.confirmed_at ||
-        user?.last_sign_in_at
-    );
-
-    if (existingMembership) {
-        let nextStatus =
-            existingMembership.status;
-
-        if (
-            accountIsConfirmed &&
-            ["invited", "pending"].includes(
-                existingMembership.status
-            )
-        ) {
-            nextStatus = "active";
-        }
-
-        const {
-            data,
-            error
-        } = await admin
-            .from("club_memberships")
-            .update({
-                membership_number:
-                    existingMembership.membership_number ||
-                    membershipNumber,
-                membership_type:
-                    existingMembership.membership_type ||
-                    membershipType,
-                status: nextStatus,
-                joined_at:
-                    nextStatus === "active"
-                        ? existingMembership.joined_at ||
-                          new Date()
-                              .toISOString()
-                              .slice(0, 10)
-                        : existingMembership.joined_at,
-                updated_at:
-                    new Date().toISOString()
-            })
-            .eq("id", existingMembership.id)
-            .select(
-                "id, status, role, is_primary"
-            )
-            .single();
-
-        if (error) {
-            throw error;
-        }
-
-        return data;
-    }
-
-    const {
-        data: primaryMembership,
-        error: primaryError
-    } = await admin
-        .from("club_memberships")
-        .select("id")
-        .eq("profile_id", user.id)
-        .eq("is_primary", true)
-        .maybeSingle();
-
-    if (primaryError) {
-        throw primaryError;
-    }
-
-    const status =
-        accountIsConfirmed
-            ? "active"
-            : "invited";
-
-    const {
-        data,
-        error
-    } = await admin
-        .from("club_memberships")
-        .insert({
-            profile_id: user.id,
-            club_id: clubId,
-            membership_number: membershipNumber,
-            membership_type: membershipType,
-            status,
-            role: "member",
-            joined_at:
-                status === "active"
-                    ? new Date()
-                        .toISOString()
-                        .slice(0, 10)
-                    : null,
-            is_primary: !primaryMembership
-        })
-        .select(
-            "id, status, role, is_primary"
-        )
-        .single();
-
-    if (error) {
-        throw error;
-    }
-
-    return data;
 }
 
 Deno.serve(async (request) => {
     if (request.method === "OPTIONS") {
-        return new Response("ok", {
-            headers: corsHeaders
-        });
+        return new Response("ok", { headers: corsHeaders });
     }
 
     if (request.method !== "POST") {
-        return responseJson(
-            { error: "Method not allowed." },
-            405
-        );
+        return responseJson({ error: "Method not allowed." }, 405);
     }
 
     try {
-        const supabaseUrl =
-            Deno.env.get("SUPABASE_URL");
+        const supabaseUrl = Deno.env.get("SUPABASE_URL");
 
         if (!supabaseUrl) {
-            throw new Error(
-                "SUPABASE_URL is unavailable."
-            );
+            throw new Error("SUPABASE_URL is unavailable.");
         }
-
-        const secretKey = getSecretKey();
 
         const admin = createClient(
             supabaseUrl,
-            secretKey,
+            getSecretKey(),
             {
                 auth: {
                     autoRefreshToken: false,
@@ -515,10 +190,7 @@ Deno.serve(async (request) => {
         const token = getBearerToken(request);
 
         if (!token) {
-            return responseJson(
-                { error: "Authentication required." },
-                401
-            );
+            return responseJson({ error: "Authentication required." }, 401);
         }
 
         const {
@@ -527,61 +199,35 @@ Deno.serve(async (request) => {
         } = await admin.auth.getUser(token);
 
         if (callerError || !caller) {
-            return responseJson(
-                { error: "Authentication required." },
-                401
-            );
+            return responseJson({ error: "Authentication required." }, 401);
         }
 
         const body = await request.json();
-
-        const clubId =
-            cleanText(body?.clubId);
-
-        const filename =
-            cleanText(body?.filename);
-
-        const redirectTo =
-            cleanText(body?.redirectTo);
-
-        const totalRows =
-            Math.max(
-                0,
-                Number(body?.totalRows || 0)
-            );
-
-        const isFinalChunk =
-            body?.isFinalChunk === true;
-
-        const rows =
-            Array.isArray(body?.rows)
-                ? body.rows as ImportRow[]
-                : [];
+        const clubId = cleanText(body?.clubId);
+        const filename = cleanText(body?.filename);
+        const totalRows = Math.max(0, Number(body?.totalRows || 0));
+        const isFinalChunk = body?.isFinalChunk === true;
+        const rows = Array.isArray(body?.rows)
+            ? body.rows as ImportRow[]
+            : [];
 
         if (!clubId) {
-            return responseJson(
-                { error: "Club ID is required." },
-                400
-            );
+            return responseJson({ error: "Club ID is required." }, 400);
         }
 
         if (!rows.length) {
-            return responseJson(
-                { error: "No member rows were supplied." },
-                400
-            );
+            return responseJson({ error: "No member rows were supplied." }, 400);
         }
 
         if (rows.length > MAX_ROWS_PER_REQUEST) {
-            return responseJson(
-                {
-                    error:
-                        `A maximum of ${MAX_ROWS_PER_REQUEST} rows can be imported per request.`
-                },
-                400
-            );
+            return responseJson({
+                error:
+                    `A maximum of ${MAX_ROWS_PER_REQUEST} rows can be imported per request.`
+            }, 400);
         }
 
+        // Staff authentication is still profile-based. Ordinary club members
+        // do not need a Paryx profile after Identity v2.
         const {
             data: adminMembership,
             error: adminMembershipError
@@ -596,28 +242,17 @@ Deno.serve(async (request) => {
         if (
             adminMembershipError ||
             !adminMembership ||
-            !ADMIN_ROLES.has(
-                adminMembership.role
-            )
+            !ADMIN_ROLES.has(String(adminMembership.role))
         ) {
-            return responseJson(
-                { error: "Admin access required." },
-                403
-            );
+            return responseJson({ error: "Admin access required." }, 403);
         }
 
-        let batchId =
-            cleanText(body?.batchId);
+        let batchId = cleanText(body?.batchId);
 
         if (batchId) {
-            const {
-                data: batch,
-                error: batchError
-            } = await admin
+            const { data: batch, error: batchError } = await admin
                 .from("member_import_batches")
-                .select(
-                    "id, club_id, created_by, status"
-                )
+                .select("id, club_id, created_by, status")
                 .eq("id", batchId)
                 .maybeSingle();
 
@@ -627,16 +262,10 @@ Deno.serve(async (request) => {
                 batch.club_id !== clubId ||
                 batch.created_by !== caller.id
             ) {
-                return responseJson(
-                    { error: "Import batch is invalid." },
-                    400
-                );
+                return responseJson({ error: "Import batch is invalid." }, 400);
             }
         } else {
-            const {
-                data: batch,
-                error: batchError
-            } = await admin
+            const { data: batch, error: batchError } = await admin
                 .from("member_import_batches")
                 .insert({
                     club_id: clubId,
@@ -655,316 +284,228 @@ Deno.serve(async (request) => {
             batchId = batch.id;
         }
 
-        const authUsers =
-            await listAllAuthUsers(admin);
-
-        const usersByEmail = new Map(
-            authUsers
-                .filter((user) => user.email)
-                .map((user) => [
-                    normaliseEmail(user.email),
-                    user
-                ])
-        );
-
-        const {
-            data: clubMemberships,
-            error: membershipsError
-        } = await admin
-            .from("club_memberships")
-            .select(
-                "id, profile_id, membership_number, membership_type, status, role, joined_at, is_primary"
-            )
-            .eq("club_id", clubId);
+        const { data: currentMemberships, error: membershipsError } =
+            await admin
+                .from("club_memberships")
+                .select([
+                    "id",
+                    "profile_id",
+                    "membership_number",
+                    "membership_type",
+                    "status",
+                    "role",
+                    "club_first_name",
+                    "club_last_name",
+                    "club_display_name",
+                    "club_email",
+                    "club_handicap_index",
+                    "club_handicap_status"
+                ].join(","))
+                .eq("club_id", clubId);
 
         if (membershipsError) {
             throw membershipsError;
         }
 
-        const membershipByProfile = new Map(
-            (clubMemberships || []).map(
-                (membership: any) => [
-                    membership.profile_id,
-                    membership
-                ]
-            )
-        );
+        // One membership number should identify one club member. We do not
+        // silently choose between legacy duplicates.
+        const membershipsByNumber = new Map<string, any[]>();
 
-        const membershipNumberOwner = new Map<string, string>();
+        for (const membership of currentMemberships || []) {
+            const key = normaliseMembershipNumber(
+                membership.membership_number
+            );
 
-        for (const membership of clubMemberships || []) {
-            const number =
-                cleanText(membership.membership_number);
-
-            if (number) {
-                membershipNumberOwner.set(
-                    number.toLowerCase(),
-                    membership.profile_id
-                );
+            if (!key) {
+                continue;
             }
+
+            const list = membershipsByNumber.get(key) || [];
+            list.push(membership);
+            membershipsByNumber.set(key, list);
         }
 
-        const seenEmails = new Set<string>();
-        const seenMembershipNumbers = new Set<string>();
+        const seenNumbers = new Set<string>();
         const results: ImportResult[] = [];
 
         for (const rawRow of rows) {
-            const rowNumber =
-                Number(rawRow?.rowNumber || 0);
-
-            const validation =
-                validateImportRow(rawRow);
-
+            const rowNumber = Number(rawRow?.rowNumber || 0);
+            const validation = validateImportRow(rawRow);
             let result: ImportResult;
 
             try {
                 if (!Number.isInteger(rowNumber) || rowNumber <= 0) {
-                    throw new Error(
-                        "CSV row number is invalid."
-                    );
+                    throw new Error("CSV row number is invalid.");
                 }
 
                 if (validation.errors.length) {
+                    throw new Error(validation.errors.join(" "));
+                }
+
+                const membershipKey = normaliseMembershipNumber(
+                    validation.membershipNumber
+                );
+
+                if (seenNumbers.has(membershipKey)) {
                     throw new Error(
-                        validation.errors.join(" ")
+                        "Duplicate membership number in this import chunk."
                     );
                 }
 
-                if (seenEmails.has(validation.email)) {
+                seenNumbers.add(membershipKey);
+
+                const matches = membershipsByNumber.get(membershipKey) || [];
+
+                if (matches.length > 1) {
                     throw new Error(
-                        "Duplicate email address in this import chunk."
+                        `Membership number ${validation.membershipNumber} exists more than once at this club. Resolve the duplicate before importing.`
                     );
                 }
 
-                seenEmails.add(validation.email);
+                const displayName =
+                    `${validation.firstName} ${validation.lastName}`.trim();
 
-                if (validation.membershipNumber) {
-                    const membershipKey =
-                        validation.membershipNumber.toLowerCase();
+                let membershipId: string;
+                let status: "imported" | "existing";
+                let message: string;
 
-                    if (
-                        seenMembershipNumbers.has(
-                            membershipKey
-                        )
-                    ) {
-                        throw new Error(
-                            "Duplicate membership number in this import chunk."
-                        );
-                    }
+                if (matches.length === 1) {
+                    const existing = matches[0];
 
-                    seenMembershipNumbers.add(
-                        membershipKey
-                    );
-                }
-
-                let targetUser =
-                    usersByEmail.get(
-                        validation.email
-                    ) || null;
-
-                const userAlreadyExisted =
-                    Boolean(targetUser);
-
-                if (!targetUser) {
-                    const inviteOptions: any = {
-                        data: {
-                            first_name:
-                                validation.firstName,
-                            last_name:
-                                validation.lastName,
-                            display_name:
-                                `${validation.firstName} ${validation.lastName}`.trim()
-                        }
+                    const update: Record<string, unknown> = {
+                        club_first_name: validation.firstName,
+                        club_last_name: validation.lastName,
+                        club_display_name: displayName,
+                        club_email: validation.email,
+                        membership_type: validation.membershipType,
+                        club_handicap_index: validation.handicapIndex,
+                        club_handicap_status:
+                            validation.handicapIndex === null
+                                ? existing.club_handicap_status
+                                : "pending",
+                        updated_at: new Date().toISOString()
                     };
 
-                    if (redirectTo) {
-                        inviteOptions.redirectTo =
-                            redirectTo;
+                    const { data, error } = await admin
+                        .from("club_memberships")
+                        .update(update)
+                        .eq("id", existing.id)
+                        .eq("club_id", clubId)
+                        .select("id")
+                        .single();
+
+                    if (error) {
+                        throw error;
                     }
 
-                    const {
-                        data: inviteData,
-                        error: inviteError
-                    } = await admin.auth.admin
-                        .inviteUserByEmail(
-                            validation.email,
-                            inviteOptions
-                        );
+                    membershipId = data.id;
+                    status = "existing";
+                    message =
+                        "Existing club membership updated. No Paryx Player account was created or changed.";
+                } else {
+                    const { data, error } = await admin
+                        .from("club_memberships")
+                        .insert({
+                            profile_id: null,
+                            club_id: clubId,
+                            membership_number: validation.membershipNumber,
+                            membership_type: validation.membershipType,
+                            status: "active",
+                            role: "member",
+                            joined_at: null,
+                            is_primary: false,
+                            club_first_name: validation.firstName,
+                            club_last_name: validation.lastName,
+                            club_display_name: displayName,
+                            club_email: validation.email,
+                            club_handicap_index: validation.handicapIndex,
+                            club_handicap_status:
+                                validation.handicapIndex === null
+                                    ? null
+                                    : "pending"
+                        })
+                        .select("id")
+                        .single();
 
-                    if (inviteError) {
-                        throw inviteError;
+                    if (error) {
+                        throw error;
                     }
 
-                    targetUser =
-                        inviteData?.user || null;
+                    membershipId = data.id;
+                    status = "imported";
+                    message =
+                        "Active club membership created. No Paryx Player account or invitation was created.";
 
-                    if (!targetUser) {
-                        throw new Error(
-                            "Supabase did not return the invited user."
-                        );
-                    }
+                    const newMembership = {
+                        id: membershipId,
+                        profile_id: null,
+                        membership_number: validation.membershipNumber,
+                        membership_type: validation.membershipType,
+                        status: "active",
+                        role: "member",
+                        club_first_name: validation.firstName,
+                        club_last_name: validation.lastName,
+                        club_display_name: displayName,
+                        club_email: validation.email,
+                        club_handicap_index: validation.handicapIndex,
+                        club_handicap_status:
+                            validation.handicapIndex === null
+                                ? null
+                                : "pending"
+                    };
 
-                    usersByEmail.set(
-                        validation.email,
-                        targetUser
+                    membershipsByNumber.set(
+                        membershipKey,
+                        [newMembership]
                     );
                 }
-
-                const existingMembership =
-                    membershipByProfile.get(
-                        targetUser.id
-                    ) || null;
-
-                if (validation.membershipNumber) {
-                    const membershipOwner =
-                        membershipNumberOwner.get(
-                            validation.membershipNumber
-                                .toLowerCase()
-                        );
-
-                    if (
-                        membershipOwner &&
-                        membershipOwner !==
-                            targetUser.id
-                    ) {
-                        throw new Error(
-                            `Membership number ${validation.membershipNumber} is already assigned to another member.`
-                        );
-                    }
-                }
-
-                await ensureProfile(
-                    admin,
-                    targetUser.id,
-                    validation.firstName!,
-                    validation.lastName!
-                );
-
-                const membership =
-                    await ensureMembership(
-                        admin,
-                        clubId,
-                        targetUser,
-                        validation.membershipNumber,
-                        validation.membershipType,
-                        existingMembership
-                    );
-
-                membershipByProfile.set(
-                    targetUser.id,
-                    {
-                        ...(existingMembership || {}),
-                        ...membership,
-                        profile_id: targetUser.id,
-                        membership_number:
-                            validation.membershipNumber,
-                        membership_type:
-                            validation.membershipType
-                    }
-                );
-
-                if (validation.membershipNumber) {
-                    membershipNumberOwner.set(
-                        validation.membershipNumber
-                            .toLowerCase(),
-                        targetUser.id
-                    );
-                }
-
-                const handicapMessage =
-                    await ensureHandicap(
-                        admin,
-                        targetUser.id,
-                        validation.handicapIndex
-                    );
-
-                const status =
-                    userAlreadyExisted
-                        ? "existing"
-                        : "imported";
-
-                const accountMessage =
-                    userAlreadyExisted
-                        ? "Existing Paryx account linked to this club."
-                        : "Invitation sent and member created.";
 
                 result = {
                     rowNumber,
                     email: validation.email,
                     status,
-                    message:
-                        accountMessage +
-                        handicapMessage,
-                    profileId: targetUser.id,
-                    membershipId: membership.id
+                    message,
+                    membershipId
                 };
             } catch (error) {
                 result = {
                     rowNumber:
-                        rowNumber ||
-                        Number(rawRow?.rowNumber || 1),
+                        rowNumber || Number(rawRow?.rowNumber || 1),
                     email:
-                        validation.email ||
-                        normaliseEmail(rawRow?.email),
+                        validation.email || normaliseEmail(rawRow?.email),
                     status: "failed",
                     message:
                         error instanceof Error
                             ? error.message
                             : String(error),
-                    profileId: null,
                     membershipId: null
                 };
             }
 
             results.push(result);
 
-            const rawSource = rows.find(
-                (item) =>
-                    Number(item.rowNumber) ===
-                    result.rowNumber
-            );
-
-            const validatedSource =
-                rawSource
-                    ? validateImportRow(rawSource)
-                    : null;
-
-            const {
-                error: auditError
-            } = await admin
+            const { error: auditError } = await admin
                 .from("member_import_rows")
-                .upsert(
-                    {
-                        batch_id: batchId,
-                        row_number:
-                            result.rowNumber,
-                        email:
-                            result.email ||
-                            "unknown@example.invalid",
-                        first_name:
-                            validatedSource?.firstName,
-                        last_name:
-                            validatedSource?.lastName,
-                        membership_number:
-                            validatedSource?.membershipNumber,
-                        membership_type:
-                            validatedSource?.membershipType,
-                        handicap_index:
-                            validatedSource?.handicapIndex,
-                        result_status:
-                            result.status,
-                        result_message:
-                            result.message,
-                        profile_id:
-                            result.profileId || null,
-                        membership_id:
-                            result.membershipId || null
-                    },
-                    {
-                        onConflict:
-                            "batch_id,row_number"
-                    }
-                );
+                .upsert({
+                    batch_id: batchId,
+                    row_number: result.rowNumber,
+                    email:
+                        result.email || "unknown@example.invalid",
+                    first_name: validation.firstName,
+                    last_name: validation.lastName,
+                    membership_number:
+                        validation.membershipNumber,
+                    membership_type:
+                        validation.membershipType,
+                    handicap_index:
+                        validation.handicapIndex,
+                    result_status: result.status,
+                    result_message: result.message,
+                    membership_id:
+                        result.membershipId || null
+                }, {
+                    onConflict: "batch_id,row_number"
+                });
 
             if (auditError) {
                 console.error(
@@ -974,10 +515,7 @@ Deno.serve(async (request) => {
             }
         }
 
-        const {
-            data: allBatchRows,
-            error: batchRowsError
-        } = await admin
+        const { data: allBatchRows, error: batchRowsError } = await admin
             .from("member_import_rows")
             .select("result_status")
             .eq("batch_id", batchId);
@@ -986,34 +524,25 @@ Deno.serve(async (request) => {
             throw batchRowsError;
         }
 
-        const importedCount =
-            (allBatchRows || []).filter(
-                (row: any) =>
-                    row.result_status === "imported"
-            ).length;
+        const importedCount = (allBatchRows || []).filter(
+            (row: any) => row.result_status === "imported"
+        ).length;
 
-        const existingCount =
-            (allBatchRows || []).filter(
-                (row: any) =>
-                    row.result_status === "existing"
-            ).length;
+        const existingCount = (allBatchRows || []).filter(
+            (row: any) => row.result_status === "existing"
+        ).length;
 
-        const failedCount =
-            (allBatchRows || []).filter(
-                (row: any) =>
-                    row.result_status === "failed"
-            ).length;
+        const failedCount = (allBatchRows || []).filter(
+            (row: any) => row.result_status === "failed"
+        ).length;
 
-        const batchStatus =
-            isFinalChunk
-                ? failedCount > 0
-                    ? "partial"
-                    : "completed"
-                : "processing";
+        const batchStatus = isFinalChunk
+            ? failedCount > 0
+                ? "partial"
+                : "completed"
+            : "processing";
 
-        const {
-            error: batchUpdateError
-        } = await admin
+        const { error: batchUpdateError } = await admin
             .from("member_import_batches")
             .update({
                 imported_count: importedCount,
@@ -1039,27 +568,19 @@ Deno.serve(async (request) => {
                 existing: existingCount,
                 failed: failedCount,
                 processed:
-                    importedCount +
-                    existingCount +
-                    failedCount,
+                    importedCount + existingCount + failedCount,
                 total: totalRows,
                 status: batchStatus
             }
         });
     } catch (error) {
-        console.error(
-            "admin-import-members failed:",
-            error
-        );
+        console.error("admin-import-members failed:", error);
 
-        return responseJson(
-            {
-                error:
-                    error instanceof Error
-                        ? error.message
-                        : String(error)
-            },
-            500
-        );
+        return responseJson({
+            error:
+                error instanceof Error
+                    ? error.message
+                    : String(error)
+        }, 500);
     }
 });
