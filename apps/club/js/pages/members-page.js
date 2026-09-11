@@ -1634,9 +1634,18 @@
 
         if (
             !window.confirm(
-                `Remove ${name} from this club?\n\nTheir club access will end immediately. Their historical club record, bookings, results and Club Credit history will be retained.`
+                `Permanently remove ${name} from this club?\n\nThis deletes their club membership record and cannot be undone. Use Suspend instead if the change is temporary. Historical bookings, completed competition results and financial audit records may remain as detached history.`
             )
         ) {
+            return;
+        }
+
+        const confirmation =
+            window.prompt(
+                `This is a destructive action. Type DELETE to permanently remove ${name} from the club.`
+            );
+
+        if (confirmation !== "DELETE") {
             return;
         }
 
@@ -1664,7 +1673,7 @@
             }
 
             showSuccess(
-                "Member removed from active club membership. Historical record retained as Cancelled."
+                "Member permanently removed from this club."
             );
 
             await Promise.all([
