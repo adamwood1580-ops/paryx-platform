@@ -4,49 +4,52 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
     <meta name="theme-color" content="#064831">
-    <title>Club Credit | Paryx</title>
+    <title>Notifications | Paryx</title>
     <link rel="stylesheet" href="../styles/member.css?v=0.28.0">
     <link rel="manifest" href="../json/manifest.json">
     <link rel="apple-touch-icon" href="../assets/paryx-apple-touch-icon.png">
 </head>
-<body data-page="profile">
+<body data-page="notifications">
     <main class="member-app">
         <header class="topbar">
             <div class="brand">
                 <img src="../assets/branding/paryx-mark.png" alt="">
-                <strong>Club Credit</strong>
+                <strong>Notifications</strong>
             </div>
-            <a class="link-btn" href="clubs.html">My clubs</a>
+            <button id="markAllRead" class="link-btn" type="button">Mark all read</button>
         </header>
 
         <section class="hero">
-            <p class="eyebrow">Member benefits</p>
-            <h1 class="title">Your club balances</h1>
-            <p class="subtitle">Club Credit belongs to each club separately and follows your club membership.</p>
+            <p class="eyebrow">Player alerts</p>
+            <h1 class="title">Stay on top of your golf</h1>
+            <p class="subtitle">Booking updates and tee-time availability alerts appear here.</p>
         </section>
 
-        <div id="creditMessage" class="notice" hidden></div>
+        <div id="notificationMessage" class="notice" hidden></div>
 
         <section class="section">
             <div class="section-head">
                 <div>
-                    <h2>Balances</h2>
-                    <p id="creditAccountCount" class="profile-section-meta">Loading…</p>
+                    <h2>Notifications</h2>
+                    <p id="notificationCount" class="profile-section-meta">Loading…</p>
                 </div>
             </div>
-            <div id="creditAccounts" class="credit-page-accounts">
-                <div class="empty">Loading Club Credit…</div>
+            <div id="notificationList" class="notification-list">
+                <div class="empty">Loading notifications…</div>
             </div>
         </section>
 
-        <section id="creditActivitySection" class="section" hidden>
+        <section class="section">
             <div class="section-head">
                 <div>
-                    <h2 id="creditActivityTitle">Activity</h2>
-                    <p class="profile-section-meta">Most recent transactions</p>
+                    <h2>Tee-time alerts</h2>
+                    <p class="profile-section-meta">One-shot alerts for exact tee times you are watching.</p>
                 </div>
+                <a href="booking.html">Find times</a>
             </div>
-            <div id="creditActivity" class="profile-credit-transactions"></div>
+            <div id="alertList" class="tee-alert-list">
+                <div class="empty">Loading tee-time alerts…</div>
+            </div>
         </section>
     </main>
 
@@ -57,6 +60,6 @@
     <script src="../js/core/supabase.js"></script>
     <script src="../js/core/member-core.js"></script>
     <script src="../js/core/member-shell.js?v=0.28.0"></script>
-    <script src="../js/pages/credit-page.js?v=0.26.0"></script>
+    <script src="../js/pages/notifications-page.js?v=0.28.0"></script>
 </body>
 </html>

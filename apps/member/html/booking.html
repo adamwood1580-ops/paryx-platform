@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
     <meta name="theme-color" content="#064831">
     <title>Book | Paryx</title>
-    <link rel="stylesheet" href="../styles/member.css">
+    <link rel="stylesheet" href="../styles/member.css?v=0.28.0">
     <link rel="manifest" href="../json/manifest.json">
 </head>
 <body data-page="book">
@@ -33,6 +33,17 @@
             <div class="section-head"><h2 id="teeHeading">Tee times</h2></div>
             <div id="message" class="notice" hidden></div>
             <div id="teeTimes" class="tee-list"><div class="empty">Loading tee times…</div></div>
+        </section>
+
+        <section id="tee-alerts" class="section">
+            <div class="section-head">
+                <div>
+                    <h2>Tee-time alerts</h2>
+                    <p class="profile-section-meta">Watch a full time and Paryx will tell you when enough space opens.</p>
+                </div>
+                <a href="notifications.html">Notifications</a>
+            </div>
+            <div id="teeAlerts" class="tee-alert-list"><div class="empty">Loading tee-time alerts…</div></div>
         </section>
 
         <section id="my-bookings" class="section">
@@ -73,11 +84,27 @@
         </form>
     </dialog>
 
+    <dialog id="alertDialog" class="dialog">
+        <form id="alertForm" class="dialog-panel">
+            <div class="dialog-head">
+                <div><h2>Alert me</h2><p id="alertMeta">Choose how many places you need.</p></div>
+                <button id="closeAlertDialog" class="close" type="button">×</button>
+            </div>
+            <input id="alertTeeId" type="hidden">
+            <label class="field"><span>Places required</span><select id="alertPartySize"></select></label>
+            <p class="notification-footnote">This is a one-shot alert. When enough space becomes available, Paryx will add a notification with a direct link back to this tee time.</p>
+            <div class="dialog-actions">
+                <button id="backAlert" class="button secondary" type="button">Back</button>
+                <button id="confirmAlert" class="button" type="submit">Create alert</button>
+            </div>
+        </form>
+    </dialog>
+
     <script src="../js/core/config.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../js/core/supabase.js"></script>
-    <script src="../js/core/member-core.js?v=0.27.0"></script>
-    <script src="../js/core/member-shell.js"></script>
-    <script src="../js/pages/booking-page.js?v=0.27.0"></script>
+    <script src="../js/core/member-core.js?v=0.28.0"></script>
+    <script src="../js/core/member-shell.js?v=0.28.0"></script>
+    <script src="../js/pages/booking-page.js?v=0.28.0"></script>
 </body>
 </html>

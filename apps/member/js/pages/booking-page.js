@@ -12,6 +12,7 @@
         courses: [],
         tees: [],
         bookings: [],
+        alerts: [],
         clubId: null,
         courseId: null,
         date: /^\d{4}-\d{2}-\d{2}$/.test(String(requestedDate || ""))
@@ -47,7 +48,16 @@
         bookingType: document.getElementById("bookingType"),
         closeBooking: document.getElementById("closeBookingDialog"),
         backBooking: document.getElementById("backBooking"),
-        confirmBooking: document.getElementById("confirmBooking")
+        confirmBooking: document.getElementById("confirmBooking"),
+        alertList: document.getElementById("teeAlerts"),
+        alertDialog: document.getElementById("alertDialog"),
+        alertForm: document.getElementById("alertForm"),
+        alertMeta: document.getElementById("alertMeta"),
+        alertTeeId: document.getElementById("alertTeeId"),
+        alertParty: document.getElementById("alertPartySize"),
+        closeAlert: document.getElementById("closeAlertDialog"),
+        backAlert: document.getElementById("backAlert"),
+        confirmAlert: document.getElementById("confirmAlert")
     };
 
     function showMessage(text, type) {
@@ -176,6 +186,45 @@
         return "Unavailable";
     }
 
+    function activeAlertForTee(teeTimeId) {
+        return state.alerts.find(function (alert) {
+            return alert.tee_time_id === teeTimeId && alert.alert_status === "active";
+        }) || null;
+    }
+
+    function renderAlerts() {
+        const active = state.alerts.filter(function (alert) {
+            return alert.alert_status === "active";
+        });
+
+        if (!active.length) {
+            elements.alertList.innerHTML = '<div class="empty">No active tee-time alerts.</div>';
+            return;
+        }
+
+        elements.alertList.innerHTML = active.map(function (alert) {
+            const places = Number(alert.requested_places || 1);
+            return `
+                <article class="card tee-alert-card">
+                    <div>
+                        <p class="kicker">${P.escapeHtml(alert.club_name)}</p>
+                        <h3>${P.escapeHtml(P.longDay(alert.play_date))} · ${P.escapeHtml(P.shortTime(alert.start_time))}</h3>
+                        <p class="meta">${P.escapeHtml(alert.course_name)} · watching for ${places} ${places === 1 ? "place" : "places"}</p>
+                    </div>
+                    <div class="tee-alert-card__actions">
+                        <a class="button secondary" href="${P.escapeHtml(alert.action_url)}">View</a>
+                        <button class="button secondary" type="button" data-cancel-alert="${P.escapeHtml(alert.alert_id)}">Cancel</button>
+                    </div>
+                </article>
+            `;
+        }).join("");
+    }
+
+    async function loadAlerts() {
+        state.alerts = P.rows(await P.rpc("player_list_tee_time_alerts"));
+        renderAlerts();
+    }
+
     function renderTees() {
         renderDates();
         elements.teeHeading.textContent = `Tee times · ${P.formatDay(state.date)}`;
@@ -212,13 +261,19 @@
                 meta = `${row.spaces_remaining} places available`;
                 action = `<button type="button" data-join="${P.escapeHtml(row.booking_id)}">Join</button>`;
             } else if (row.booking_type === "private") {
+                const alert = activeAlertForTee(row.tee_time_id);
                 title = "Private booking";
-                meta = "Unavailable";
-                action = '<button disabled>Private</button>';
+                meta = "Unavailable right now";
+                action = alert
+                    ? '<button class="secondary" disabled>Watching</button>'
+                    : `<button class="secondary" type="button" data-alert="${P.escapeHtml(row.tee_time_id)}">Alert me</button>`;
             } else {
+                const alert = activeAlertForTee(row.tee_time_id);
                 title = "Fully booked";
                 meta = (row.player_names || []).join(", ");
-                action = '<button disabled>Full</button>';
+                action = alert
+                    ? '<button class="secondary" disabled>Watching</button>'
+                    : `<button class="secondary" type="button" data-alert="${P.escapeHtml(row.tee_time_id)}">Alert me</button>`;
             }
 
             return `
@@ -315,6 +370,57 @@
         elements.bookingDialog.showModal();
     }
 
+    function openAlert(teeTimeId) {
+        const row = state.tees.find(function (item) {
+            return item.tee_time_id === teeTimeId;
+        });
+        if (!row) return;
+
+        const max = Math.max(1, Math.min(8, Number(row.max_players || 1)));
+        elements.alertTeeId.value = teeTimeId;
+        elements.alertMeta.textContent = `${P.longDay(row.play_date)} · ${P.shortTime(row.start_time)} · ${row.course_name || "Tee time"}`;
+        elements.alertParty.innerHTML = Array.from({ length: max }, function (_, index) {
+            const value = index + 1;
+            return `<option value="${value}">${value} ${value === 1 ? "place" : "places"}</option>`;
+        }).join("");
+        elements.alertDialog.showModal();
+    }
+
+    async function submitAlert(event) {
+        event.preventDefault();
+        elements.confirmAlert.disabled = true;
+        try {
+            await P.rpc("player_create_tee_time_alert", {
+                p_tee_time_id: elements.alertTeeId.value,
+                p_requested_places: Number(elements.alertParty.value)
+            });
+            elements.alertDialog.close();
+            showMessage("Tee-time alert created. We’ll notify you when enough space opens.", "success");
+            await loadAlerts();
+            renderTees();
+            window.dispatchEvent(new CustomEvent("paryx:notifications-changed"));
+        } catch (error) {
+            showMessage(P.readableError(error), "error");
+            await loadTees();
+        } finally {
+            elements.confirmAlert.disabled = false;
+        }
+    }
+
+    async function cancelAlert(id) {
+        try {
+            await P.rpc("player_cancel_tee_time_alert", {
+                p_alert_id: id
+            });
+            showMessage("Tee-time alert cancelled.", "success");
+            await loadAlerts();
+            renderTees();
+            window.dispatchEvent(new CustomEvent("paryx:notifications-changed"));
+        } catch (error) {
+            showMessage(P.readableError(error), "error");
+        }
+    }
+
     async function submitBooking(event) {
         event.preventDefault();
         elements.confirmBooking.disabled = true;
@@ -334,7 +440,8 @@
                 showMessage("You joined the booking.", "success");
             }
             elements.bookingDialog.close();
-            await Promise.all([loadTees(), loadBookings()]);
+            await Promise.all([loadTees(), loadBookings(), loadAlerts()]);
+            window.dispatchEvent(new CustomEvent("paryx:notifications-changed"));
         } catch (error) {
             showMessage(P.readableError(error), "error");
         } finally {
@@ -371,7 +478,8 @@
         try {
             await P.rpc(action === "cancel" ? "cancel_booking" : "leave_booking", { p_booking_id: id });
             showMessage(action === "cancel" ? "Booking cancelled." : "You left the booking.", "success");
-            await Promise.all([loadTees(), loadBookings()]);
+            await Promise.all([loadTees(), loadBookings(), loadAlerts()]);
+            window.dispatchEvent(new CustomEvent("paryx:notifications-changed"));
         } catch (error) {
             showMessage(P.readableError(error), "error");
         }
@@ -410,13 +518,23 @@
             const book = event.target.closest("[data-book]");
             const join = event.target.closest("[data-join]");
             const view = event.target.closest("[data-view]");
+            const alert = event.target.closest("[data-alert]");
             if (book) openBooking("create", book.dataset.book);
             else if (join) openBooking("join", join.dataset.join);
+            else if (alert) openAlert(alert.dataset.alert);
             else if (view) document.getElementById("my-bookings").scrollIntoView({ behavior: "smooth" });
         });
         elements.bookingForm.addEventListener("submit", submitBooking);
         [elements.closeBooking, elements.backBooking].forEach(function (button) {
             button.addEventListener("click", function () { elements.bookingDialog.close(); });
+        });
+        elements.alertForm.addEventListener("submit", submitAlert);
+        [elements.closeAlert, elements.backAlert].forEach(function (button) {
+            button.addEventListener("click", function () { elements.alertDialog.close(); });
+        });
+        elements.alertList.addEventListener("click", function (event) {
+            const cancel = event.target.closest("[data-cancel-alert]");
+            if (cancel) cancelAlert(cancel.dataset.cancelAlert);
         });
         elements.bookings.addEventListener("click", function (event) {
             const cancel = event.target.closest("[data-cancel]");
@@ -448,7 +566,8 @@
             renderTees();
         }
 
-        await loadBookings();
+        await Promise.all([loadBookings(), loadAlerts()]);
+        renderTees();
     }).catch(function (error) {
         showMessage(P.readableError(error), "error");
     });
