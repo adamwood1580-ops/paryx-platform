@@ -1077,3 +1077,126 @@ body {
         grid-template-columns: 1fr;
     }
 }
+
+/* =========================================================
+   TEMPORARY PRE-RELEASE DEMO RESET
+   Remove with the final production release.
+   ========================================================= */
+
+.console-badge--danger {
+    color: #8a2727;
+    background: #fff0f0;
+    border-color: #efc0c0;
+}
+
+.console-danger-panel {
+    border-color: #efc9c9;
+    background: #fffafa;
+}
+
+.console-maintenance-copy,
+.console-maintenance-warning,
+.console-maintenance-confirmation p {
+    color: var(--color-text-muted);
+    line-height: 1.55;
+}
+
+.console-maintenance-warning {
+    margin: 1rem 0 0;
+    padding: .85rem 1rem;
+    border: 1px solid #efc9c9;
+    border-radius: .75rem;
+    background: #fff3f3;
+    color: #8a2727;
+    font-weight: 700;
+}
+
+.console-maintenance-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.console-maintenance-grid > div {
+    padding: 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: .85rem;
+    background: #fff;
+}
+
+.console-maintenance-grid strong {
+    color: var(--color-primary);
+}
+
+.console-maintenance-grid ul {
+    margin: .65rem 0 0;
+    padding-left: 1.15rem;
+    color: var(--color-text-muted);
+    font-size: .84rem;
+    line-height: 1.55;
+}
+
+.console-field-grid--two {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.console-maintenance-actions {
+    margin-top: 1rem;
+}
+
+.console-reset-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: .75rem;
+}
+
+.console-reset-stat {
+    min-width: 0;
+    padding: .9rem;
+    border: 1px solid var(--color-border);
+    border-radius: .8rem;
+    background: #fff;
+}
+
+.console-reset-stat span {
+    display: block;
+    color: var(--color-text-muted);
+    font-size: .72rem;
+    font-weight: 700;
+}
+
+.console-reset-stat strong {
+    display: block;
+    margin-top: .25rem;
+    color: var(--color-primary);
+    font-size: 1.35rem;
+}
+
+.console-reset-stat--danger strong {
+    color: #9b2f2f;
+}
+
+.console-maintenance-confirmation {
+    margin-top: 1.25rem;
+    padding-top: 1.1rem;
+    border-top: 1px solid var(--color-border);
+}
+
+.console-maintenance-confirmation h3 {
+    margin: 0 0 .45rem;
+    color: var(--color-primary);
+}
+
+@media (max-width: 900px) {
+    .console-reset-stat-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .console-maintenance-grid,
+    .console-field-grid--two,
+    .console-reset-stat-grid {
+        grid-template-columns: 1fr;
+    }
+}

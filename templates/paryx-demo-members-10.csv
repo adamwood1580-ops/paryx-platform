@@ -1,0 +1,11 @@
+first_name,last_name,email,membership_number,membership_type,handicap_index
+Alex,Harper,demo.member01@example.com,DM001,member,8.4
+Jordan,Ellis,demo.member02@example.com,DM002,member,12.7
+Taylor,Morgan,demo.member03@example.com,DM003,member,18.2
+Casey,Bennett,demo.member04@example.com,DM004,member,5.9
+Riley,Foster,demo.member05@example.com,DM005,member,21.4
+Morgan,Clarke,demo.member06@example.com,DM006,member,14.1
+Jamie,Turner,demo.member07@example.com,DM007,member,27.6
+Avery,Walker,demo.member08@example.com,DM008,member,10.3
+Cameron,Hughes,demo.member09@example.com,DM009,junior,19.8
+Rowan,Martin,demo.member10@example.com,DM010,social,24.5

@@ -26,6 +26,12 @@
             key: "audit",
             label: "Audit",
             href: "audit.html"
+        },
+        {
+            key: "maintenance",
+            label: "Demo Reset",
+            href: "maintenance.html",
+            ownerOnly: true
         }
     ];
 
@@ -48,6 +54,7 @@
                 <a
                     href="${item.href}"
                     class="${item.key === currentPage ? "is-active" : ""}"
+                    ${item.ownerOnly ? 'data-console-owner-only="true"' : ""}
                 >
                     ${item.label}
                 </a>
@@ -250,6 +257,13 @@
             topbarRole.textContent =
                 roleLabel(role);
         }
+
+        document
+            .querySelectorAll("[data-console-owner-only]")
+            .forEach(function (element) {
+                element.hidden =
+                    role !== "platform_owner";
+            });
     }
 
     render();

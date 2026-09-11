@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en" class="console-protected">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#022D1D" />
+    <title>Demo Reset | Paryx Console</title>
+
+    <link rel="stylesheet" href="../../club/styles/tokens.css" />
+    <link rel="stylesheet" href="../styles/console.css" />
+
+    <link rel="apple-touch-icon" href="../../club/assets/paryx-apple-touch-icon.png" />
+    <link rel="icon" type="image/png" href="../../club/assets/paryx-favicon.png" />
+
+    <script src="../js/core/console-loader.js?loader=2" defer></script>
+</head>
+<body data-page="maintenance">
+    <div class="console-shell">
+        <aside class="console-sidebar" data-console-sidebar></aside>
+
+        <div class="console-workspace">
+            <header class="console-topbar" data-console-topbar></header>
+
+            <main class="console-main">
+                <section class="console-page-header">
+                    <div>
+                        <p class="console-eyebrow">Temporary pre-release tool</p>
+                        <h1 class="console-title">Demo reset</h1>
+                        <p class="console-subtitle">
+                            Return the test platform to a clean demo state without removing club, course, tee-time or calendar configuration.
+                        </p>
+                    </div>
+
+                    <span class="console-badge console-badge--danger">Destructive</span>
+                </section>
+
+                <div id="maintenanceError" class="console-error" hidden></div>
+                <div id="maintenanceSuccess" class="console-success" hidden></div>
+
+                <section id="ownerOnlyPanel" class="console-panel" hidden>
+                    <div class="console-panel__header">
+                        <h2>Platform Owner required</h2>
+                    </div>
+                    <p class="console-maintenance-copy">
+                        Only a Platform Owner can preview or run the demo reset.
+                    </p>
+                </section>
+
+                <section id="resetWorkspace" hidden>
+                    <section class="console-panel console-danger-panel">
+                        <div class="console-panel__header">
+                            <h2>What this reset removes</h2>
+                        </div>
+
+                        <div class="console-maintenance-grid">
+                            <div>
+                                <strong>Cleared</strong>
+                                <ul>
+                                    <li>All Club Credit accounts and transactions</li>
+                                    <li>Competition entrants, results, prizes and result-import history</li>
+                                    <li>Player and visitor booking history</li>
+                                    <li>Player notifications and tee-time alerts</li>
+                                    <li>Member import / claim / access-request history</li>
+                                    <li>All non-demo club member records</li>
+                                    <li>All Paryx Auth accounts except the preserved demo owner</li>
+                                    <li>Development audit history</li>
+                                </ul>
+                            </div>
+
+                            <div>
+                                <strong>Preserved</strong>
+                                <ul>
+                                    <li>Clubs and ClubHub configuration</li>
+                                    <li>Courses, tees, holes and tee-time inventory</li>
+                                    <li>Calendar events and competition definitions</li>
+                                    <li>Branding and module settings</li>
+                                    <li>Competition integration/device configuration</li>
+                                    <li>The preserved demo owner's staff/admin access</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <p class="console-maintenance-warning">
+                            This is intentionally a temporary pre-release capability. It must be removed before the production release.
+                        </p>
+                    </section>
+
+                    <section class="console-panel">
+                        <div class="console-panel__header">
+                            <div>
+                                <h2>1. Preview reset</h2>
+                                <small>Nothing is changed by Preview.</small>
+                            </div>
+                        </div>
+
+                        <div class="console-field-grid console-field-grid--two">
+                            <div class="console-field">
+                                <label for="keepAccountEmail">Account to preserve</label>
+                                <input
+                                    id="keepAccountEmail"
+                                    type="email"
+                                    value="clubhub.demo1@gmail.com"
+                                    autocomplete="off"
+                                    spellcheck="false"
+                                />
+                            </div>
+
+                            <div class="console-field">
+                                <label for="resetReason">Audit reason</label>
+                                <input
+                                    id="resetReason"
+                                    type="text"
+                                    placeholder="e.g. Pre-demo clean environment"
+                                    autocomplete="off"
+                                />
+                            </div>
+                        </div>
+
+                        <div class="console-actions console-maintenance-actions">
+                            <button id="previewResetButton" class="console-button console-button--secondary" type="button">
+                                Preview reset
+                            </button>
+                        </div>
+                    </section>
+
+                    <section id="previewPanel" class="console-panel" hidden>
+                        <div class="console-panel__header">
+                            <div>
+                                <h2>Reset preview</h2>
+                                <small id="previewKeepAccount">—</small>
+                            </div>
+                        </div>
+
+                        <div id="previewStats" class="console-reset-stat-grid"></div>
+
+                        <div class="console-maintenance-confirmation">
+                            <h3>2. Run destructive reset</h3>
+                            <p>
+                                The server also verifies that you are currently signed in as the preserved account. You will receive two browser confirmations and must type <strong>RESET DEMO DATA</strong> exactly.
+                            </p>
+
+                            <button id="runResetButton" class="console-button console-button--danger" type="button">
+                                Reset demo environment
+                            </button>
+                        </div>
+                    </section>
+                </section>
+            </main>
+        </div>
+    </div>
+</body>
+</html>

@@ -15,7 +15,8 @@
         clubs: "../js/pages/clubs-page.js",
         accounts: "../js/pages/accounts-page.js",
         platformusers: "../js/pages/platform-users-page.js",
-        audit: "../js/pages/audit-page.js"
+        audit: "../js/pages/audit-page.js",
+        maintenance: "../js/pages/maintenance-page.js"
     };
 
     function pageName() {
