@@ -2,21 +2,23 @@
     "use strict";
 
     /*
-     * Paryx Membership Identity v2 privacy guard.
+     * Paryx Membership Identity v2 — ClubHub privacy guard v0.24.2
      *
-     * ClubHub manages club-owned membership records. Whether a membership is
-     * linked to a global Paryx Player account is deliberately a Paryx-only
-     * concern and must not be shown or inferred in the club UI.
+     * ClubHub must not reveal or imply whether a club member has a Paryx
+     * Player account. Remove the legacy member-detail UI that exposes:
+     *   - ClubHub role
+     *   - Paryx account / global identity
+     *   - explanatory Paryx account identity copy
      *
-     * This guard removes the legacy member-card Details block that contained
-     * "ClubHub role" and "Paryx identity" whenever the member list renders.
+     * This runs document-wide because the member editor/detail panel may be
+     * rendered outside #memberList.
      */
 
-    const MEMBER_LIST_ID = "memberList";
-    const TARGET_LABELS = [
+    const HIDDEN_LABELS = new Set([
         "clubhub role",
+        "paryx account",
         "paryx identity"
-    ];
+    ]);
 
     function normalise(value) {
         return String(value || "")
@@ -25,39 +27,34 @@
             .toLowerCase();
     }
 
-    function isExactText(element, value) {
-        return element && normalise(element.textContent) === value;
+    function isLeafLike(element) {
+        return element && element.children.length === 0;
     }
 
-    function findExact(root, value) {
-        return Array.from(root.querySelectorAll("*")).filter(function (element) {
-            return isExactText(element, value);
-        });
+    function hideElement(element) {
+        if (!element || element === document.body || element === document.documentElement) {
+            return;
+        }
+        element.hidden = true;
+        element.style.setProperty("display", "none", "important");
+        element.setAttribute("aria-hidden", "true");
     }
 
-    function containsExactDescendant(root, value) {
-        return Array.from(root.querySelectorAll("*")).some(function (element) {
-            return isExactText(element, value);
-        });
-    }
-
-    function findDetailsContainer(identityLabel, memberList) {
-        let candidate = identityLabel.parentElement;
+    function findSmallestFieldContainer(label) {
+        let candidate = label.parentElement;
         let depth = 0;
 
-        while (
-            candidate &&
-            candidate !== memberList &&
-            depth < 8
-        ) {
-            const hasRole =
-                containsExactDescendant(candidate, TARGET_LABELS[0]);
-            const hasIdentity =
-                containsExactDescendant(candidate, TARGET_LABELS[1]);
-            const hasDetailsHeading =
-                containsExactDescendant(candidate, "details");
+        while (candidate && candidate !== document.body && depth < 5) {
+            const text = normalise(candidate.textContent);
 
-            if (hasRole && hasIdentity && hasDetailsHeading) {
+            // An individual detail tile normally contains only its label/value.
+            // Stop before accidentally hiding the whole 2x2 details grid.
+            if (
+                text.length <= 180 &&
+                !text.includes("email") &&
+                !text.includes("handicap index") &&
+                !text.includes("membership number")
+            ) {
                 return candidate;
             }
 
@@ -65,79 +62,71 @@
             depth += 1;
         }
 
-        return null;
+        return label.parentElement;
     }
 
-    function removeLegacyIdentityDetails(memberList) {
-        const identityLabels = findExact(
-            memberList,
-            TARGET_LABELS[1]
-        );
+    function hideIdentityFields(root) {
+        const elements = Array.from(root.querySelectorAll("span,strong,label,div,p,small"));
 
-        identityLabels.forEach(function (identityLabel) {
-            const detailsContainer =
-                findDetailsContainer(identityLabel, memberList);
+        for (const element of elements) {
+            const text = normalise(element.textContent);
 
-            if (detailsContainer) {
-                detailsContainer.remove();
-                return;
+            if (HIDDEN_LABELS.has(text)) {
+                hideElement(findSmallestFieldContainer(element));
+                continue;
             }
 
-            /*
-             * Conservative fallback: if the legacy markup changes, remove
-             * only the individual Paryx/account rows and explanatory copy.
-             * Never remove the containing member card unless we positively
-             * identify the complete Details block above.
-             */
-            const roleLabels = findExact(memberList, TARGET_LABELS[0]);
+            // Remove the explanatory block shown below the four detail tiles.
+            if (
+                text.includes("global paryx account") &&
+                (
+                    text.includes("clubhub edits only") ||
+                    text.includes("account identity belong") ||
+                    text.includes("account identity belongs")
+                )
+            ) {
+                let container = element;
 
-            [identityLabel].concat(roleLabels).forEach(function (label) {
-                const row = label.parentElement;
-                if (row && row !== memberList) {
-                    row.remove();
-                }
-            });
-
-            Array.from(memberList.querySelectorAll("p,small")).forEach(
-                function (element) {
-                    const text = normalise(element.textContent);
+                // Prefer the smallest standalone info block rather than a large
+                // editor/card wrapper that may also contain membership fields.
+                for (let i = 0; i < 3 && container.parentElement; i += 1) {
+                    const parent = container.parentElement;
+                    const parentText = normalise(parent.textContent);
                     if (
-                        text.includes("identity belongs to paryx") ||
-                        text.includes("paryx account") ||
-                        text.includes("clubhub never receives")
+                        parentText.length <= 420 &&
+                        !parentText.includes("membership number") &&
+                        !parentText.includes("membership type")
                     ) {
-                        element.remove();
+                        container = parent;
+                    } else {
+                        break;
                     }
                 }
-            );
-        });
+
+                hideElement(container);
+            }
+        }
+    }
+
+    function scrub() {
+        hideIdentityFields(document);
     }
 
     function initialise() {
-        const memberList = document.getElementById(MEMBER_LIST_ID);
-
-        if (!memberList) {
-            return;
-        }
-
-        removeLegacyIdentityDetails(memberList);
+        scrub();
 
         const observer = new MutationObserver(function () {
-            removeLegacyIdentityDetails(memberList);
+            scrub();
         });
 
-        observer.observe(memberList, {
+        observer.observe(document.body, {
             childList: true,
             subtree: true
         });
     }
 
     if (document.readyState === "loading") {
-        document.addEventListener(
-            "DOMContentLoaded",
-            initialise,
-            { once: true }
-        );
+        document.addEventListener("DOMContentLoaded", initialise, { once: true });
     } else {
         initialise();
     }
