@@ -12,6 +12,7 @@
         previewPanel: document.getElementById("previewPanel"),
         previewKeep: document.getElementById("previewKeepAccount"),
         previewStats: document.getElementById("previewStats"),
+        readyStatus: document.getElementById("resetReadyStatus"),
         runButton: document.getElementById("runResetButton")
     };
 
@@ -105,6 +106,12 @@
         ].join("");
 
         elements.previewPanel.hidden = false;
+        elements.runButton.disabled = false;
+
+        if (elements.readyStatus) {
+            elements.readyStatus.textContent =
+                "Preview complete. Review the figures below, then run the reset when ready.";
+        }
     }
 
     async function previewReset() {
@@ -139,6 +146,13 @@
             state.preview = null;
             state.previewEmail = "";
             elements.previewPanel.hidden = true;
+            elements.runButton.disabled = true;
+
+            if (elements.readyStatus) {
+                elements.readyStatus.textContent =
+                    "Preview failed. Correct the issue and run Preview again.";
+            }
+
             showError(error);
         } finally {
             elements.previewButton.disabled = false;
@@ -230,7 +244,7 @@
         } catch (error) {
             showError(error);
         } finally {
-            elements.runButton.disabled = false;
+            elements.runButton.disabled = !state.preview;
             elements.runButton.textContent = "Reset demo environment";
             elements.previewButton.disabled = false;
         }
@@ -257,6 +271,13 @@
                 state.preview = null;
                 state.previewEmail = "";
                 elements.previewPanel.hidden = true;
+                elements.runButton.disabled = true;
+
+                if (elements.readyStatus) {
+                    elements.readyStatus.textContent =
+                        "Account changed. Run Preview again to unlock the reset.";
+                }
+
                 clearMessages();
             });
         } catch (error) {

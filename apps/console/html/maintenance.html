@@ -12,7 +12,7 @@
     <link rel="apple-touch-icon" href="../../club/assets/paryx-apple-touch-icon.png" />
     <link rel="icon" type="image/png" href="../../club/assets/paryx-favicon.png" />
 
-    <script src="../js/core/console-loader.js?loader=2" defer></script>
+    <script src="../js/core/console-loader.js?loader=demo-reset-v2" defer></script>
 </head>
 <body data-page="maintenance">
     <div class="console-shell">
@@ -123,23 +123,31 @@
                         </div>
                     </section>
 
-                    <section id="previewPanel" class="console-panel" hidden>
+                    <section class="console-panel">
                         <div class="console-panel__header">
                             <div>
-                                <h2>Reset preview</h2>
-                                <small id="previewKeepAccount">—</small>
+                                <h2>2. Run destructive reset</h2>
+                                <small id="resetReadyStatus">Run Preview first to unlock the reset.</small>
                             </div>
                         </div>
 
-                        <div id="previewStats" class="console-reset-stat-grid"></div>
+                        <div id="previewPanel" hidden>
+                            <div class="console-panel__header">
+                                <div>
+                                    <h3>Reset preview</h3>
+                                    <small id="previewKeepAccount">—</small>
+                                </div>
+                            </div>
+
+                            <div id="previewStats" class="console-reset-stat-grid"></div>
+                        </div>
 
                         <div class="console-maintenance-confirmation">
-                            <h3>2. Run destructive reset</h3>
                             <p>
                                 The server also verifies that you are currently signed in as the preserved account. You will receive two browser confirmations and must type <strong>RESET DEMO DATA</strong> exactly.
                             </p>
 
-                            <button id="runResetButton" class="console-button console-button--danger" type="button">
+                            <button id="runResetButton" class="console-button console-button--danger" type="button" disabled>
                                 Reset demo environment
                             </button>
                         </div>
