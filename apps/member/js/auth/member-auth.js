@@ -136,17 +136,21 @@
 
     function destination() {
         const value =
-            pageParameters.get(
-                "returnTo"
-            );
+            String(
+                pageParameters.get(
+                    "returnTo"
+                ) ||
+                ""
+            ).trim();
 
-        return (
-            value &&
-            !value.includes("://") &&
-            !value.includes("..")
-        )
-            ? value
-            : "home.html";
+        if (
+            !/^[A-Za-z0-9_-]+\.html(?:\?[^#]*)?(?:#.*)?$/.test(value) ||
+            value.includes("..")
+        ) {
+            return "home.html";
+        }
+
+        return value;
     }
 
     tabs.forEach(
@@ -294,7 +298,7 @@
                                 options: {
                                     emailRedirectTo:
                                         new URL(
-                                            "confirm-email.html",
+                                            `confirm-email.html?returnTo=${encodeURIComponent(destination())}`,
                                             window.location.href
                                         ).href,
 

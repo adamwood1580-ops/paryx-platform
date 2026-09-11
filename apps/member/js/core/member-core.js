@@ -166,12 +166,18 @@
             if (
                 !data?.session?.user
             ) {
+                const pageName =
+                    window.location.pathname
+                        .split("/")
+                        .pop() ||
+                    "home.html";
+
+                const returnTarget =
+                    `${pageName}${window.location.search || ""}${window.location.hash || ""}`;
+
                 const returnTo =
                     encodeURIComponent(
-                        window.location.pathname
-                            .split("/")
-                            .pop() ||
-                        "home.html"
+                        returnTarget
                     );
 
                 window.location.replace(

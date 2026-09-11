@@ -95,9 +95,21 @@
 
             window.setTimeout(
                 function () {
+                    const returnTo =
+                        String(
+                            query.get("returnTo") ||
+                            ""
+                        ).trim();
+
+                    const destination =
+                        /^[A-Za-z0-9_-]+\.html(?:\?[^#]*)?(?:#.*)?$/.test(returnTo) &&
+                        !returnTo.includes("..")
+                            ? `login.html?confirmed=1&returnTo=${encodeURIComponent(returnTo)}`
+                            : "login.html?confirmed=1";
+
                     window.location
                         .replace(
-                            "login.html?confirmed=1"
+                            destination
                         );
                 },
                 600

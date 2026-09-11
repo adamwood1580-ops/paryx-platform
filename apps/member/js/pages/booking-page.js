@@ -2,6 +2,10 @@
     "use strict";
 
     const P = window.ParyxMember;
+    const pageParameters = new URLSearchParams(window.location.search);
+    const requestedCourseId = pageParameters.get("course");
+    const requestedTeeId = pageParameters.get("tee");
+    const requestedDate = pageParameters.get("date");
 
     const state = {
         clubs: [],
@@ -10,8 +14,11 @@
         bookings: [],
         clubId: null,
         courseId: null,
-        date: P.isoDate(new Date()),
-        timer: null
+        date: /^\d{4}-\d{2}-\d{2}$/.test(String(requestedDate || ""))
+            ? requestedDate
+            : P.isoDate(new Date()),
+        timer: null,
+        deepLinkHandled: false
     };
 
     const elements = {
@@ -135,7 +142,12 @@
             }).join("")
             : '<option value="">No active courses</option>';
 
-        state.courseId = state.courses[0]?.course_id || null;
+        const requestedCourse = state.courses.find(function (course) {
+            return course.course_id === requestedCourseId;
+        });
+
+        state.courseId = requestedCourse?.course_id || state.courses[0]?.course_id || null;
+        elements.course.value = state.courseId || "";
         await loadTees();
     }
 
@@ -231,6 +243,58 @@
             p_play_date: state.date
         }));
         renderTees();
+        handleRequestedTee();
+    }
+
+    function handleRequestedTee() {
+        if (state.deepLinkHandled || !requestedTeeId) {
+            return;
+        }
+
+        state.deepLinkHandled = true;
+
+        const row = state.tees.find(function (item) {
+            return item.tee_time_id === requestedTeeId;
+        });
+
+        if (!row) {
+            showMessage(
+                "That tee time is no longer available. Choose another time below.",
+                "error"
+            );
+            return;
+        }
+
+        if (row.current_user_role) {
+            showMessage(
+                "This tee time is already in your bookings.",
+                "success"
+            );
+            return;
+        }
+
+        if (row.operational_status !== "open") {
+            showMessage(
+                "That tee time is no longer available. Choose another time below.",
+                "error"
+            );
+            return;
+        }
+
+        if (!row.booking_id) {
+            openBooking("create", row.tee_time_id);
+            return;
+        }
+
+        if (row.booking_type === "joinable" && Number(row.spaces_remaining || 0) > 0) {
+            openBooking("join", row.booking_id);
+            return;
+        }
+
+        showMessage(
+            "That tee time has filled since you viewed the club website. Choose another time below.",
+            "error"
+        );
     }
 
     function openBooking(type, id) {
@@ -367,7 +431,7 @@
         renderDates();
         await loadClubs("");
 
-        const queryClubId = new URLSearchParams(window.location.search).get("club");
+        const queryClubId = pageParameters.get("club");
         const stored = P.selectedClubId();
         const initial = state.clubs.find(function (club) { return club.club_id === queryClubId; })
             || state.clubs.find(function (club) { return club.club_id === stored; })

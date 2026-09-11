@@ -381,6 +381,53 @@
                         </div>
                     </section>
 
+                    <section class="settings-card">
+                        <div class="settings-card__header">
+                            <div>
+                                <span class="settings-card__eyebrow">
+                                    Website booking
+                                </span>
+                                <h2>Public booking widget</h2>
+                            </div>
+
+                            <p>
+                                Show live tee-time availability on the club's existing website. Visitors only see availability; booking details and player identities remain private.
+                            </p>
+                        </div>
+
+                        <div class="settings-widget-grid">
+                            <label class="settings-checkbox-row">
+                                <input id="publicBookingEnabled" type="checkbox">
+                                <span>
+                                    <strong>Enable public tee-time availability</strong>
+                                    <small>When enabled, the widget can be embedded on the club website.</small>
+                                </span>
+                            </label>
+
+                            <label class="settings-field settings-widget-days">
+                                <span>Days shown</span>
+                                <input id="publicBookingAdvanceDays" type="number" min="1" max="14" value="14">
+                                <small>Choose between 1 and 14 days.</small>
+                            </label>
+                        </div>
+
+                        <div class="settings-widget-share">
+                            <label class="settings-field">
+                                <span>Widget preview URL</span>
+                                <input id="publicBookingUrl" type="text" readonly>
+                            </label>
+
+                            <label class="settings-field">
+                                <span>Website embed code</span>
+                                <textarea id="publicBookingEmbed" class="settings-code" rows="3" readonly></textarea>
+                            </label>
+
+                            <button id="copyPublicBookingEmbed" class="settings-secondary-button" type="button">
+                                Copy embed code
+                            </button>
+                        </div>
+                    </section>
+
                     <div class="settings-save-bar">
                         <div>
                             <strong>Club configuration</strong>

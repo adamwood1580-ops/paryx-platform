@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+    <meta name="theme-color" content="#064831">
+    <title>Book golf | Paryx</title>
+    <link rel="stylesheet" href="widget.css?v=0.27.0">
+</head>
+<body>
+    <main class="widget-shell" id="widgetShell">
+        <header class="widget-header">
+            <div class="widget-club">
+                <div id="clubLogoWrap" class="widget-logo-wrap" hidden>
+                    <img id="clubLogo" class="widget-logo" alt="">
+                </div>
+                <div>
+                    <p class="widget-eyebrow">Book a tee time</p>
+                    <h1 id="clubName">Loading…</h1>
+                    <p id="clubLocation" class="widget-subtitle"></p>
+                </div>
+            </div>
+            <span class="widget-powered">Powered by <strong>Paryx</strong></span>
+        </header>
+
+        <section id="widgetError" class="widget-notice widget-notice--error" hidden></section>
+        <section id="widgetDisabled" class="widget-notice" hidden>
+            Online tee-time availability is not currently enabled for this club.
+        </section>
+
+        <div id="widgetContent" hidden>
+            <section class="widget-controls">
+                <label class="widget-field">
+                    <span>Course</span>
+                    <select id="courseSelect"></select>
+                </label>
+            </section>
+
+            <section>
+                <div id="dateStrip" class="widget-dates" aria-label="Choose date"></div>
+            </section>
+
+            <section class="widget-availability">
+                <div class="widget-section-head">
+                    <div>
+                        <p class="widget-eyebrow">Availability</p>
+                        <h2 id="availabilityHeading">Tee times</h2>
+                    </div>
+                    <button id="refreshButton" class="widget-link-button" type="button">Refresh</button>
+                </div>
+                <div id="teeTimes" class="widget-tee-list">
+                    <div class="widget-empty">Loading tee times…</div>
+                </div>
+            </section>
+        </div>
+
+        <footer class="widget-footer">
+            <span>Booking completes securely in Paryx.</span>
+            <span id="clubContact"></span>
+        </footer>
+    </main>
+
+    <script src="config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="widget.js?v=0.27.0"></script>
+</body>
+</html>

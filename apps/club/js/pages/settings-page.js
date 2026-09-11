@@ -54,6 +54,11 @@
             "countryCode",
             "currencyCode",
             "defaultCourse",
+            "publicBookingEnabled",
+            "publicBookingAdvanceDays",
+            "publicBookingUrl",
+            "publicBookingEmbed",
+            "copyPublicBookingEmbed",
             "clubLogoPreview",
             "clubLogoPlaceholder",
             "clubLogoFile",
@@ -162,6 +167,22 @@
 
         if (elements.resetBranding) {
             elements.resetBranding.disabled =
+                state.saving;
+        }
+
+        if (elements.publicBookingEnabled) {
+            elements.publicBookingEnabled.disabled =
+                state.saving;
+        }
+
+        if (elements.publicBookingAdvanceDays) {
+            elements.publicBookingAdvanceDays.disabled =
+                state.saving ||
+                !elements.publicBookingEnabled?.checked;
+        }
+
+        if (elements.copyPublicBookingEmbed) {
+            elements.copyPublicBookingEmbed.disabled =
                 state.saving;
         }
     }
@@ -298,6 +319,60 @@
         return Array.isArray(data)
             ? data
             : [];
+    }
+
+    async function loadPublicBookingWidget() {
+        const { data, error } = await getClient().rpc(
+            "admin_get_public_booking_widget",
+            { p_club_id: state.clubId }
+        );
+
+        if (error) {
+            throw error;
+        }
+
+        return rowFromRpc(data);
+    }
+
+    function widgetUrls(slug) {
+        const safeSlug = String(slug || "").trim();
+        if (!safeSlug) {
+            return { url: "", embed: "" };
+        }
+
+        const widgetUrl = new URL(
+            "../../widget/index.html",
+            window.location.href
+        );
+        widgetUrl.searchParams.set("club", safeSlug);
+
+        const embedScriptUrl = new URL(
+            "../../widget/embed.js",
+            window.location.href
+        );
+
+        return {
+            url: widgetUrl.href,
+            embed: `<script src="${embedScriptUrl.href}" data-paryx-club="${safeSlug}"></script>`
+        };
+    }
+
+    function renderPublicBookingWidget(config) {
+        const enabled = config?.public_booking_enabled === true;
+        const days = Math.max(
+            1,
+            Math.min(
+                14,
+                Number(config?.public_booking_advance_days || 14)
+            )
+        );
+        const urls = widgetUrls(config?.club_slug);
+
+        elements.publicBookingEnabled.checked = enabled;
+        elements.publicBookingAdvanceDays.value = String(days);
+        elements.publicBookingAdvanceDays.disabled = !enabled;
+        elements.publicBookingUrl.value = urls.url;
+        elements.publicBookingEmbed.value = urls.embed;
     }
 
     function renderCourses(
@@ -619,8 +694,24 @@
                 throw error;
             }
 
+            const widgetDays = Number(elements.publicBookingAdvanceDays.value || 14);
+            const { data: widgetData, error: widgetError } = await getClient().rpc(
+                "admin_update_public_booking_widget",
+                {
+                    p_club_id: state.clubId,
+                    p_enabled: elements.publicBookingEnabled.checked,
+                    p_advance_days: widgetDays
+                }
+            );
+
+            if (widgetError) {
+                throw widgetError;
+            }
+
             const updated =
                 rowFromRpc(data);
+            const updatedWidget =
+                rowFromRpc(widgetData);
 
             await removeOldLogo(
                 oldLogoPath,
@@ -628,6 +719,7 @@
             );
 
             renderConfiguration(updated);
+            renderPublicBookingWidget(updatedWidget);
 
             const courses =
                 await loadCourses();
@@ -751,6 +843,33 @@
             }
         );
 
+        elements.publicBookingEnabled.addEventListener(
+            "change",
+            function () {
+                elements.publicBookingAdvanceDays.disabled =
+                    !elements.publicBookingEnabled.checked;
+            }
+        );
+
+        elements.copyPublicBookingEmbed.addEventListener(
+            "click",
+            async function () {
+                const value = elements.publicBookingEmbed.value.trim();
+                if (!value) {
+                    return;
+                }
+
+                try {
+                    await navigator.clipboard.writeText(value);
+                    showSuccess("Website booking embed code copied.");
+                } catch (error) {
+                    elements.publicBookingEmbed.focus();
+                    elements.publicBookingEmbed.select();
+                    showError(new Error("Copy was blocked by the browser. The embed code is selected so you can copy it manually."));
+                }
+            }
+        );
+
         elements.clubSettingsForm.addEventListener(
             "submit",
             saveSettings
@@ -796,10 +915,12 @@
 
             const [
                 config,
-                courses
+                courses,
+                publicBookingWidget
             ] = await Promise.all([
                 loadConfiguration(),
-                loadCourses()
+                loadCourses(),
+                loadPublicBookingWidget()
             ]);
 
             renderConfiguration(config);
@@ -807,6 +928,7 @@
                 courses,
                 config.default_course_id || null
             );
+            renderPublicBookingWidget(publicBookingWidget);
         } catch (error) {
             showError(error);
             elements.clubSettingsForm.hidden = true;
