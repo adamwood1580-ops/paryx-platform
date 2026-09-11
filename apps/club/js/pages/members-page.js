@@ -87,7 +87,6 @@
             "memberDetailsMembershipId",
             "memberDetailsEmail",
             "memberDetailsHandicap",
-            "memberDetailsRole",
             "memberDetailsNumber",
             "memberDetailsType",
             "memberDetailsStatus",
@@ -1366,15 +1365,6 @@
             .textContent =
             formatHandicap(
                 member.handicap_index
-            );
-
-        elements.memberDetailsRole
-            .textContent =
-            ROLE_LABELS[
-                member.membership_role
-            ] ||
-            statusLabel(
-                member.membership_role
             );
 
         elements.memberDetailsNumber
