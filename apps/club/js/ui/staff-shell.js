@@ -4,9 +4,9 @@
     window.Paryx = window.Paryx || {};
 
     const NAV_ITEMS = [
-        { key: "dashboard", label: "Dashboard", href: "dashboard.html" },
-        { key: "teesheet", label: "Tee Sheet", href: "tee-sheet.html" },
-        { key: "members", label: "Members", href: "members.html" },
+        { key: "dashboard", label: "Dashboard", href: "dashboard.html", moduleKey: "dashboard" },
+        { key: "teesheet", label: "Tee Sheet", href: "tee-sheet.html", moduleKey: "tee_sheet" },
+        { key: "members", label: "Members", href: "members.html", moduleKey: "members" },
         {
             key: "credit",
             label: "Club Credit",
@@ -23,13 +23,15 @@
             key: "staff",
             label: "Staff",
             href: "staff.html",
+            moduleKey: "members",
             adminOnly: true
         },
-        { key: "calendar", label: "Calendar", href: "calendar.html" },
+        { key: "calendar", label: "Calendar", href: "calendar.html", moduleKey: "calendar" },
         {
             key: "competitions",
             label: "Competitions",
             href: "competitions.html",
+            moduleKey: "competitions",
             roles: [
                 "reception",
                 "professional",
@@ -37,7 +39,7 @@
                 "club_admin"
             ]
         },
-        { key: "courses", label: "Courses", href: "courses.html" },
+        { key: "courses", label: "Courses", href: "courses.html", moduleKey: "courses" },
         {
             key: "stock",
             label: "Stock",
@@ -61,7 +63,7 @@
                 "club_admin"
             ]
         },
-        { key: "settings", label: "Settings", href: "settings.html" }
+        { key: "settings", label: "Settings", href: "settings.html", moduleKey: "settings" }
     ];
 
     const ROLE_LABELS = {
@@ -384,7 +386,7 @@
         hydrateClubModules(activeClub);
     }
 
-    async function hydrateClubModules(activeClub) {
+    function hydrateClubModules(activeClub) {
         const moduleLinks = Array.from(
             document.querySelectorAll("[data-club-module]")
         );
@@ -397,53 +399,39 @@
             link.hidden = true;
         });
 
-        if (
-            !activeClub?.id ||
-            !window.supabaseClient ||
-            typeof window.supabaseClient.rpc !== "function"
-        ) {
+        if (!activeClub?.id) {
             return;
         }
 
-        try {
-            const { data, error } = await window.supabaseClient.rpc(
-                "get_my_club_modules",
-                { p_club_id: activeClub.id }
+        const enabled = new Set(
+            Array.isArray(activeClub.modules)
+                ? activeClub.modules
+                : []
+        );
+
+        moduleLinks.forEach(function (link) {
+            const moduleKey = String(link.dataset.clubModule || "");
+            const allowedRoles = String(link.dataset.staffRoles || "")
+                .split(",")
+                .map(function (role) { return role.trim(); })
+                .filter(Boolean);
+
+            const roleAllowed =
+                !allowedRoles.length ||
+                allowedRoles.includes(activeClub.role);
+
+            link.hidden = !(
+                enabled.has(moduleKey) && roleAllowed
             );
+        });
 
-            if (error) {
-                throw error;
-            }
+        const activeLink = moduleLinks.find(function (link) {
+            return link.classList.contains("is-active");
+        });
 
-            const enabled = new Set(
-                (Array.isArray(data) ? data : [])
-                    .filter(function (item) {
-                        return item.is_enabled === true;
-                    })
-                    .map(function (item) {
-                        return String(item.module_key || "");
-                    })
-            );
-
-            moduleLinks.forEach(function (link) {
-                const moduleKey = String(link.dataset.clubModule || "");
-                const allowedRoles = String(link.dataset.staffRoles || "")
-                    .split(",")
-                    .map(function (role) { return role.trim(); })
-                    .filter(Boolean);
-
-                const roleAllowed =
-                    !allowedRoles.length ||
-                    allowedRoles.includes(activeClub.role);
-
-                link.hidden = !(
-                    enabled.has(moduleKey) && roleAllowed
-                );
-            });
-        } catch (error) {
-            console.warn(
-                "Paryx optional modules could not be loaded:",
-                error
+        if (activeLink?.hidden && currentPage !== "dashboard") {
+            window.location.replace(
+                "dashboard.html?reason=module"
             );
         }
     }
@@ -544,10 +532,39 @@
             if (select) {
                 select.innerHTML = `
                     <option value="">
-                        Club unavailable
+                        Access denied
                     </option>
                 `;
                 select.disabled = true;
+            }
+
+            const main =
+                document.querySelector("main");
+
+            if (
+                main &&
+                !document.getElementById(
+                    "clubHubAccessDenied"
+                )
+            ) {
+                const notice =
+                    document.createElement("section");
+
+                notice.id =
+                    "clubHubAccessDenied";
+
+                notice.className =
+                    "admin-error";
+
+                notice.setAttribute(
+                    "role",
+                    "alert"
+                );
+
+                notice.textContent =
+                    "ClubHub is available only to authorised staff at an active club. Contact your club administrator if you require access.";
+
+                main.prepend(notice);
             }
         }
     }

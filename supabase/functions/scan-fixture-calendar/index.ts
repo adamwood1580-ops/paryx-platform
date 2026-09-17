@@ -568,10 +568,17 @@ Deno.serve(
                 error: accessError
             } =
                 await client.rpc(
-                    "user_can_manage_club",
+                    "clubhub_user_can_access",
                     {
                         p_club_id:
-                            clubId
+                            clubId,
+                        p_module_key:
+                            "calendar",
+                        p_allowed_roles:
+                            [
+                                "manager",
+                                "club_admin"
+                            ]
                     }
                 );
 

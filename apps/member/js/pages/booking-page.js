@@ -162,12 +162,6 @@
             console.warn("Course mode unavailable; using normal selector.", error);
         }
 
-        elements.course.innerHTML = state.courses.length
-            ? state.courses.map(function (course) {
-                return `<option value="${P.escapeHtml(course.course_id)}">${P.escapeHtml(course.course_name)}</option>`;
-            }).join("")
-            : '<option value="">No active courses</option>';
-
         const requestedCourse = state.courses.find(function (course) {
             return course.course_id === requestedCourseId;
         });
@@ -175,7 +169,25 @@
         const defaultCourse = state.courses.find(function (course) {
             return course.course_id === courseMode?.default_course_id;
         });
-        state.courseId = requestedCourse?.course_id || defaultCourse?.course_id || state.courses[0]?.course_id || null;
+
+        const singleCourse =
+            courseMode?.single_course_mode === true &&
+            state.courses.length === 1
+                ? state.courses[0]
+                : null;
+
+        state.courseId =
+            requestedCourse?.course_id ||
+            defaultCourse?.course_id ||
+            singleCourse?.course_id ||
+            null;
+
+        elements.course.innerHTML = state.courses.length
+            ? `${state.courseId ? "" : '<option value="">Choose a course</option>'}${state.courses.map(function (course) {
+                return `<option value="${P.escapeHtml(course.course_id)}">${P.escapeHtml(course.course_name)}</option>`;
+            }).join("")}`
+            : '<option value="">No active courses</option>';
+
         elements.course.value = state.courseId || "";
         if (elements.courseField) {
             elements.courseField.hidden = courseMode?.single_course_mode === true && state.courses.length === 1;

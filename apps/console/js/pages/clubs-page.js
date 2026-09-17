@@ -6,7 +6,8 @@
         role: null,
         isOwner: false,
         canManage: false,
-        selectedClub: null
+        selectedClub: null,
+        moduleCatalog: []
     };
 
     const elements = {
@@ -65,19 +66,39 @@
                 "newClubTimezone"
             ),
 
-        newModuleStock:
+        courseName:
             document.getElementById(
-                "newModuleStock"
+                "newCourseName"
             ),
 
-        newModuleCredit:
+        courseHoles:
             document.getElementById(
-                "newModuleCredit"
+                "newCourseHoles"
             ),
 
-        newModuleEpos:
+        singleCourseMode:
             document.getElementById(
-                "newModuleEpos"
+                "newSingleCourseMode"
+            ),
+
+        adminFirstName:
+            document.getElementById(
+                "newAdminFirstName"
+            ),
+
+        adminLastName:
+            document.getElementById(
+                "newAdminLastName"
+            ),
+
+        adminEmail:
+            document.getElementById(
+                "newAdminEmail"
+            ),
+
+        newModuleGrid:
+            document.getElementById(
+                "newModuleGrid"
             ),
 
         dialog:
@@ -150,34 +171,9 @@
                 "clubDetailTimezone"
             ),
 
-        detailModuleStock:
+        detailModuleGrid:
             document.getElementById(
-                "detailModuleStock"
-            ),
-
-        detailModuleCredit:
-            document.getElementById(
-                "detailModuleCredit"
-            ),
-
-        detailModuleEpos:
-            document.getElementById(
-                "detailModuleEpos"
-            ),
-
-        detailModuleStockState:
-            document.getElementById(
-                "detailModuleStockState"
-            ),
-
-        detailModuleCreditState:
-            document.getElementById(
-                "detailModuleCreditState"
-            ),
-
-        detailModuleEposState:
-            document.getElementById(
-                "detailModuleEposState"
+                "detailModuleGrid"
             ),
 
         moduleReadOnly:
@@ -707,41 +703,32 @@
     }
 
     function moduleMap(rows) {
-        const result = {
-            stock_inventory: false,
-            member_credit: false,
-            epos_integration: false
-        };
+        const result = {};
+
+        state.moduleCatalog.forEach(function (module) {
+            result[module.module_key] =
+                module.required === true ||
+                module.default_enabled === true;
+        });
 
         (Array.isArray(rows)
             ? rows
             : []
         ).forEach(
             function (row) {
-                if (
-                    Object.prototype
-                        .hasOwnProperty
-                        .call(
-                            result,
-                            row.module_key
-                        )
-                ) {
-                    result[
-                        row.module_key
-                    ] =
-                        row.is_enabled ===
-                        true;
-                }
+                result[row.module_key] =
+                    row.is_enabled === true;
             }
         );
 
         return result;
     }
 
-    function updateModuleStateLabel(
-        element,
-        enabled
-    ) {
+    function updateModuleStateLabel(element, enabled) {
+        if (!element) {
+            return;
+        }
+
         element.textContent =
             enabled
                 ? "Enabled"
@@ -755,55 +742,164 @@
             }`;
     }
 
-    function renderDetailModules(rows) {
-        const modules =
-            moduleMap(rows);
-
-        elements.detailModuleStock.checked =
-            modules.stock_inventory;
-
-        elements.detailModuleCredit.checked =
-            modules.member_credit;
-
-        elements.detailModuleEpos.checked =
-            modules.epos_integration;
-
-        updateModuleStateLabel(
-            elements.detailModuleStockState,
-            modules.stock_inventory
-        );
-
-        updateModuleStateLabel(
-            elements.detailModuleCreditState,
-            modules.member_credit
-        );
-
-        updateModuleStateLabel(
-            elements.detailModuleEposState,
-            modules.epos_integration
+    function moduleInput(grid, moduleKey) {
+        return grid.querySelector(
+            `[data-module-key="${moduleKey}"]`
         );
     }
 
-    function enforceEposDependency(
-        stockInput,
-        eposInput,
-        changedInput
-    ) {
-        if (
-            changedInput === eposInput &&
-            eposInput.checked
-        ) {
-            stockInput.checked =
-                true;
+    function updateGridStateLabels(grid) {
+        grid.querySelectorAll("[data-module-key]")
+            .forEach(function (input) {
+                updateModuleStateLabel(
+                    grid.querySelector(
+                        `[data-module-state="${input.dataset.moduleKey}"]`
+                    ),
+                    input.checked
+                );
+            });
+    }
+
+    function enforceModuleDependencies(grid, changedInput) {
+        if (changedInput.checked) {
+            const dependency =
+                changedInput.dataset.dependsOn;
+
+            if (dependency) {
+                const requiredInput =
+                    moduleInput(grid, dependency);
+
+                if (requiredInput) {
+                    requiredInput.checked = true;
+                }
+            }
         }
 
-        if (
-            changedInput === stockInput &&
-            !stockInput.checked
-        ) {
-            eposInput.checked =
-                false;
+        if (!changedInput.checked) {
+            grid.querySelectorAll("[data-module-key]")
+                .forEach(function (input) {
+                    if (
+                        input.dataset.dependsOn ===
+                        changedInput.dataset.moduleKey
+                    ) {
+                        input.checked = false;
+                    }
+                });
         }
+
+        updateGridStateLabels(grid);
+    }
+
+    function renderModuleGrid(grid, rows, mode) {
+        const configured = moduleMap(rows);
+
+        grid.innerHTML = state.moduleCatalog
+            .map(function (module) {
+                const enabled =
+                    module.required === true ||
+                    configured[module.module_key] === true;
+
+                const disabled =
+                    module.required === true ||
+                    (mode === "detail" && !state.canManage);
+
+                const dependency = module.depends_on
+                    ? ` · Requires ${
+                        state.moduleCatalog.find(function (candidate) {
+                            return candidate.module_key === module.depends_on;
+                        })?.label || module.depends_on
+                    }`
+                    : "";
+
+                return `
+                    <label class="console-module-card">
+                        <span class="console-module-card__body">
+                            <span class="console-module-card__title-line">
+                                <strong>${escapeHtml(module.label)}</strong>
+                                <span
+                                    class="console-module-state ${enabled ? "console-module-state--enabled" : ""}"
+                                    data-module-state="${escapeHtml(module.module_key)}"
+                                >${enabled ? "Enabled" : "Disabled"}</span>
+                            </span>
+                            <small>
+                                ${escapeHtml(module.description)}${escapeHtml(dependency)}
+                                ${module.required ? " · Required" : ""}
+                            </small>
+                        </span>
+                        <span class="console-switch">
+                            <input
+                                type="checkbox"
+                                data-module-key="${escapeHtml(module.module_key)}"
+                                data-depends-on="${escapeHtml(module.depends_on || "")}"
+                                ${enabled ? "checked" : ""}
+                                ${disabled ? "disabled" : ""}
+                            />
+                            <span class="console-switch__track" aria-hidden="true"></span>
+                        </span>
+                    </label>
+                `;
+            })
+            .join("");
+
+        grid.onchange = function (event) {
+            const input = event.target.closest("[data-module-key]");
+            if (input) {
+                enforceModuleDependencies(grid, input);
+            }
+        };
+    }
+
+    function collectModules(grid) {
+        const values = {};
+
+        grid.querySelectorAll("[data-module-key]")
+            .forEach(function (input) {
+                values[input.dataset.moduleKey] =
+                    input.checked;
+            });
+
+        values.dashboard = true;
+        return values;
+    }
+
+    function renderCreateModules() {
+        renderModuleGrid(
+            elements.newModuleGrid,
+            [],
+            "create"
+        );
+    }
+
+    async function loadModuleCatalog() {
+        const { data, error } =
+            await window.supabaseClient.rpc(
+                "platform_get_module_catalog"
+            );
+
+        if (error) {
+            throw error;
+        }
+
+        state.moduleCatalog =
+            Array.isArray(data)
+                ? data
+                : [];
+
+        if (!state.moduleCatalog.length) {
+            throw new Error(
+                "The Paryx module catalogue is unavailable."
+            );
+        }
+
+        renderCreateModules();
+    }
+
+    function renderDetailModules(rows) {
+        renderModuleGrid(
+            elements.detailModuleGrid,
+            rows,
+            "detail"
+        );
     }
 
     function setMetric(
@@ -824,16 +920,21 @@
     function applyDetailEditState() {
         [
             elements.detailName,
-            elements.detailTimezone,
-            elements.detailModuleStock,
-            elements.detailModuleCredit,
-            elements.detailModuleEpos
+            elements.detailTimezone
         ].forEach(
             function (input) {
                 input.disabled =
                     !state.canManage;
             }
         );
+
+        elements.detailModuleGrid
+            .querySelectorAll("[data-module-key]")
+            .forEach(function (input) {
+                input.disabled =
+                    !state.canManage ||
+                    input.dataset.moduleKey === "dashboard";
+            });
 
         elements.detailSave.hidden =
             !state.canManage;
@@ -1058,8 +1159,8 @@
             } =
                 await window
                     .supabaseClient
-                    .rpc(
-                        "platform_update_club_configuration",
+                        .rpc(
+                        "platform_update_club_configuration_v2",
                         {
                             p_club_id:
                                 state.selectedClub
@@ -1077,20 +1178,10 @@
                                     .value
                                     .trim(),
 
-                            p_stock_inventory:
-                                elements
-                                    .detailModuleStock
-                                    .checked,
-
-                            p_member_credit:
-                                elements
-                                    .detailModuleCredit
-                                    .checked,
-
-                            p_epos_integration:
-                                elements
-                                    .detailModuleEpos
-                                    .checked
+                            p_modules:
+                                collectModules(
+                                    elements.detailModuleGrid
+                                )
                         }
                     );
 
@@ -1247,7 +1338,7 @@
                     await window
                         .supabaseClient
                         .rpc(
-                            "platform_create_club_configured",
+                            "platform_provision_club",
                             {
                                 p_name:
                                     elements
@@ -1267,20 +1358,28 @@
                                         .value
                                         .trim(),
 
-                                p_stock_inventory:
+                                p_course_name:
                                     elements
-                                        .newModuleStock
+                                        .courseName
+                                        .value
+                                        .trim(),
+
+                                p_course_holes:
+                                    Number(
+                                        elements
+                                            .courseHoles
+                                            .value
+                                    ),
+
+                                p_single_course_mode:
+                                    elements
+                                        .singleCourseMode
                                         .checked,
 
-                                p_member_credit:
-                                    elements
-                                        .newModuleCredit
-                                        .checked,
-
-                                p_epos_integration:
-                                    elements
-                                        .newModuleEpos
-                                        .checked
+                                p_modules:
+                                    collectModules(
+                                        elements.newModuleGrid
+                                    )
                             }
                         );
 
@@ -1293,12 +1392,53 @@
                         ? data[0]
                         : data;
 
+                if (!row?.club_id) {
+                    throw new Error(
+                        "Paryx did not return the provisioned club."
+                    );
+                }
+
+                const invitation =
+                    await window
+                        .supabaseClient
+                        .functions
+                        .invoke(
+                            "admin-invite-staff",
+                            {
+                                body: {
+                                    clubId:
+                                        row.club_id,
+                                    firstName:
+                                        elements.adminFirstName.value.trim(),
+                                    lastName:
+                                        elements.adminLastName.value.trim(),
+                                    email:
+                                        elements.adminEmail.value.trim(),
+                                    role:
+                                        "club_admin",
+                                    redirectTo:
+                                        new URL(
+                                            "../../club/html/set-password.html",
+                                            window.location.href
+                                        ).href
+                                }
+                            }
+                        );
+
+                if (invitation.error || invitation.data?.error) {
+                    const invitationError =
+                        invitation.data?.error ||
+                        invitation.error?.message ||
+                        "Initial Club Admin invitation failed.";
+
+                    throw new Error(
+                        `${row.club_name || "The club"} and its first course were created, but the administrator could not be linked: ${invitationError}`
+                    );
+                }
+
                 showMessage(
                     elements.success,
-                    `${
-                        row?.club_name ||
-                        "The club"
-                    } was created.`
+                    `${row.club_name || "The club"} was provisioned and its first Club Admin was invited.`
                 );
 
                 elements.createForm.reset();
@@ -1306,14 +1446,10 @@
                 elements.timezone.value =
                     "Europe/London";
 
-                elements.newModuleStock.checked =
-                    false;
+                elements.singleCourseMode.checked =
+                    true;
 
-                elements.newModuleCredit.checked =
-                    false;
-
-                elements.newModuleEpos.checked =
-                    false;
+                renderCreateModules();
 
                 slugWasEdited =
                     false;
@@ -1335,63 +1471,6 @@
             }
         }
     );
-
-    [
-        elements.newModuleStock,
-        elements.newModuleEpos
-    ].forEach(
-        function (input) {
-            input.addEventListener(
-                "change",
-                function () {
-                    enforceEposDependency(
-                        elements.newModuleStock,
-                        elements.newModuleEpos,
-                        input
-                    );
-                }
-            );
-        }
-    );
-
-    [
-        elements.detailModuleStock,
-        elements.detailModuleEpos
-    ].forEach(
-        function (input) {
-            input.addEventListener(
-                "change",
-                function () {
-                    enforceEposDependency(
-                        elements.detailModuleStock,
-                        elements.detailModuleEpos,
-                        input
-                    );
-
-                    updateModuleStateLabel(
-                        elements.detailModuleStockState,
-                        elements.detailModuleStock.checked
-                    );
-
-                    updateModuleStateLabel(
-                        elements.detailModuleEposState,
-                        elements.detailModuleEpos.checked
-                    );
-                }
-            );
-        }
-    );
-
-    elements.detailModuleCredit
-        .addEventListener(
-            "change",
-            function () {
-                updateModuleStateLabel(
-                    elements.detailModuleCreditState,
-                    elements.detailModuleCredit.checked
-                );
-            }
-        );
 
     elements.detailForm
         .addEventListener(
@@ -1416,7 +1495,7 @@
 
     window.ParyxConsole.ready
         .then(
-            function (context) {
+            async function (context) {
                 state.role =
                     context
                         ?.access
@@ -1438,6 +1517,7 @@
                 elements.createPanel.hidden =
                     !state.canManage;
 
+                await loadModuleCatalog();
                 return loadClubs();
             }
         )

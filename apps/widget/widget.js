@@ -200,20 +200,19 @@
             throw new Error("No active courses are available for online booking.");
         }
 
-        elements.course.innerHTML = courses.map(function (course) {
-            const suffix = Number(course.holes) === 9 ? " · 9 holes" : "";
-            return `<option value="${escapeHtml(course.course_id)}">${escapeHtml(course.course_name)}${suffix}</option>`;
-        }).join("");
-
         const requestedCourse = String(params.get("course") || "");
         const defaultCourse = courses.find(function (course) {
             return course.course_id === requestedCourse;
         }) || courses.find(function (course) {
             return course.course_id === row.default_course_id;
-        }) || courses[0];
+        }) || null;
 
-        state.courseId = defaultCourse.course_id;
-        elements.course.value = state.courseId;
+        state.courseId = defaultCourse?.course_id || null;
+        elements.course.innerHTML = `${state.courseId ? "" : '<option value="">Choose a course</option>'}${courses.map(function (course) {
+            const suffix = Number(course.holes) === 9 ? " · 9 holes" : "";
+            return `<option value="${escapeHtml(course.course_id)}">${escapeHtml(course.course_name)}${suffix}</option>`;
+        }).join("")}`;
+        elements.course.value = state.courseId || "";
         if (elements.courseField) {
             elements.courseField.hidden = courses.length === 1;
         }

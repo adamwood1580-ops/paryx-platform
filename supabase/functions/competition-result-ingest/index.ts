@@ -356,6 +356,17 @@ async function requireClubRole(service: ReturnType<typeof createClient>, userId:
     if (error || !data || !roles.has(String(data.role))) {
         throw new Error("Club Admin or Manager access required.");
     }
+
+    const { data: moduleState, error: moduleError } = await service
+        .from("club_modules")
+        .select("is_enabled")
+        .eq("club_id", clubId)
+        .eq("module_key", "competitions")
+        .maybeSingle();
+
+    if (moduleError || moduleState?.is_enabled !== true) {
+        throw new Error("Competitions module access required.");
+    }
 }
 
 async function ensureClubV1Integration(service: ReturnType<typeof createClient>, clubId: string) {

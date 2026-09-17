@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="../styles/app-shell.css" />
     <link rel="stylesheet" href="../styles/components.css" />
     <link rel="stylesheet" href="../styles/staff-shell.css" />
-    <link rel="stylesheet" href="../styles/courses.css?v=0.29.5" />
+    <link rel="stylesheet" href="../styles/courses.css?v=0.30.0" />
 
     <link rel="manifest" href="../json/manifest.json" />
     <link rel="apple-touch-icon" href="../assets/paryx-apple-touch-icon.png" />
@@ -18,7 +18,7 @@
     <meta name="application-name" content="Paryx" />
     <title>Courses | Paryx</title>
 
-    <script src="../js/core/protected-loader.js?loader=5" defer></script>
+    <script src="../js/core/protected-loader.js?loader=6" defer></script>
 </head>
 <body data-page="courses">
     <div class="staff-shell">
@@ -188,18 +188,26 @@
                                 </form>
                             </section>
 
-                            <section
+                            <details
                                 id="holeDataSection"
-                                class="courses-card courses-card--scorecard"
+                                class="courses-card courses-card--scorecard course-import-review"
                             >
+                                <summary class="course-import-review__summary">
+                                    <span>
+                                        <strong>Import or review a printed scorecard</strong>
+                                        <small>Temporary bulk review tools — collapse after confirmation.</small>
+                                    </span>
+                                    <span aria-hidden="true">⌄</span>
+                                </summary>
+
                                 <div class="courses-card__header courses-card__header--wrap">
                                     <div>
                                         <span class="courses-card__eyebrow">
-                                            Scorecard setup
+                                            Temporary review
                                         </span>
-                                        <h2>Set up the scorecard</h2>
+                                        <h2>Scorecard import &amp; bulk check</h2>
                                         <p id="holeParSummary">
-                                            Scan a card for the fastest setup, then review par, tee yardages and WHS ratings below. Stroke index is edited with the selected tee.
+                                            Use this panel after a scan, confirm the extracted values, then continue with the compact tee and hole editor below.
                                         </p>
                                     </div>
 
@@ -230,8 +238,8 @@
                                         class="course-setup-choice__item"
                                         type="button"
                                     >
-                                        <strong>Enter or correct manually</strong>
-                                        <span>Use the scorecard below for direct editing and final checks.</span>
+                                        <strong>Continue to compact editor</strong>
+                                        <span>Manage a tee, its ratings and every hole from one compact workspace.</span>
                                     </button>
                                 </div>
 
@@ -295,7 +303,7 @@
                                         Saves hole pars, tee ratings, stroke index and all visible tee yardages.
                                     </span>
                                 </div>
-                            </section>
+                            </details>
 
                             <section
                                 id="teesSection"
@@ -306,9 +314,9 @@
                                         <span class="courses-card__eyebrow">
                                             Tees
                                         </span>
-                                        <h2>Tee setup</h2>
+                                        <h2>Compact tee &amp; hole editor</h2>
                                         <p>
-                                            Select a tee to manage its WHS rating, yardages and the course stroke index in one place.
+                                            Select a tee to manage its WHS rating, yardages, par and stroke index in one place.
                                         </p>
                                     </div>
 
@@ -484,9 +492,9 @@
                                         >
                                             <div class="tee-yardage-section__header">
                                                 <div>
-                                                    <h3>Hole yardages &amp; stroke index</h3>
+                                                    <h3>Hole par, stroke index &amp; yardages</h3>
                                                     <p id="teeYardageSummary">
-                                                        Enter this tee's yardages. Stroke index is course-wide and is shown here so the whole hole setup can be completed in one place.
+                                                        Complete the course hole data and this tee's yardages in one compact grid.
                                                     </p>
                                                 </div>
                                             </div>

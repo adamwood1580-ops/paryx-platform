@@ -12,7 +12,7 @@
     <link rel="apple-touch-icon" href="../../club/assets/paryx-apple-touch-icon.png" />
     <link rel="icon" type="image/png" href="../../club/assets/paryx-favicon.png" />
 
-    <script src="../js/core/console-loader.js?loader=modules-v1" defer></script>
+    <script src="../js/core/console-loader.js?loader=modules-v2" defer></script>
 </head>
 <body data-page="clubs">
     <div class="console-shell">
@@ -64,95 +64,82 @@
         <section class="console-module-config">
             <div class="console-module-config__heading">
                 <div>
+                    <span class="console-eyebrow">Course setup</span>
+                    <h3>First course</h3>
+                    <p>The first course is created and saved as the club default during provisioning.</p>
+                </div>
+            </div>
+
+            <div class="console-field-grid">
+                <div class="console-field">
+                    <label for="newCourseName">Course name</label>
+                    <input id="newCourseName" type="text" maxlength="140" required placeholder="Main Course" />
+                </div>
+
+                <div class="console-field">
+                    <label for="newCourseHoles">Number of holes</label>
+                    <select id="newCourseHoles">
+                        <option value="18">18 holes</option>
+                        <option value="9">9 holes</option>
+                    </select>
+                </div>
+
+                <label class="console-module-card">
+                    <span class="console-module-card__body">
+                        <strong>Single-course club</strong>
+                        <small>Use this course automatically and hide unnecessary course choices.</small>
+                    </span>
+                    <span class="console-switch">
+                        <input id="newSingleCourseMode" type="checkbox" checked />
+                        <span class="console-switch__track" aria-hidden="true"></span>
+                    </span>
+                </label>
+            </div>
+        </section>
+
+        <section class="console-module-config">
+            <div class="console-module-config__heading">
+                <div>
+                    <span class="console-eyebrow">Initial access</span>
+                    <h3>First Club Admin</h3>
+                    <p>Paryx will link an existing account or send the administrator an activation email.</p>
+                </div>
+            </div>
+
+            <div class="console-field-grid">
+                <div class="console-field">
+                    <label for="newAdminFirstName">First name</label>
+                    <input id="newAdminFirstName" type="text" maxlength="100" required />
+                </div>
+
+                <div class="console-field">
+                    <label for="newAdminLastName">Last name</label>
+                    <input id="newAdminLastName" type="text" maxlength="100" required />
+                </div>
+
+                <div class="console-field">
+                    <label for="newAdminEmail">Email</label>
+                    <input id="newAdminEmail" type="email" maxlength="254" required />
+                </div>
+            </div>
+        </section>
+
+        <section class="console-module-config">
+            <div class="console-module-config__heading">
+                <div>
                     <span class="console-eyebrow">
                         Provisioning
                     </span>
 
-                    <h3>
-                        Optional modules
-                    </h3>
+                    <h3>Feature modules</h3>
 
                     <p>
-                        Core ClubHub remains available. Enable only the
-                        additional modules this club requires.
+                        Choose the ClubHub areas this tenant can use. Dashboard is required.
                     </p>
                 </div>
             </div>
 
-            <div class="console-module-grid">
-                <label class="console-module-card">
-                    <span class="console-module-card__body">
-                        <strong>
-                            Stock Inventory
-                        </strong>
-
-                        <small>
-                            Products, stock levels, valuation and movement audit.
-                        </small>
-                    </span>
-
-                    <span class="console-switch">
-                        <input
-                            id="newModuleStock"
-                            type="checkbox"
-                        />
-
-                        <span
-                            class="console-switch__track"
-                            aria-hidden="true"
-                        ></span>
-                    </span>
-                </label>
-
-                <label class="console-module-card">
-                    <span class="console-module-card__body">
-                        <strong>
-                            Member Club Credit
-                        </strong>
-
-                        <small>
-                            Club-specific balances, prizes, credits and debits.
-                        </small>
-                    </span>
-
-                    <span class="console-switch">
-                        <input
-                            id="newModuleCredit"
-                            type="checkbox"
-                        />
-
-                        <span
-                            class="console-switch__track"
-                            aria-hidden="true"
-                        ></span>
-                    </span>
-                </label>
-
-                <label class="console-module-card">
-                    <span class="console-module-card__body">
-                        <strong>
-                            EPOS Integration
-                        </strong>
-
-                        <small>
-                            Product mapping and sales/refund integration.
-                            Requires Stock Inventory.
-                        </small>
-                    </span>
-
-                    <span class="console-switch">
-                        <input
-                            id="newModuleEpos"
-                            type="checkbox"
-                        />
-
-                        <span
-                            class="console-switch__track"
-                            aria-hidden="true"
-                        ></span>
-                    </span>
-                </label>
-            </div>
+            <div id="newModuleGrid" class="console-module-grid"></div>
         </section>
 
         <div class="console-actions" style="margin-top: .9rem;">
@@ -327,115 +314,12 @@
                     </h2>
 
                     <small>
-                        Optional services enabled for this tenant.
-                        Core ClubHub is always available.
+                        ClubHub areas enabled for this tenant. Dashboard is required.
                     </small>
                 </div>
             </div>
 
-            <div class="console-module-grid console-module-grid--detail">
-                <label class="console-module-card">
-                    <span class="console-module-card__body">
-                        <span class="console-module-card__title-line">
-                            <strong>
-                                Stock Inventory
-                            </strong>
-
-                            <span
-                                id="detailModuleStockState"
-                                class="console-module-state"
-                            >
-                                Disabled
-                            </span>
-                        </span>
-
-                        <small>
-                            Product database, stock movement audit,
-                            stock levels and valuation.
-                        </small>
-                    </span>
-
-                    <span class="console-switch">
-                        <input
-                            id="detailModuleStock"
-                            type="checkbox"
-                        />
-
-                        <span
-                            class="console-switch__track"
-                            aria-hidden="true"
-                        ></span>
-                    </span>
-                </label>
-
-                <label class="console-module-card">
-                    <span class="console-module-card__body">
-                        <span class="console-module-card__title-line">
-                            <strong>
-                                Member Club Credit
-                            </strong>
-
-                            <span
-                                id="detailModuleCreditState"
-                                class="console-module-state"
-                            >
-                                Disabled
-                            </span>
-                        </span>
-
-                        <small>
-                            Member-specific club balances, prizes,
-                            adjustments and transaction history.
-                        </small>
-                    </span>
-
-                    <span class="console-switch">
-                        <input
-                            id="detailModuleCredit"
-                            type="checkbox"
-                        />
-
-                        <span
-                            class="console-switch__track"
-                            aria-hidden="true"
-                        ></span>
-                    </span>
-                </label>
-
-                <label class="console-module-card">
-                    <span class="console-module-card__body">
-                        <span class="console-module-card__title-line">
-                            <strong>
-                                EPOS Integration
-                            </strong>
-
-                            <span
-                                id="detailModuleEposState"
-                                class="console-module-state"
-                            >
-                                Disabled
-                            </span>
-                        </span>
-
-                        <small>
-                            Provider-neutral EPOS mapping and sync.
-                            Requires Stock Inventory.
-                        </small>
-                    </span>
-
-                    <span class="console-switch">
-                        <input
-                            id="detailModuleEpos"
-                            type="checkbox"
-                        />
-
-                        <span
-                            class="console-switch__track"
-                            aria-hidden="true"
-                        ></span>
-                    </span>
-                </label>
-            </div>
+            <div id="detailModuleGrid" class="console-module-grid console-module-grid--detail"></div>
 
             <div
                 id="clubModuleReadOnlyNote"

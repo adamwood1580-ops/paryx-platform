@@ -188,7 +188,7 @@
                 error
             } =
                 await window.supabaseClient.rpc(
-                    "get_my_staff_clubs"
+                    "get_my_clubhub_access"
                 );
 
             if (error) {

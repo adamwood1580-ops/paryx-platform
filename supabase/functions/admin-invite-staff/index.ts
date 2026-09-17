@@ -536,11 +536,61 @@ Deno.serve(
                     )
                     .maybeSingle();
 
+            const {
+                data:
+                    platformAccess,
+                error:
+                    platformAccessError
+            } =
+                await admin
+                    .from(
+                        "platform_users"
+                    )
+                    .select(
+                        "role, is_active"
+                    )
+                    .eq(
+                        "user_id",
+                        caller.id
+                    )
+                    .eq(
+                        "is_active",
+                        true
+                    )
+                    .in(
+                        "role",
+                        [
+                            "platform_owner",
+                            "platform_admin"
+                        ]
+                    )
+                    .maybeSingle();
+
+            if (platformAccessError) {
+                throw platformAccessError;
+            }
+
+            const isPlatformAdmin =
+                Boolean(
+                    platformAccess &&
+                    [
+                        "platform_owner",
+                        "platform_admin"
+                    ].includes(
+                        platformAccess.role
+                    )
+                );
+
             if (
                 actorError ||
-                !actorMembership ||
-                !ADMIN_ROLES.has(
-                    actorMembership.role
+                (
+                    !isPlatformAdmin &&
+                    (
+                        !actorMembership ||
+                        !ADMIN_ROLES.has(
+                            actorMembership.role
+                        )
+                    )
                 )
             ) {
                 return responseJson(
@@ -552,8 +602,35 @@ Deno.serve(
                 );
             }
 
+            if (!isPlatformAdmin) {
+                const {
+                    data: membersModule,
+                    error: membersModuleError
+                } =
+                    await admin
+                        .from("club_modules")
+                        .select("is_enabled")
+                        .eq("club_id", clubId)
+                        .eq("module_key", "members")
+                        .maybeSingle();
+
+                if (
+                    membersModuleError ||
+                    membersModule?.is_enabled !== true
+                ) {
+                    return responseJson(
+                        {
+                            error:
+                                "Members module access required."
+                        },
+                        403
+                    );
+                }
+            }
+
             if (
-                actorMembership.role !==
+                !isPlatformAdmin &&
+                actorMembership?.role !==
                     "club_admin" &&
                 ELEVATED_ROLES.has(
                     role
@@ -670,7 +747,8 @@ Deno.serve(
             if (
                 existingMembership?.role ===
                     "club_admin" &&
-                actorMembership.role !==
+                !isPlatformAdmin &&
+                actorMembership?.role !==
                     "club_admin"
             ) {
                 return responseJson(

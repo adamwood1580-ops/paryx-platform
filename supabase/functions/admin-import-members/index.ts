@@ -247,6 +247,23 @@ Deno.serve(async (request) => {
             return responseJson({ error: "Admin access required." }, 403);
         }
 
+        const {
+            data: membersModule,
+            error: membersModuleError
+        } = await admin
+            .from("club_modules")
+            .select("is_enabled")
+            .eq("club_id", clubId)
+            .eq("module_key", "members")
+            .maybeSingle();
+
+        if (
+            membersModuleError ||
+            membersModule?.is_enabled !== true
+        ) {
+            return responseJson({ error: "Members module access required." }, 403);
+        }
+
         let batchId = cleanText(body?.batchId);
 
         if (batchId) {

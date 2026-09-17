@@ -1424,6 +1424,90 @@
     min-height: 0;
     padding: 1.15rem 1.35rem;
 }
+
+/* v0.30.0: temporary scorecard review + compact ongoing hole editor */
+.course-import-review {
+    padding: 0;
+    overflow: hidden;
+}
+
+.course-import-review__summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: .9rem 1rem;
+    cursor: pointer;
+    background: color-mix(in srgb, var(--color-primary-light) 55%, #fff);
+    border-bottom: 1px solid transparent;
+    list-style: none;
+}
+
+.course-import-review__summary::-webkit-details-marker {
+    display: none;
+}
+
+.course-import-review__summary span:first-child {
+    display: grid;
+    gap: .18rem;
+}
+
+.course-import-review__summary strong {
+    color: var(--color-primary-dark);
+}
+
+.course-import-review__summary small {
+    color: var(--color-text-muted);
+}
+
+.course-import-review[open] > .course-import-review__summary {
+    border-bottom-color: var(--color-border);
+}
+
+.course-import-review[open] > :not(summary) {
+    margin-left: var(--space-4);
+    margin-right: var(--space-4);
+}
+
+.course-import-review[open] > :last-child {
+    margin-bottom: var(--space-4);
+}
+
+.tee-yardage-grid {
+    grid-template-columns: repeat(2, minmax(20rem, 1fr));
+}
+
+.tee-yardage-item__fields {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.tee-hole-input {
+    width: 100%;
+    min-height: 2.15rem;
+    box-sizing: border-box;
+    padding: .32rem .35rem;
+    text-align: center;
+    border: 1px solid var(--color-border);
+    border-radius: .5rem;
+    background: #fff;
+    font: inherit;
+}
+
+@media (max-width: 900px) {
+    .tee-yardage-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 520px) {
+    .tee-yardage-item__fields {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .tee-yardage-item__field:first-child {
+        grid-column: 1 / -1;
+    }
+}
 .courses-empty-state h2 {
     font-size: 1.2rem;
 }

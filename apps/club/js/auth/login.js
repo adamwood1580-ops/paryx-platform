@@ -200,14 +200,14 @@
         }
     }
 
-    async function verifyStaffAccess() {
+    async function resolveStaffAccess(userId) {
         const {
             data,
             error
         } =
             await window.supabaseClient
                 .rpc(
-                    "get_my_staff_clubs"
+                    "get_my_clubhub_access"
                 );
 
         if (error) {
@@ -219,7 +219,7 @@
                 ? data
                 : [];
 
-        return rows.some(
+        const authorised = rows.filter(
             function (row) {
                 const role =
                     String(
@@ -234,6 +234,50 @@
                 );
             }
         );
+
+        if (!authorised.length) {
+            return [];
+        }
+
+        const storageKey =
+            `paryx_active_club:${userId}`;
+
+        let savedClubId = null;
+
+        try {
+            savedClubId =
+                window.localStorage.getItem(
+                    storageKey
+                );
+        } catch (error) {
+            console.warn(
+                "ClubHub could not read the saved club selection:",
+                error
+            );
+        }
+
+        const selected =
+            authorised.find(function (row) {
+                return row.club_id === savedClubId;
+            }) ||
+            authorised.find(function (row) {
+                return row.is_primary === true;
+            }) ||
+            authorised[0];
+
+        try {
+            window.localStorage.setItem(
+                storageKey,
+                selected.club_id
+            );
+        } catch (error) {
+            console.warn(
+                "ClubHub could not save the authorised club selection:",
+                error
+            );
+        }
+
+        return authorised;
     }
 
     /* =========================================================
@@ -507,10 +551,12 @@
                  * Confirm an active staff relationship BEFORE
                  * navigating to any protected ClubHub route.
                  */
-                const hasStaffAccess =
-                    await verifyStaffAccess();
+                const authorisedClubs =
+                    await resolveStaffAccess(
+                        data.user.id
+                    );
 
-                if (!hasStaffAccess) {
+                if (!authorisedClubs.length) {
                     /*
                      * Do not let a stale ClubHub inactivity
                      * timestamp convert an access denial into

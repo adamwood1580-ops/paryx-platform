@@ -107,6 +107,20 @@
                 .trim()
                 .toLowerCase();
 
+        const rawModules =
+            Array.isArray(row?.enabled_modules)
+                ? row.enabled_modules
+                : [];
+
+        const modules =
+            rawModules
+                .map(function (moduleKey) {
+                    return String(moduleKey || "")
+                        .trim()
+                        .toLowerCase();
+                })
+                .filter(Boolean);
+
         return {
             id:
                 row?.club_id || null,
@@ -131,6 +145,8 @@
 
             isAdmin:
                 ADMIN_ROLES.has(role),
+
+            modules,
 
             settings: {},
 
@@ -447,7 +463,7 @@
             data,
             error
         } = await client.rpc(
-            "get_my_staff_clubs"
+            "get_my_clubhub_access"
         );
 
         if (error) {
