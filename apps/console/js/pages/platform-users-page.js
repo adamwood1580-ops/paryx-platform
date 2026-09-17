@@ -41,6 +41,16 @@
             "testLoginSubmit"
         );
 
+    const testLoginClub =
+        document.getElementById(
+            "testLoginClub"
+        );
+
+    const testLoginRole =
+        document.getElementById(
+            "testLoginRole"
+        );
+
     const state = {
         isOwner: false
     };
@@ -217,6 +227,42 @@
         }
     }
 
+    async function loadTestClubs() {
+        if (!testLoginClub) {
+            return;
+        }
+
+        const {
+            data,
+            error
+        } =
+            await window.supabaseClient.rpc(
+                "platform_list_clubs",
+                {
+                    p_search: null,
+                    p_limit: 250,
+                    p_offset: 0
+                }
+            );
+
+        if (error) {
+            throw error;
+        }
+
+        const clubs =
+            (Array.isArray(data) ? data : [])
+                .filter(function (row) {
+                    return row.is_active !== false;
+                });
+
+        testLoginClub.innerHTML =
+            clubs.length
+                ? clubs.map(function (row) {
+                    return `<option value="${escapeHtml(row.club_id)}">${escapeHtml(row.club_name)}</option>`;
+                }).join("")
+                : '<option value="">No active clubs available</option>';
+    }
+
     async function initialise() {
         const context =
             await window.ParyxConsole.ready;
@@ -240,6 +286,8 @@
                     "ownerOnlyNote"
                 )
                 .hidden = false;
+        } else {
+            await loadTestClubs();
         }
 
         await loadUsers();
@@ -382,7 +430,11 @@
                                         password:
                                             document.getElementById(
                                                 "testLoginPassword"
-                                            ).value
+                                            ).value,
+                                        clubId:
+                                            testLoginClub.value,
+                                        role:
+                                            testLoginRole.value
                                     }
                                 }
                             );
@@ -427,7 +479,7 @@
 
                     show(
                         successBox,
-                        `Test login created for ${email}. The email is already confirmed and can sign in immediately. No club, ClubHub or Console permissions were granted.`
+                        `ClubHub smoke-test login created for ${email}. It is already confirmed and has active ${testLoginRole.options[testLoginRole.selectedIndex].text} access to ${testLoginClub.options[testLoginClub.selectedIndex].text}.`
                     );
 
                     document.getElementById(
@@ -447,7 +499,7 @@
                 } finally {
                     testLoginSubmit.disabled = false;
                     testLoginSubmit.textContent =
-                        "Create test login";
+                        "Create ClubHub test login";
                 }
             }
         );

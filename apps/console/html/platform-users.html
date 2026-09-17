@@ -82,25 +82,25 @@
 
 <section id="testLoginPanel" class="console-panel">
     <div class="console-panel__header">
-        <h2>Create test login</h2>
+        <h2>Create ClubHub smoke-test login</h2>
         <span class="console-badge">Testing only</span>
     </div>
 
     <div class="console-account-note">
-        Creates a normal Paryx sign-in with its email already confirmed, so it can be used immediately without opening a verification email.
-        This does not grant club membership, ClubHub access or Console access. Use a clearly marked test email such as <strong>name+test1@example.com</strong>.
+        Creates an email-confirmed Paryx account and gives it active ClubHub staff access immediately.
+        Use a clearly marked test email such as <strong>name+test1@example.com</strong>. This does not grant Paryx Console access.
     </div>
 
     <form id="testLoginForm">
         <div class="console-field-grid">
             <div class="console-field">
                 <label for="testLoginFirstName">First name</label>
-                <input id="testLoginFirstName" type="text" required autocomplete="off" placeholder="Test" />
+                <input id="testLoginFirstName" type="text" required autocomplete="off" placeholder="Smoke" />
             </div>
 
             <div class="console-field">
                 <label for="testLoginLastName">Last name</label>
-                <input id="testLoginLastName" type="text" required autocomplete="off" placeholder="Player" />
+                <input id="testLoginLastName" type="text" required autocomplete="off" placeholder="Tester" />
             </div>
 
             <div class="console-field">
@@ -109,14 +109,33 @@
             </div>
 
             <div class="console-field">
-                <label for="testLoginPassword">Temporary test password</label>
+                <label for="testLoginPassword">Test password</label>
                 <input id="testLoginPassword" type="password" required minlength="8" autocomplete="new-password" placeholder="Minimum 8 characters" />
+            </div>
+
+            <div class="console-field">
+                <label for="testLoginClub">Club</label>
+                <select id="testLoginClub" required>
+                    <option value="">Loading clubs…</option>
+                </select>
+            </div>
+
+            <div class="console-field">
+                <label for="testLoginRole">ClubHub role</label>
+                <select id="testLoginRole" required>
+                    <option value="club_admin" selected>Club Admin</option>
+                    <option value="manager">Manager</option>
+                    <option value="reception">Reception</option>
+                    <option value="professional">Professional</option>
+                    <option value="greenkeeper">Greenkeeper</option>
+                    <option value="starter">Starter</option>
+                </select>
             </div>
         </div>
 
         <div class="console-actions" style="margin-top:.9rem;">
             <button id="testLoginSubmit" class="console-button console-button--warning" type="submit">
-                Create test login
+                Create ClubHub test login
             </button>
         </div>
     </form>
