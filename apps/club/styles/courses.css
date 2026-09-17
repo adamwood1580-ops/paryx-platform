@@ -206,20 +206,6 @@
     margin-bottom: var(--space-4);
 }
 
-.courses-empty-state {
-    min-height: 0;
-    display: grid;
-    place-content: center;
-    padding-block: 1.35rem;
-    text-align: center;
-}
-
-.courses-empty-state h2 {
-    margin: .35rem 0 0;
-    color: var(--color-primary);
-}
-
-.courses-empty-state p,
 .courses-empty {
     color: var(--color-text-muted);
 }
@@ -1445,12 +1431,6 @@
 }
 
 
-/* v0.29.5: compact empty state + tee-based stroke-index editing */
-.courses-empty-state {
-    min-height: 0;
-    padding: 1.15rem 1.35rem;
-}
-
 /* v0.30.0: temporary scorecard review + ongoing Tee and Hole editor */
 .course-import-review {
     padding: 0;
@@ -1533,13 +1513,6 @@
     .tee-yardage-item__field:first-child {
         grid-column: 1 / -1;
     }
-}
-.courses-empty-state h2 {
-    font-size: 1.2rem;
-}
-.courses-empty-state p {
-    margin: .35rem 0 0;
-    font-size: .78rem;
 }
 .course-scorecard-table {
     min-width: 28rem;

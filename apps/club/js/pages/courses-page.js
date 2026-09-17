@@ -34,7 +34,6 @@
         success: document.getElementById("coursesSuccess"),
         addCourseButton: document.getElementById("addCourseButton"),
         courseList: document.getElementById("courseList"),
-        emptyState: document.getElementById("courseEmptyState"),
         editor: document.getElementById("courseEditor"),
         editorTitle: document.getElementById("courseEditorTitle"),
         defaultBadge: document.getElementById("courseDefaultBadge"),
@@ -349,12 +348,10 @@
     }
 
     function showEditor() {
-        elements.emptyState.hidden = true;
         elements.editor.hidden = false;
     }
 
     function showEmptyState() {
-        elements.emptyState.hidden = false;
         elements.editor.hidden = true;
     }
 
