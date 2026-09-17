@@ -14,6 +14,7 @@
         disabled: document.getElementById("widgetDisabled"),
         content: document.getElementById("widgetContent"),
         course: document.getElementById("courseSelect"),
+        courseField: document.getElementById("courseField"),
         dates: document.getElementById("dateStrip"),
         heading: document.getElementById("availabilityHeading"),
         summary: document.getElementById("availabilitySummary"),
@@ -213,6 +214,9 @@
 
         state.courseId = defaultCourse.course_id;
         elements.course.value = state.courseId;
+        if (elements.courseField) {
+            elements.courseField.hidden = courses.length === 1;
+        }
         state.date = /^\d{4}-\d{2}-\d{2}$/.test(String(params.get("date") || ""))
             ? params.get("date")
             : isoDate(new Date());

@@ -61,6 +61,7 @@
         error: document.getElementById("teeSheetError"),
         success: document.getElementById("teeSheetSuccess"),
         courseSelect: document.getElementById("teeSheetCourseSelect"),
+        courseField: document.getElementById("teeSheetCourseField"),
         date: document.getElementById("teeSheetDate"),
         previousDay: document.getElementById("previousDayButton"),
         nextDay: document.getElementById("nextDayButton"),
@@ -363,6 +364,15 @@
         );
 
         state.courses = rows;
+
+        let courseMode = null;
+        try {
+            const modeRows = normaliseRows(await rpc("get_club_course_mode", { p_club_id: state.clubId }));
+            courseMode = modeRows[0] || null;
+        } catch (error) {
+            console.warn("Course mode unavailable; using normal selector.", error);
+        }
+
         elements.courseSelect.innerHTML = rows
             .map(function (course) {
                 return `
@@ -375,11 +385,16 @@
 
         const preferred =
             rows.find(function (course) {
+                return course.course_id === courseMode?.default_course_id;
+            }) || rows.find(function (course) {
                 return course.is_default === true;
             }) || rows[0] || null;
 
         state.courseId = preferred?.course_id || null;
         elements.courseSelect.value = state.courseId || "";
+        if (elements.courseField) {
+            elements.courseField.hidden = courseMode?.single_course_mode === true && rows.length === 1;
+        }
     }
 
     async function loadSchedules() {

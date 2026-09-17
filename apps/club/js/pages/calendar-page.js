@@ -78,6 +78,7 @@
         sectionFilter: "all",
         events: [],
         courses: [],
+        courseMode: null,
         suggestions: [],
         selectedDay: null,
         returnToDayAfterEdit: false,
@@ -133,6 +134,7 @@
         eventStatus: document.getElementById("eventStatus"),
         eventVenue: document.getElementById("eventVenue"),
         eventCourseId: document.getElementById("eventCourseId"),
+        eventCourseField: document.getElementById("eventCourseField"),
         eventNotes: document.getElementById("eventNotes"),
         eventQualifier: document.getElementById("eventQualifier"),
         eventPublished: document.getElementById("eventPublished"),
@@ -652,6 +654,18 @@
                 ? data
                 : [];
 
+        try {
+            const { data: modeData, error: modeError } = await getClient().rpc(
+                "get_club_course_mode",
+                { p_club_id: state.clubId }
+            );
+            if (modeError) throw modeError;
+            state.courseMode = Array.isArray(modeData) ? (modeData[0] || null) : modeData;
+        } catch (error) {
+            state.courseMode = null;
+            console.warn("Course mode unavailable; using normal calendar selector.", error);
+        }
+
         populateCourseSelect();
     }
 
@@ -660,8 +674,9 @@
             return;
         }
 
+        const single = state.courseMode?.single_course_mode === true && state.courses.length === 1;
         elements.eventCourseId.innerHTML = [
-            '<option value="">All / not specified</option>',
+            ...(single ? [] : ['<option value="">All / not specified</option>']),
             ...state.courses.map(function (course) {
                 return `
                     <option value="${escapeHtml(course.course_id)}">
@@ -670,6 +685,13 @@
                 `;
             })
         ].join("");
+
+        if (single) {
+            elements.eventCourseId.value = state.courseMode.default_course_id || state.courses[0].course_id;
+        }
+        if (elements.eventCourseField) {
+            elements.eventCourseField.hidden = single;
+        }
     }
 
     function defaultCourseId() {

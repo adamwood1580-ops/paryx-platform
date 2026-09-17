@@ -30,6 +30,7 @@
         clubMeta: document.getElementById("clubMeta"),
         accessBanner: document.getElementById("accessBanner"),
         course: document.getElementById("courseSelect"),
+        courseField: document.getElementById("courseField"),
         dateStrip: document.getElementById("dateStrip"),
         teeHeading: document.getElementById("teeHeading"),
         teeSummary: document.getElementById("teeSummary"),
@@ -152,6 +153,15 @@
             p_club_id: state.clubId
         }));
 
+        let courseMode = null;
+        try {
+            courseMode = P.rows(await P.rpc("get_club_course_mode", {
+                p_club_id: state.clubId
+            }))[0] || null;
+        } catch (error) {
+            console.warn("Course mode unavailable; using normal selector.", error);
+        }
+
         elements.course.innerHTML = state.courses.length
             ? state.courses.map(function (course) {
                 return `<option value="${P.escapeHtml(course.course_id)}">${P.escapeHtml(course.course_name)}</option>`;
@@ -162,8 +172,14 @@
             return course.course_id === requestedCourseId;
         });
 
-        state.courseId = requestedCourse?.course_id || state.courses[0]?.course_id || null;
+        const defaultCourse = state.courses.find(function (course) {
+            return course.course_id === courseMode?.default_course_id;
+        });
+        state.courseId = requestedCourse?.course_id || defaultCourse?.course_id || state.courses[0]?.course_id || null;
         elements.course.value = state.courseId || "";
+        if (elements.courseField) {
+            elements.courseField.hidden = courseMode?.single_course_mode === true && state.courses.length === 1;
+        }
         await loadTees();
     }
 

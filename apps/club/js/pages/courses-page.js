@@ -22,7 +22,9 @@
         editingTeeId: null,
         creatingCourse: false,
         scorecardImageDataUrl: null,
-        scorecardExtraction: null
+        scorecardExtraction: null,
+        singleCourseMode: false,
+        activeCourseCount: 0
     };
 
     const elements = {
@@ -40,6 +42,8 @@
         courseName: document.getElementById("courseName"),
         courseHoles: document.getElementById("courseHoles"),
         courseActive: document.getElementById("courseActive"),
+        singleCourseClub: document.getElementById("singleCourseClub"),
+        singleCourseHint: document.getElementById("singleCourseHint"),
         saveCourseButton: document.getElementById("saveCourseButton"),
         holeDataSection: document.getElementById("holeDataSection"),
         holeTableBody: document.getElementById("holeTableBody"),
@@ -271,6 +275,32 @@
         renderCourseList();
     }
 
+
+    async function loadCourseMode() {
+        const client = getClient();
+        const { data, error } = await client.rpc(
+            "get_club_course_mode",
+            { p_club_id: state.clubId }
+        );
+        if (error) throw error;
+        const row = Array.isArray(data) ? data[0] : data;
+        state.singleCourseMode = row?.single_course_mode === true;
+        state.activeCourseCount = Number(row?.active_course_count || 0);
+        return row || null;
+    }
+
+    function renderSingleCourseControl() {
+        if (!elements.singleCourseClub) return;
+        elements.singleCourseClub.checked = state.singleCourseMode;
+        const tooMany = state.activeCourseCount > 1 && !state.singleCourseMode;
+        elements.singleCourseClub.disabled = tooMany;
+        if (elements.singleCourseHint) {
+            elements.singleCourseHint.textContent = tooMany
+                ? "Deactivate extra courses first. Single-course mode requires exactly one active course."
+                : "Use the only active course automatically across Paryx and remove unnecessary course choices.";
+        }
+    }
+
     function normaliseConfiguration(data) {
         if (!data) {
             return null;
@@ -344,6 +374,7 @@
         elements.courseName.value = "";
         elements.courseHoles.value = "18";
         elements.courseActive.checked = true;
+        renderSingleCourseControl();
 
         elements.holeDataSection.hidden = true;
         elements.teesSection.hidden = true;
@@ -1331,6 +1362,8 @@
         elements.courseActive.checked =
             course.is_active === true;
 
+        renderSingleCourseControl();
+
         elements.holeDataSection.hidden = false;
         elements.teesSection.hidden = false;
 
@@ -1424,6 +1457,19 @@
                 courseId;
 
             state.creatingCourse = false;
+
+            const requestedSingleCourse = elements.singleCourseClub?.checked === true;
+            const { data: modeData, error: modeError } = await client.rpc(
+                "admin_set_single_course_mode",
+                {
+                    p_club_id: state.clubId,
+                    p_enabled: requestedSingleCourse
+                }
+            );
+            if (modeError) throw modeError;
+            const modeRow = Array.isArray(modeData) ? modeData[0] : modeData;
+            state.singleCourseMode = modeRow?.single_course_mode === true;
+            state.activeCourseCount = Number(modeRow?.active_course_count || 0);
 
             await loadCourses();
 
@@ -3100,6 +3146,7 @@
 
             bindEvents();
             await loadCourses();
+            await loadCourseMode();
 
             const defaultCourse =
                 state.courses.find(
