@@ -12,7 +12,7 @@
     <link rel="apple-touch-icon" href="../../club/assets/paryx-apple-touch-icon.png" />
     <link rel="icon" type="image/png" href="../../club/assets/paryx-favicon.png" />
 
-    <script src="../js/core/console-loader.js?loader=2" defer></script>
+    <script src="../js/core/console-loader.js?loader=3" defer></script>
 </head>
 <body data-page="platformusers">
     <div class="console-shell">
@@ -80,7 +80,7 @@
     </form>
 </section>
 
-<section id="testLoginPanel" class="console-panel">
+<section id="testLoginPanel" class="console-panel" hidden>
     <div class="console-panel__header">
         <h2>Create ClubHub smoke-test login</h2>
         <span class="console-badge">Testing only</span>
@@ -91,7 +91,7 @@
         Use a clearly marked test email such as <strong>name+test1@example.com</strong>. This does not grant Paryx Console access.
     </div>
 
-    <form id="testLoginForm">
+    <form id="testLoginForm" novalidate>
         <div class="console-field-grid">
             <div class="console-field">
                 <label for="testLoginFirstName">First name</label>
@@ -133,8 +133,10 @@
             </div>
         </div>
 
+        <div id="testLoginInlineMessage" class="console-account-note" hidden style="margin-top:.9rem;" aria-live="polite"></div>
+
         <div class="console-actions" style="margin-top:.9rem;">
-            <button id="testLoginSubmit" class="console-button console-button--warning" type="submit">
+            <button id="testLoginSubmit" class="console-button console-button--warning" type="button">
                 Create ClubHub test login
             </button>
         </div>

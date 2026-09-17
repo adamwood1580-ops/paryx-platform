@@ -51,6 +51,11 @@
             "testLoginRole"
         );
 
+    const testLoginInlineMessage =
+        document.getElementById(
+            "testLoginInlineMessage"
+        );
+
     const state = {
         isOwner: false
     };
@@ -81,6 +86,31 @@
     function clear() {
         errorBox.hidden = true;
         successBox.hidden = true;
+    }
+
+    function showTestLoginMessage(message, kind) {
+        if (!testLoginInlineMessage) {
+            return;
+        }
+
+        testLoginInlineMessage.textContent = message;
+        testLoginInlineMessage.hidden = false;
+        testLoginInlineMessage.setAttribute(
+            "data-status",
+            kind || "info"
+        );
+    }
+
+    function clearTestLoginMessage() {
+        if (!testLoginInlineMessage) {
+            return;
+        }
+
+        testLoginInlineMessage.hidden = true;
+        testLoginInlineMessage.textContent = "";
+        testLoginInlineMessage.removeAttribute(
+            "data-status"
+        );
     }
 
     function render(rows) {
@@ -261,6 +291,8 @@
                     return `<option value="${escapeHtml(row.club_id)}">${escapeHtml(row.club_name)}</option>`;
                 }).join("")
                 : '<option value="">No active clubs available</option>';
+
+        return clubs.length;
     }
 
     async function initialise() {
@@ -287,7 +319,39 @@
                 )
                 .hidden = false;
         } else {
-            await loadTestClubs();
+            try {
+                const clubCount =
+                    await loadTestClubs();
+
+                if (testLoginPanel) {
+                    testLoginPanel.hidden = false;
+                }
+
+                if (clubCount > 0) {
+                    testLoginSubmit.disabled = false;
+                    showTestLoginMessage(
+                        "Test-login creator is ready.",
+                        "ready"
+                    );
+                } else {
+                    testLoginSubmit.disabled = true;
+                    showTestLoginMessage(
+                        "No active clubs are available for a ClubHub test login.",
+                        "error"
+                    );
+                }
+            } catch (error) {
+                if (testLoginPanel) {
+                    testLoginPanel.hidden = false;
+                }
+
+                testLoginSubmit.disabled = true;
+                showTestLoginMessage(
+                    error?.message ||
+                    "The club list could not be loaded.",
+                    "error"
+                );
+            }
         }
 
         await loadUsers();
@@ -370,137 +434,223 @@
         }
     );
 
+    async function createClubHubTestLogin() {
+        clear();
+        clearTestLoginMessage();
+
+        if (!state.isOwner) {
+            showTestLoginMessage(
+                "Only a Platform Owner can create test logins.",
+                "error"
+            );
+            return;
+        }
+
+        if (!testLoginForm.checkValidity()) {
+            testLoginForm.reportValidity();
+            showTestLoginMessage(
+                "Complete all required fields before creating the test login.",
+                "error"
+            );
+            return;
+        }
+
+        const firstName =
+            document.getElementById(
+                "testLoginFirstName"
+            ).value.trim();
+
+        const lastName =
+            document.getElementById(
+                "testLoginLastName"
+            ).value.trim();
+
+        const email =
+            document.getElementById(
+                "testLoginEmail"
+            ).value.trim();
+
+        const password =
+            document.getElementById(
+                "testLoginPassword"
+            ).value;
+
+        if (
+            !email
+                .split("@")[0]
+                ?.toLowerCase()
+                .includes("+test")
+        ) {
+            showTestLoginMessage(
+                "Use a test email containing +test before the @ symbol, for example name+test1@example.com.",
+                "error"
+            );
+            return;
+        }
+
+        if (!testLoginClub.value) {
+            showTestLoginMessage(
+                "Select an active club.",
+                "error"
+            );
+            return;
+        }
+
+        testLoginSubmit.disabled = true;
+        testLoginSubmit.textContent =
+            "Creating…";
+
+        showTestLoginMessage(
+            "Creating the confirmed Paryx account and ClubHub staff access…",
+            "working"
+        );
+
+        try {
+            const {
+                data,
+                error
+            } =
+                await window.supabaseClient
+                    .functions
+                    .invoke(
+                        "admin-create-test-user",
+                        {
+                            body: {
+                                firstName,
+                                lastName,
+                                email,
+                                password,
+                                clubId:
+                                    testLoginClub.value,
+                                role:
+                                    testLoginRole.value
+                            }
+                        }
+                    );
+
+            if (error) {
+                let message =
+                    error.message ||
+                    "Test login could not be created.";
+
+                try {
+                    const response =
+                        error.context;
+
+                    if (
+                        response &&
+                        typeof response.clone ===
+                            "function"
+                    ) {
+                        const clone =
+                            response.clone();
+
+                        const contentType =
+                            clone.headers?.get?.(
+                                "content-type"
+                            ) || "";
+
+                        if (
+                            contentType.includes(
+                                "application/json"
+                            )
+                        ) {
+                            const payload =
+                                await clone.json();
+
+                            message =
+                                payload?.error ||
+                                message;
+                        } else {
+                            const text =
+                                await clone.text();
+
+                            if (text.trim()) {
+                                message =
+                                    text.trim();
+                            }
+                        }
+                    }
+                } catch {
+                    // Keep the Supabase Functions error message.
+                }
+
+                throw new Error(message);
+            }
+
+            if (data?.error) {
+                throw new Error(
+                    data.error
+                );
+            }
+
+            const roleLabel =
+                testLoginRole.options[
+                    testLoginRole.selectedIndex
+                ]?.text ||
+                testLoginRole.value;
+
+            const clubLabel =
+                testLoginClub.options[
+                    testLoginClub.selectedIndex
+                ]?.text ||
+                "the selected club";
+
+            showTestLoginMessage(
+                `Created ${email}. The account is email-confirmed and has active ${roleLabel} access to ${clubLabel}.`,
+                "success"
+            );
+
+            show(
+                successBox,
+                `ClubHub smoke-test login created for ${email}.`
+            );
+
+            document.getElementById(
+                "testLoginPassword"
+            ).value = "";
+        } catch (error) {
+            console.error(
+                "Test login creation failed:",
+                error
+            );
+
+            const message =
+                error?.message ||
+                "Test login could not be created.";
+
+            showTestLoginMessage(
+                message,
+                "error"
+            );
+
+            show(
+                errorBox,
+                message
+            );
+        } finally {
+            testLoginSubmit.disabled = false;
+            testLoginSubmit.textContent =
+                "Create ClubHub test login";
+        }
+    }
+
     if (testLoginForm) {
         testLoginForm.addEventListener(
             "submit",
-            async function (event) {
+            function (event) {
                 event.preventDefault();
-                clear();
+                createClubHubTestLogin();
+            }
+        );
+    }
 
-                if (!state.isOwner) {
-                    show(
-                        errorBox,
-                        "Only a Platform Owner can create test logins."
-                    );
-                    return;
-                }
-
-                const email =
-                    document.getElementById(
-                        "testLoginEmail"
-                    ).value.trim();
-
-                if (
-                    !email
-                        .split("@")[0]
-                        ?.toLowerCase()
-                        .includes("+test")
-                ) {
-                    show(
-                        errorBox,
-                        "Use a clearly marked test email containing +test before the @ symbol, for example name+test1@example.com."
-                    );
-                    return;
-                }
-
-                testLoginSubmit.disabled = true;
-                testLoginSubmit.textContent =
-                    "Creating…";
-
-                try {
-                    const {
-                        data,
-                        error
-                    } =
-                        await window.supabaseClient
-                            .functions
-                            .invoke(
-                                "admin-create-test-user",
-                                {
-                                    body: {
-                                        firstName:
-                                            document.getElementById(
-                                                "testLoginFirstName"
-                                            ).value.trim(),
-                                        lastName:
-                                            document.getElementById(
-                                                "testLoginLastName"
-                                            ).value.trim(),
-                                        email,
-                                        password:
-                                            document.getElementById(
-                                                "testLoginPassword"
-                                            ).value,
-                                        clubId:
-                                            testLoginClub.value,
-                                        role:
-                                            testLoginRole.value
-                                    }
-                                }
-                            );
-
-                    if (error) {
-                        let message =
-                            error.message ||
-                            "Test login could not be created.";
-
-                        try {
-                            const response =
-                                error.context;
-
-                            if (
-                                response &&
-                                typeof response.clone ===
-                                    "function"
-                            ) {
-                                const payload =
-                                    await response
-                                        .clone()
-                                        .json();
-
-                                message =
-                                    payload?.error ||
-                                    message;
-                            }
-                        } catch {
-                            // Keep the function error message.
-                        }
-
-                        throw new Error(
-                            message
-                        );
-                    }
-
-                    if (data?.error) {
-                        throw new Error(
-                            data.error
-                        );
-                    }
-
-                    show(
-                        successBox,
-                        `ClubHub smoke-test login created for ${email}. It is already confirmed and has active ${testLoginRole.options[testLoginRole.selectedIndex].text} access to ${testLoginClub.options[testLoginClub.selectedIndex].text}.`
-                    );
-
-                    document.getElementById(
-                        "testLoginPassword"
-                    ).value = "";
-                } catch (error) {
-                    console.error(
-                        "Test login creation failed:",
-                        error
-                    );
-
-                    show(
-                        errorBox,
-                        error?.message ||
-                        "Test login could not be created."
-                    );
-                } finally {
-                    testLoginSubmit.disabled = false;
-                    testLoginSubmit.textContent =
-                        "Create ClubHub test login";
-                }
+    if (testLoginSubmit) {
+        testLoginSubmit.addEventListener(
+            "click",
+            function (event) {
+                event.preventDefault();
+                createClubHubTestLogin();
             }
         );
     }

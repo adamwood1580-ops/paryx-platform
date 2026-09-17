@@ -269,6 +269,21 @@ Deno.serve(async (request: Request) => {
 
         if (membershipError) throw membershipError;
 
+        const { error: playerLinkError } = await admin
+            .from("club_membership_player_links")
+            .upsert(
+                {
+                    membership_id: membership.id,
+                    club_id: clubId,
+                    profile_id: targetUser.id,
+                    link_method: "platform_support",
+                    updated_at: now
+                },
+                { onConflict: "membership_id" }
+            );
+
+        if (playerLinkError) throw playerLinkError;
+
         const { error: auditError } = await admin
             .from("platform_audit_log")
             .insert({
