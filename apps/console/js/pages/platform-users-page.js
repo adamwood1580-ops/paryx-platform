@@ -507,6 +507,29 @@
 
         try {
             const {
+                data: sessionData,
+                error: sessionError
+            } =
+                await window.supabaseClient
+                    .auth
+                    .getSession();
+
+            const accessToken =
+                sessionData?.session?.access_token;
+
+            if (
+                sessionError ||
+                !accessToken
+            ) {
+                throw (
+                    sessionError ||
+                    new Error(
+                        "Your Paryx Console session is not ready. Sign in again and retry."
+                    )
+                );
+            }
+
+            const {
                 data,
                 error
             } =
@@ -515,6 +538,10 @@
                     .invoke(
                         "admin-create-test-user",
                         {
+                            headers: {
+                                Authorization:
+                                    `Bearer ${accessToken}`
+                            },
                             body: {
                                 firstName,
                                 lastName,
@@ -573,6 +600,14 @@
                     }
                 } catch {
                     // Keep the Supabase Functions error message.
+                }
+
+                if (
+                    message ===
+                    "Failed to send a request to the Edge Function"
+                ) {
+                    message =
+                        "The browser could not complete the Edge Function request. The v0.30.3 function includes the current Supabase CORS headers and sends your Console session explicitly. If this message remains after redeploying admin-create-test-user, check Supabase → Edge Functions → admin-create-test-user → Invocations: no invocation means the gateway/deployment is blocking the request; an invocation means open its log for the returned server error.";
                 }
 
                 throw new Error(message);

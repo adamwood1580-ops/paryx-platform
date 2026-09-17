@@ -1,4 +1,5 @@
-import { createClient } from "npm:@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@^2";
+import { corsHeaders as supabaseCorsHeaders } from "npm:@supabase/supabase-js@^2/cors";
 
 const STAFF_ROLES = new Set([
     "starter",
@@ -10,9 +11,7 @@ const STAFF_ROLES = new Set([
 ]);
 
 const corsHeaders = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers":
-        "authorization, x-client-info, apikey, content-type",
+    ...supabaseCorsHeaders,
     "Access-Control-Allow-Methods":
         "POST, OPTIONS"
 };
