@@ -1471,7 +1471,9 @@
         renderYardageGrid(tee || null);
         renderTeeList();
 
-        elements.teeName.focus();
+        elements.teeName.focus({
+            preventScroll: true
+        });
     }
 
     function renderCourseConfiguration() {

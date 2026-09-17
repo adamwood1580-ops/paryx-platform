@@ -35,9 +35,14 @@ body {
     position: sticky;
     top: 0;
     height: 100vh;
+    height: 100dvh;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    scrollbar-gutter: stable;
     padding: 1.6rem 1.15rem;
     color: #fff;
     background:
@@ -466,6 +471,8 @@ body {
     .console-sidebar {
         position: static;
         height: auto;
+        overflow: visible;
+        scrollbar-gutter: auto;
         padding: .9rem 1rem;
     }
 

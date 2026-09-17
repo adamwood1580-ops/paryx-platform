@@ -396,6 +396,15 @@
     grid-template-columns: minmax(10rem, 14rem) minmax(0, 1fr);
     gap: var(--space-4);
     margin-top: var(--space-4);
+    min-width: 0;
+}
+
+.courses-editor,
+#courseEditor,
+.tee-editor,
+.tee-yardage-section {
+    min-width: 0;
+    max-width: 100%;
 }
 
 .tee-list {
@@ -500,7 +509,7 @@
     font: inherit;
 }
 
-@media (max-width: 1080px) {
+@media (max-width: 1200px) {
     .courses-layout {
         grid-template-columns: 1fr;
     }
@@ -510,6 +519,10 @@
     }
 
     .course-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .courses-grid--three {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
@@ -609,15 +622,27 @@
 }
 
 @media (max-width: 1180px) {
-    .tee-layout {
-        grid-template-columns:
-            minmax(10rem, 12rem)
-            minmax(0, 1fr);
-    }
-
     .tee-rating-fields {
         grid-template-columns:
             repeat(3, minmax(6rem, 1fr));
+    }
+}
+
+@media (max-width: 1440px) {
+    .tee-layout {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .tee-list {
+        grid-template-columns:
+            repeat(auto-fit, minmax(min(10rem, 100%), 1fr));
+    }
+
+    .tee-editor,
+    .tee-editor-empty {
+        width: 100%;
+        max-width: 100%;
+        grid-column: 1;
     }
 }
 
@@ -1407,10 +1432,11 @@
 .courses-check-field--single input:disabled + span { opacity: .65; }
 .courses-card--scorecard .courses-card__header { margin-bottom: .25rem; }
 .course-setup-status, .course-tee-ratings-overview { margin-top: var(--space-3); }
-@media (max-width: 1080px) {
+@media (max-width: 1200px) {
     .courses-layout { grid-template-columns: 1fr; }
     .courses-directory { padding: .8rem; }
     .course-list { grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); }
+    .courses-grid--three { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 780px) {
     .courses-card { padding: var(--space-3); }
@@ -1425,7 +1451,7 @@
     padding: 1.15rem 1.35rem;
 }
 
-/* v0.30.0: temporary scorecard review + compact ongoing hole editor */
+/* v0.30.0: temporary scorecard review + ongoing Tee and Hole editor */
 .course-import-review {
     padding: 0;
     overflow: hidden;
@@ -1521,7 +1547,7 @@
 .tee-yardage-grid {
     grid-template-columns: repeat(3, minmax(12rem, 1fr));
 }
-@media (max-width: 1080px) {
+@media (max-width: 1200px) {
     .tee-yardage-grid {
         grid-template-columns: repeat(2, minmax(12rem, 1fr));
     }
