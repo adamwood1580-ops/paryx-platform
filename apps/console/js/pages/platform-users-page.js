@@ -26,6 +26,21 @@
             "platformUserSubmit"
         );
 
+    const testLoginPanel =
+        document.getElementById(
+            "testLoginPanel"
+        );
+
+    const testLoginForm =
+        document.getElementById(
+            "testLoginForm"
+        );
+
+    const testLoginSubmit =
+        document.getElementById(
+            "testLoginSubmit"
+        );
+
     const state = {
         isOwner: false
     };
@@ -216,6 +231,10 @@
         if (!owner) {
             form.hidden = true;
 
+            if (testLoginPanel) {
+                testLoginPanel.hidden = true;
+            }
+
             document
                 .getElementById(
                     "ownerOnlyNote"
@@ -302,6 +321,137 @@
             }
         }
     );
+
+    if (testLoginForm) {
+        testLoginForm.addEventListener(
+            "submit",
+            async function (event) {
+                event.preventDefault();
+                clear();
+
+                if (!state.isOwner) {
+                    show(
+                        errorBox,
+                        "Only a Platform Owner can create test logins."
+                    );
+                    return;
+                }
+
+                const email =
+                    document.getElementById(
+                        "testLoginEmail"
+                    ).value.trim();
+
+                if (
+                    !email
+                        .split("@")[0]
+                        ?.toLowerCase()
+                        .includes("+test")
+                ) {
+                    show(
+                        errorBox,
+                        "Use a clearly marked test email containing +test before the @ symbol, for example name+test1@example.com."
+                    );
+                    return;
+                }
+
+                testLoginSubmit.disabled = true;
+                testLoginSubmit.textContent =
+                    "Creating…";
+
+                try {
+                    const {
+                        data,
+                        error
+                    } =
+                        await window.supabaseClient
+                            .functions
+                            .invoke(
+                                "admin-create-test-user",
+                                {
+                                    body: {
+                                        firstName:
+                                            document.getElementById(
+                                                "testLoginFirstName"
+                                            ).value.trim(),
+                                        lastName:
+                                            document.getElementById(
+                                                "testLoginLastName"
+                                            ).value.trim(),
+                                        email,
+                                        password:
+                                            document.getElementById(
+                                                "testLoginPassword"
+                                            ).value
+                                    }
+                                }
+                            );
+
+                    if (error) {
+                        let message =
+                            error.message ||
+                            "Test login could not be created.";
+
+                        try {
+                            const response =
+                                error.context;
+
+                            if (
+                                response &&
+                                typeof response.clone ===
+                                    "function"
+                            ) {
+                                const payload =
+                                    await response
+                                        .clone()
+                                        .json();
+
+                                message =
+                                    payload?.error ||
+                                    message;
+                            }
+                        } catch {
+                            // Keep the function error message.
+                        }
+
+                        throw new Error(
+                            message
+                        );
+                    }
+
+                    if (data?.error) {
+                        throw new Error(
+                            data.error
+                        );
+                    }
+
+                    show(
+                        successBox,
+                        `Test login created for ${email}. The email is already confirmed and can sign in immediately. No club, ClubHub or Console permissions were granted.`
+                    );
+
+                    document.getElementById(
+                        "testLoginPassword"
+                    ).value = "";
+                } catch (error) {
+                    console.error(
+                        "Test login creation failed:",
+                        error
+                    );
+
+                    show(
+                        errorBox,
+                        error?.message ||
+                        "Test login could not be created."
+                    );
+                } finally {
+                    testLoginSubmit.disabled = false;
+                    testLoginSubmit.textContent =
+                        "Create test login";
+                }
+            }
+        );
+    }
 
     initialise().catch(function (error) {
         show(
