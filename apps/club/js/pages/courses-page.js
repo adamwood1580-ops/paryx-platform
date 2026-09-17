@@ -397,6 +397,54 @@
         );
     }
 
+    function holeStateByNumber(holeNumber) {
+        return (
+            Array.isArray(state.config?.holes)
+                ? state.config.holes
+                : []
+        ).find(function (hole) {
+            return Number(hole.hole_number) === Number(holeNumber);
+        }) || null;
+    }
+
+    function syncStrokeIndexesFromTeeEditor() {
+        if (
+            !elements.teeYardageGrid ||
+            (
+                elements.teeYardageGrid.dataset.courseId &&
+                elements.teeYardageGrid.dataset.courseId !== state.selectedCourseId
+            )
+        ) {
+            return;
+        }
+
+        elements.teeYardageGrid
+            .querySelectorAll("[data-men-si-hole]")
+            .forEach(function (input) {
+                const hole = holeStateByNumber(
+                    input.dataset.menSiHole
+                );
+
+                if (hole) {
+                    hole.men_stroke_index =
+                        numberOrNull(input.value);
+                }
+            });
+
+        elements.teeYardageGrid
+            .querySelectorAll("[data-women-si-hole]")
+            .forEach(function (input) {
+                const hole = holeStateByNumber(
+                    input.dataset.womenSiHole
+                );
+
+                if (hole) {
+                    hole.women_stroke_index =
+                        numberOrNull(input.value);
+                }
+            });
+    }
+
     function renderHoleRows() {
         const holes =
             Array.isArray(state.config?.holes)
@@ -408,19 +456,11 @@
                 ? state.config.tees
                 : [];
 
-        const maxSi =
-            Number(
-                state.config?.course?.holes ||
-                18
-            );
-
         elements.scorecardTableHead.innerHTML = `
             <tr>
                 <th class="course-scorecard-table__hole">Hole</th>
                 <th>Men par</th>
-                <th>Men SI</th>
                 <th>Women par</th>
-                <th>Women SI</th>
                 ${tees.map(function (tee) {
                     return `
                         <th class="course-scorecard-table__tee">
@@ -477,34 +517,12 @@
                             <td>
                                 <input
                                     type="number"
-                                    min="1"
-                                    max="${maxSi}"
-                                    step="1"
-                                    value="${hole.men_stroke_index ?? ""}"
-                                    data-men-si
-                                    aria-label="Hole ${holeNumber} men's stroke index"
-                                >
-                            </td>
-                            <td>
-                                <input
-                                    type="number"
                                     min="2"
                                     max="7"
                                     step="1"
                                     value="${hole.women_par ?? ""}"
                                     data-women-par
                                     aria-label="Hole ${holeNumber} women's par"
-                                >
-                            </td>
-                            <td>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    max="${maxSi}"
-                                    step="1"
-                                    value="${hole.women_stroke_index ?? ""}"
-                                    data-women-si
-                                    aria-label="Hole ${holeNumber} women's stroke index"
                                 >
                             </td>
                             ${teeCells}
@@ -533,13 +551,16 @@
                     "tr[data-hole-number]"
                 )
         ).map(function (row) {
+            const holeNumber =
+                Number(row.dataset.holeNumber);
+
+            const storedHole =
+                holeStateByNumber(holeNumber);
+
             return {
-                hole_number:
-                    Number(
-                        row.dataset.holeNumber
-                    ),
+                hole_number: holeNumber,
                 hole_name:
-                    null,
+                    storedHole?.hole_name || null,
                 men_par:
                     numberOrNull(
                         row.querySelector(
@@ -548,9 +569,7 @@
                     ),
                 men_stroke_index:
                     numberOrNull(
-                        row.querySelector(
-                            "[data-men-si]"
-                        )?.value
+                        storedHole?.men_stroke_index
                     ),
                 women_par:
                     numberOrNull(
@@ -560,9 +579,7 @@
                     ),
                 women_stroke_index:
                     numberOrNull(
-                        row.querySelector(
-                            "[data-women-si]"
-                        )?.value
+                        storedHole?.women_stroke_index
                     )
             };
         });
@@ -724,9 +741,7 @@
                     <tr>
                         <th>${label}</th>
                         <td>${men ?? "—"}</td>
-                        <td></td>
                         <td>${women ?? "—"}</td>
-                        <td></td>
                         ${teeCells}
                     </tr>
                 `;
@@ -1178,6 +1193,11 @@
                 })
         );
 
+        const maxSi = holeCount;
+
+        elements.teeYardageGrid.dataset.courseId =
+            state.selectedCourseId || "";
+
         elements.teeYardageGrid.innerHTML =
             Array.from(
                 { length: holeCount },
@@ -1188,20 +1208,57 @@
                     const yards =
                         byHole.get(holeNumber);
 
+                    const hole =
+                        holeStateByNumber(holeNumber);
+
                     return `
-                        <label class="tee-yardage-item">
-                            <span>Hole ${holeNumber}</span>
-                            <input
-                                class="tee-yardage-input"
-                                type="number"
-                                min="20"
-                                max="900"
-                                step="1"
-                                value="${yards ?? ""}"
-                                data-yardage-hole="${holeNumber}"
-                                aria-label="Hole ${holeNumber} yardage"
-                            >
-                        </label>
+                        <div class="tee-yardage-item">
+                            <strong class="tee-yardage-item__hole">Hole ${holeNumber}</strong>
+
+                            <div class="tee-yardage-item__fields">
+                                <label class="tee-yardage-item__field">
+                                    <span>Yards</span>
+                                    <input
+                                        class="tee-yardage-input"
+                                        type="number"
+                                        min="20"
+                                        max="900"
+                                        step="1"
+                                        value="${yards ?? ""}"
+                                        data-yardage-hole="${holeNumber}"
+                                        aria-label="Hole ${holeNumber} yardage"
+                                    >
+                                </label>
+
+                                <label class="tee-yardage-item__field">
+                                    <span>Men SI</span>
+                                    <input
+                                        class="tee-stroke-index-input"
+                                        type="number"
+                                        min="1"
+                                        max="${maxSi}"
+                                        step="1"
+                                        value="${hole?.men_stroke_index ?? ""}"
+                                        data-men-si-hole="${holeNumber}"
+                                        aria-label="Hole ${holeNumber} men's stroke index"
+                                    >
+                                </label>
+
+                                <label class="tee-yardage-item__field">
+                                    <span>Women SI</span>
+                                    <input
+                                        class="tee-stroke-index-input"
+                                        type="number"
+                                        min="1"
+                                        max="${maxSi}"
+                                        step="1"
+                                        value="${hole?.women_stroke_index ?? ""}"
+                                        data-women-si-hole="${holeNumber}"
+                                        aria-label="Hole ${holeNumber} women's stroke index"
+                                    >
+                                </label>
+                            </div>
+                        </div>
                     `;
                 }
             ).join("");
@@ -1214,6 +1271,20 @@
                 input.addEventListener(
                     "input",
                     updateYardageSummary
+                );
+            });
+
+        elements.teeYardageGrid
+            .querySelectorAll(
+                "[data-men-si-hole], [data-women-si-hole]"
+            )
+            .forEach(function (input) {
+                input.addEventListener(
+                    "input",
+                    function () {
+                        syncStrokeIndexesFromTeeEditor();
+                        updateCourseSetupStatus();
+                    }
                 );
             });
 
@@ -1272,6 +1343,10 @@
     }
 
     function renderTeeEditor(tee) {
+        if (state.editingTeeId) {
+            syncStrokeIndexesFromTeeEditor();
+        }
+
         const isNew = !tee?.id;
 
         state.editingTeeId =
@@ -1497,10 +1572,13 @@
             "Saving course setup…";
 
         try {
+            syncStrokeIndexesFromTeeEditor();
+
             const invalidInput =
                 Array.from(
-                    elements.holeDataSection
-                        .querySelectorAll("input")
+                    document.querySelectorAll(
+                        "#holeDataSection input, #teeYardageGrid .tee-stroke-index-input"
+                    )
                 ).find(function (input) {
                     return !input.checkValidity();
                 });
@@ -1699,6 +1777,8 @@
             "Saving…";
 
         try {
+            syncStrokeIndexesFromTeeEditor();
+
             const men = ratingPayload("men");
             const women = ratingPayload("women");
 
@@ -1752,6 +1832,19 @@
 
             state.editingTeeId = teeId;
 
+            const { error: holeError } = await client.rpc(
+                "admin_save_course_holes",
+                {
+                    p_club_id: state.clubId,
+                    p_course_id: state.selectedCourseId,
+                    p_holes: holeRowsPayload()
+                }
+            );
+
+            if (holeError) {
+                throw holeError;
+            }
+
             state.config =
                 await loadCourseConfiguration(
                     state.selectedCourseId
@@ -1759,7 +1852,7 @@
 
             await loadCourses();
             renderCourseConfiguration();
-            showSuccess("Tee and WHS ratings saved.");
+            showSuccess("Tee, WHS ratings and stroke index saved.");
         } catch (error) {
             showError(error);
         } finally {
@@ -1786,7 +1879,37 @@
             "Saving…";
 
         try {
+            syncStrokeIndexesFromTeeEditor();
+
+            const invalidInput =
+                Array.from(
+                    elements.teeYardageGrid.querySelectorAll("input")
+                ).find(function (input) {
+                    return !input.checkValidity();
+                });
+
+            if (invalidInput) {
+                invalidInput.focus();
+                invalidInput.reportValidity();
+                throw new Error(
+                    "Check the highlighted yardage or stroke index before saving."
+                );
+            }
+
             const client = getClient();
+
+            const { error: holeError } = await client.rpc(
+                "admin_save_course_holes",
+                {
+                    p_club_id: state.clubId,
+                    p_course_id: state.selectedCourseId,
+                    p_holes: holeRowsPayload()
+                }
+            );
+
+            if (holeError) {
+                throw holeError;
+            }
 
             const {
                 error
@@ -1815,13 +1938,13 @@
 
             await loadCourses();
             renderCourseConfiguration();
-            showSuccess("Tee yardages saved.");
+            showSuccess("Hole yardages and stroke index saved.");
         } catch (error) {
             showError(error);
         } finally {
             elements.saveYardagesButton.disabled = false;
             elements.saveYardagesButton.textContent =
-                "Save yardages";
+                "Save hole setup";
         }
     }
 
@@ -1836,27 +1959,29 @@
                         "[data-men-par]"
                     );
 
-                const menSi =
-                    row.querySelector(
-                        "[data-men-si]"
-                    );
-
                 const womenPar =
                     row.querySelector(
                         "[data-women-par]"
                     );
 
-                const womenSi =
-                    row.querySelector(
-                        "[data-women-si]"
-                    );
+                if (menPar && womenPar) {
+                    womenPar.value = menPar.value;
+                }
 
-                womenPar.value =
-                    menPar.value;
+                const hole = holeStateByNumber(
+                    row.dataset.holeNumber
+                );
 
-                womenSi.value =
-                    menSi.value;
+                if (hole) {
+                    hole.women_stroke_index =
+                        hole.men_stroke_index ?? null;
+                }
             });
+
+        const selectedTee = findTee(state.editingTeeId);
+        if (selectedTee) {
+            renderYardageGrid(selectedTee);
+        }
 
         updateHoleParSummary();
     }

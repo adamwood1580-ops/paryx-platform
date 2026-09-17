@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="../styles/app-shell.css" />
     <link rel="stylesheet" href="../styles/components.css" />
     <link rel="stylesheet" href="../styles/staff-shell.css" />
-    <link rel="stylesheet" href="../styles/courses.css?v=0.29.4" />
+    <link rel="stylesheet" href="../styles/courses.css?v=0.29.5" />
 
     <link rel="manifest" href="../json/manifest.json" />
     <link rel="apple-touch-icon" href="../assets/paryx-apple-touch-icon.png" />
@@ -199,7 +199,7 @@
                                         </span>
                                         <h2>Set up the scorecard</h2>
                                         <p id="holeParSummary">
-                                            Scan a card for the fastest setup, then review holes, tees and WHS ratings below.
+                                            Scan a card for the fastest setup, then review par, tee yardages and WHS ratings below. Stroke index is edited with the selected tee.
                                         </p>
                                     </div>
 
@@ -292,7 +292,7 @@
                                     </button>
 
                                     <span class="courses-actions__hint">
-                                        Saves hole data, tee ratings and all visible tee yardages.
+                                        Saves hole pars, tee ratings, stroke index and all visible tee yardages.
                                     </span>
                                 </div>
                             </section>
@@ -304,11 +304,11 @@
                                 <div class="courses-card__header courses-card__header--wrap">
                                     <div>
                                         <span class="courses-card__eyebrow">
-                                            Advanced
+                                            Tees
                                         </span>
-                                        <h2>Tee management</h2>
+                                        <h2>Tee setup</h2>
                                         <p>
-                                            Add, rename, reorder or deactivate tees. Normal scorecard editing is handled above.
+                                            Select a tee to manage its WHS rating, yardages and the course stroke index in one place.
                                         </p>
                                     </div>
 
@@ -484,9 +484,9 @@
                                         >
                                             <div class="tee-yardage-section__header">
                                                 <div>
-                                                    <h3>Hole yardages</h3>
+                                                    <h3>Hole yardages &amp; stroke index</h3>
                                                     <p id="teeYardageSummary">
-                                                        Enter yardage for each hole.
+                                                        Enter this tee's yardages. Stroke index is course-wide and is shown here so the whole hole setup can be completed in one place.
                                                     </p>
                                                 </div>
                                             </div>
@@ -499,7 +499,7 @@
                                                     class="courses-button"
                                                     type="button"
                                                 >
-                                                    Save yardages
+                                                    Save hole setup
                                                 </button>
                                             </div>
                                         </section>

@@ -207,9 +207,10 @@
 }
 
 .courses-empty-state {
-    min-height: 18rem;
+    min-height: 0;
     display: grid;
     place-content: center;
+    padding-block: 1.35rem;
     text-align: center;
 }
 
@@ -268,7 +269,8 @@
 .courses-field input:focus,
 .courses-field select:focus,
 .course-hole-table input:focus,
-.tee-yardage-input:focus {
+.tee-yardage-input:focus,
+.tee-stroke-index-input:focus {
     outline: 2px solid color-mix(in srgb, var(--color-primary) 25%, transparent);
     outline-offset: 1px;
     border-color: var(--color-primary);
@@ -356,7 +358,7 @@
 .course-hole-table {
     width: 100%;
     border-collapse: collapse;
-    min-width: 34rem;
+    min-width: 28rem;
 }
 
 .course-hole-table th,
@@ -445,34 +447,56 @@
 
 .tee-yardage-grid {
     display: grid;
-    grid-template-columns: repeat(6, minmax(5rem, 1fr));
-    gap: .55rem;
+    grid-template-columns: repeat(3, minmax(12rem, 1fr));
+    gap: .6rem;
     margin-top: var(--space-3);
 }
 
 .tee-yardage-item {
     display: grid;
-    gap: .25rem;
-    padding: .55rem;
+    gap: .45rem;
+    padding: .6rem;
     background: var(--color-surface-muted);
+    border: 1px solid color-mix(in srgb, var(--color-border) 80%, transparent);
     border-radius: .65rem;
 }
 
-.tee-yardage-item span {
-    color: var(--color-text-muted);
-    font-size: .66rem;
+.tee-yardage-item__hole {
+    color: var(--color-primary);
+    font-size: .72rem;
     font-weight: var(--font-weight-bold);
+}
+
+.tee-yardage-item__fields {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) repeat(2, minmax(0, .8fr));
+    gap: .4rem;
+}
+
+.tee-yardage-item__field {
+    display: grid;
+    gap: .2rem;
+    min-width: 0;
+}
+
+.tee-yardage-item__field > span {
+    color: var(--color-text-muted);
+    font-size: .58rem;
+    font-weight: var(--font-weight-bold);
+    letter-spacing: .03em;
     text-transform: uppercase;
 }
 
-.tee-yardage-input {
+.tee-yardage-input,
+.tee-stroke-index-input {
     width: 100%;
-    min-height: 2.25rem;
+    min-height: 2.15rem;
     box-sizing: border-box;
-    padding: .35rem .4rem;
+    padding: .32rem .35rem;
     text-align: center;
     border: 1px solid var(--color-border);
     border-radius: .5rem;
+    background: #fff;
     font: inherit;
 }
 
@@ -490,7 +514,7 @@
     }
 
     .tee-yardage-grid {
-        grid-template-columns: repeat(4, minmax(5rem, 1fr));
+        grid-template-columns: repeat(2, minmax(12rem, 1fr));
     }
 }
 
@@ -506,7 +530,7 @@
     }
 
     .tee-yardage-grid {
-        grid-template-columns: repeat(3, minmax(4.8rem, 1fr));
+        grid-template-columns: 1fr;
     }
 
     .courses-intro {
@@ -525,9 +549,10 @@
     }
 
     .tee-yardage-grid {
-        grid-template-columns: repeat(2, minmax(4.6rem, 1fr));
+        grid-template-columns: 1fr;
     }
 }
+
 
 
 /* =========================================================
@@ -1391,4 +1416,34 @@
     .courses-card { padding: var(--space-3); }
     .courses-grid--three { grid-template-columns: 1fr; }
     .courses-check-field--single { grid-column: auto; }
+}
+
+
+/* v0.29.5: compact empty state + tee-based stroke-index editing */
+.courses-empty-state {
+    min-height: 0;
+    padding: 1.15rem 1.35rem;
+}
+.courses-empty-state h2 {
+    font-size: 1.2rem;
+}
+.courses-empty-state p {
+    margin: .35rem 0 0;
+    font-size: .78rem;
+}
+.course-scorecard-table {
+    min-width: 28rem;
+}
+.tee-yardage-grid {
+    grid-template-columns: repeat(3, minmax(12rem, 1fr));
+}
+@media (max-width: 1080px) {
+    .tee-yardage-grid {
+        grid-template-columns: repeat(2, minmax(12rem, 1fr));
+    }
+}
+@media (max-width: 780px) {
+    .tee-yardage-grid {
+        grid-template-columns: 1fr;
+    }
 }
