@@ -414,6 +414,10 @@
         state.pendingLogoFile = null;
         state.removeLogo = false;
 
+        if (elements.clubLogoFile) {
+            elements.clubLogoFile.value = "";
+        }
+
         elements.settingsClubName.textContent =
             config.club_name;
 
@@ -577,10 +581,14 @@
         }
 
         try {
-            await getClient()
+            const { error } = await getClient()
                 .storage
                 .from(BRANDING_BUCKET)
                 .remove([oldPath]);
+
+            if (error) {
+                throw error;
+            }
         } catch (error) {
             console.warn(
                 "Paryx saved the new configuration but could not remove the previous logo:",
@@ -676,6 +684,7 @@
             state.currentLogoPath;
 
         let uploadedLogoPath = null;
+        let configurationSaved = false;
 
         try {
             const logoPath =
@@ -701,24 +710,10 @@
                 throw error;
             }
 
-            const widgetDays = Number(elements.publicBookingAdvanceDays.value || 14);
-            const { data: widgetData, error: widgetError } = await getClient().rpc(
-                "admin_update_public_booking_widget",
-                {
-                    p_club_id: state.clubId,
-                    p_enabled: elements.publicBookingEnabled.checked,
-                    p_advance_days: widgetDays
-                }
-            );
-
-            if (widgetError) {
-                throw widgetError;
-            }
+            configurationSaved = true;
 
             const updated =
                 rowFromRpc(data);
-            const updatedWidget =
-                rowFromRpc(widgetData);
 
             await removeOldLogo(
                 oldLogoPath,
@@ -726,7 +721,40 @@
             );
 
             renderConfiguration(updated);
-            renderPublicBookingWidget(updatedWidget);
+
+            let widgetWarning = null;
+
+            try {
+                const widgetDays = Number(
+                    elements.publicBookingAdvanceDays.value || 14
+                );
+
+                const {
+                    data: widgetData,
+                    error: widgetError
+                } = await getClient().rpc(
+                    "admin_update_public_booking_widget",
+                    {
+                        p_club_id: state.clubId,
+                        p_enabled: elements.publicBookingEnabled.checked,
+                        p_advance_days: widgetDays
+                    }
+                );
+
+                if (widgetError) {
+                    throw widgetError;
+                }
+
+                renderPublicBookingWidget(
+                    rowFromRpc(widgetData)
+                );
+            } catch (error) {
+                widgetWarning = error;
+                console.warn(
+                    "Paryx saved the club configuration but could not save website booking settings:",
+                    error
+                );
+            }
 
             const courses =
                 await loadCourses();
@@ -740,21 +768,34 @@
                 .clubContext
                 .refresh();
 
-            showSuccess(
-                "Club configuration saved. Paryx has applied the updated club identity."
-            );
+            if (widgetWarning) {
+                showSuccess(
+                    "Club details and branding were saved, including the logo. Website booking settings were not updated."
+                );
 
-            elements.settingsSaveHint.textContent =
-                "Saved for this club.";
+                elements.settingsSaveHint.textContent =
+                    "Branding saved; website booking settings need retrying.";
+            } else {
+                showSuccess(
+                    "Club configuration saved. Paryx has applied the updated club identity."
+                );
+
+                elements.settingsSaveHint.textContent =
+                    "Saved for this club.";
+            }
         } catch (error) {
-            if (uploadedLogoPath) {
+            if (uploadedLogoPath && !configurationSaved) {
                 try {
-                    await getClient()
+                    const { error: cleanupError } = await getClient()
                         .storage
                         .from(BRANDING_BUCKET)
                         .remove([
                             uploadedLogoPath
                         ]);
+
+                    if (cleanupError) {
+                        throw cleanupError;
+                    }
                 } catch (cleanupError) {
                     console.warn(
                         "Paryx could not clean up the unsuccessful logo upload:",
@@ -836,6 +877,9 @@
                 setLogoPreview(
                     state.previewUrl
                 );
+
+                elements.settingsSaveHint.textContent =
+                    "New logo selected — choose Save changes to upload it.";
             }
         );
 
@@ -847,6 +891,8 @@
                 state.removeLogo = true;
                 elements.clubLogoFile.value = "";
                 setLogoPreview(null);
+                elements.settingsSaveHint.textContent =
+                    "Logo will be removed when you choose Save changes.";
             }
         );
 
