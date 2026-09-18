@@ -554,6 +554,39 @@
     }
 
     /* =========================================================
+       KEYBOARD SUBMISSION
+       ========================================================= */
+
+    function submitWithKeyboard(event) {
+        if (
+            event.key !== "Enter" ||
+            event.isComposing ||
+            submissionInProgress
+        ) {
+            return;
+        }
+
+        event.preventDefault();
+
+        if (typeof form.requestSubmit === "function") {
+            form.requestSubmit(loginButton);
+            return;
+        }
+
+        loginButton.click();
+    }
+
+    emailInput.addEventListener(
+        "keydown",
+        submitWithKeyboard
+    );
+
+    passwordInput.addEventListener(
+        "keydown",
+        submitWithKeyboard
+    );
+
+    /* =========================================================
        SUBMISSION
        ========================================================= */
 

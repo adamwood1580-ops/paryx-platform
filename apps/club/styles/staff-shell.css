@@ -226,3 +226,369 @@ html.auth-protected.auth-ready body {
 .staff-console-link[hidden] {
     display: none;
 }
+
+
+/* =========================================================
+   CLUBHUB DARK MODE — V0.30.7
+   ========================================================= */
+
+html[data-theme="dark"] {
+    color-scheme: dark;
+
+    --color-background: #0d1712;
+    --color-surface: #15221c;
+    --color-surface-muted: #1c2b24;
+    --color-surface-sage: #183128;
+    --color-surface-warm: #25251f;
+
+    --color-text: #edf5f0;
+    --color-text-muted: #b2c0b8;
+    --color-text-soft: #92a39a;
+
+    --color-border: #2b3c34;
+    --color-border-strong: #3a4d44;
+    --color-border-brand: rgba(143, 207, 178, .22);
+
+    --color-primary-light: #17392d;
+    --shadow-sm: 0 3px 10px rgba(0, 0, 0, .22);
+    --shadow-md: 0 10px 28px rgba(0, 0, 0, .28);
+    --shadow-lg: 0 18px 44px rgba(0, 0, 0, .34);
+    --shadow-card: 0 7px 22px rgba(0, 0, 0, .24);
+    --shadow-brand: 0 9px 24px rgba(0, 0, 0, .32);
+}
+
+html.auth-protected.auth-ready[data-theme="dark"] body,
+html[data-theme="dark"] .staff-shell,
+html[data-theme="dark"] .staff-workspace {
+    background: var(--color-background);
+    color: var(--color-text);
+}
+
+html[data-theme="dark"] .staff-topbar {
+    background: rgba(21, 34, 28, .97);
+    border-bottom-color: var(--color-border);
+}
+
+html[data-theme="dark"] .staff-club-identity__logo {
+    background: #f7f9f8;
+}
+
+.staff-theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    min-height: 1.75rem;
+    color: var(--color-accent-light) !important;
+    text-transform: none;
+}
+
+.staff-theme-toggle__track {
+    position: relative;
+    width: 2.15rem;
+    height: 1.2rem;
+    flex: 0 0 auto;
+    border: 1px solid rgba(255,255,255,.32);
+    border-radius: 999px;
+    background: rgba(255,255,255,.10);
+    transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.staff-theme-toggle__thumb {
+    position: absolute;
+    top: 50%;
+    left: .16rem;
+    width: .78rem;
+    height: .78rem;
+    border-radius: 50%;
+    background: rgba(255,255,255,.88);
+    transform: translateY(-50%);
+    transition: transform var(--transition-fast), background var(--transition-fast);
+}
+
+.staff-theme-toggle[aria-pressed="true"] .staff-theme-toggle__track {
+    background: rgba(229, 196, 95, .24);
+    border-color: rgba(229, 196, 95, .72);
+}
+
+.staff-theme-toggle[aria-pressed="true"] .staff-theme-toggle__thumb {
+    background: var(--color-accent-light);
+    transform: translate(0.92rem, -50%);
+}
+
+.staff-theme-toggle:focus-visible {
+    outline: 2px solid var(--color-accent-light);
+    outline-offset: 3px;
+    border-radius: .35rem;
+}
+
+/* Replace the large light surfaces used across ClubHub modules. */
+html[data-theme="dark"] :is(
+    .card,
+    .list-card,
+    .admin-stat-card,
+    .admin-next-event,
+    .admin-tool-card,
+    .settings-card,
+    .settings-checkbox-row,
+    .courses-directory,
+    .courses-card,
+    .course-list__item,
+    .tee-list__item,
+    .tee-yardage-item,
+    .scorecard-review-table,
+    .scorecard-tee-card,
+    .course-setup-choice__item,
+    .course-setup-status,
+    .course-setup-status__item,
+    .course-tee-rating-card,
+    .course-scorecard-table,
+    .tee-sheet-summary article,
+    .tee-sheet-row,
+    .tee-sheet-dialog__panel,
+    .tee-sheet-selected-player,
+    .tee-sheet-member-results,
+    .tee-sheet-booking-players,
+    .tee-sheet-booking-details,
+    .tee-sheet-event__section,
+    .tee-sheet-move-panel,
+    .calendar-day,
+    .calendar-agenda-event,
+    .calendar-dialog__panel,
+    .calendar-closure-fields,
+    .calendar-file-drop,
+    .calendar-file-summary,
+    .calendar-import-warnings,
+    .calendar-more-menu__panel,
+    .calendar-day-manager__event,
+    .calendar-repeat-section,
+    #seriesScopeSection,
+    .admin-member-card,
+    .admin-member-loading,
+    .admin-member-empty,
+    .admin-access-request,
+    .admin-access-request__message,
+    .admin-member-readonly-grid > div,
+    .stock-disabled-card,
+    .stock-card,
+    .stock-summary-card,
+    .stock-dialog__panel,
+    .competition-summary-card,
+    .competition-card,
+    .competition-section,
+    .competition-member-results,
+    .competition-member-result,
+    .competition-dialog__panel,
+    .credit-disabled-card,
+    .credit-card,
+    .credit-summary-card,
+    .credit-dialog__panel,
+    .epos-disabled-card,
+    .epos-control-card,
+    .epos-summary-card,
+    .epos-adapter-note,
+    .epos-dialog__panel,
+    .staff-user-card,
+    .staff-user-meta,
+    .admin-preview-table
+) {
+    background: var(--color-surface);
+    border-color: var(--color-border);
+    color: var(--color-text);
+}
+
+/* Inputs and editors should not remain bright white in dark mode. */
+html[data-theme="dark"] .staff-workspace :is(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),
+    select,
+    textarea
+) {
+    background: #101b16;
+    color: var(--color-text);
+    border-color: var(--color-border-strong);
+}
+
+html[data-theme="dark"] .staff-workspace :is(input, select, textarea)::placeholder {
+    color: #809087;
+}
+
+html[data-theme="dark"] .staff-workspace :is(input, select, textarea):disabled {
+    background: #17231e;
+    color: var(--color-text-muted);
+}
+
+html[data-theme="dark"] .staff-workspace :is(input[type="checkbox"], input[type="radio"]) {
+    accent-color: #3f9a73;
+}
+
+/* Secondary/quiet controls should remain visible without a white fill. */
+html[data-theme="dark"] :is(
+    .admin-secondary-button,
+    .courses-button--secondary,
+    .tee-sheet-button--secondary,
+    .tee-sheet-check-in-button.is-checked-in,
+    .tee-sheet-earlier-button,
+    .calendar-button--secondary,
+    .calendar-button--quiet,
+    .competition-button--secondary,
+    .competition-mini-button,
+    .stock-button--secondary,
+    .credit-button--secondary,
+    .epos-button--secondary,
+    .staff-secondary-button
+) {
+    background: #182720;
+    color: #9bd7bb;
+    border-color: var(--color-border-strong);
+}
+
+/* Keep headings legible where the light theme used the dark brand green as text. */
+html[data-theme="dark"] :is(
+    .admin-intro__title,
+    .admin-members-intro__title,
+    .admin-import-intro__title,
+    .settings-intro__title,
+    .courses-intro__title,
+    .calendar-intro__title,
+    .credit-intro__title,
+    .epos-intro__title,
+    .stock-intro__title,
+    .admin-member-card__name,
+    .admin-member-summary__value
+) {
+    color: #9bd7bb;
+}
+
+html[data-theme="dark"] .staff-workspace :is(th, td) {
+    border-color: var(--color-border);
+}
+
+html[data-theme="dark"] .staff-workspace :is(
+    .admin-preview-table th,
+    .stock-table th,
+    .competition-results-table th,
+    .calendar-import-table th,
+    .course-scorecard-table thead th,
+    .course-scorecard-table tfoot th,
+    .course-scorecard-table tfoot td
+) {
+    background: #1b2a23;
+    color: var(--color-text-muted);
+}
+
+html[data-theme="dark"] .staff-workspace :is(
+    .course-list__item.is-active,
+    .tee-list__item.is-active,
+    .course-setup-choice__item--primary,
+    .competition-chip.is-active
+) {
+    background: #18392d;
+    border-color: rgba(143, 207, 178, .38);
+}
+
+html[data-theme="dark"] .staff-workspace :is(
+    .calendar-day--outside,
+    .tee-sheet-row__past,
+    .tee-sheet-row--past-time
+) {
+    background: #101814;
+}
+
+html[data-theme="dark"] .staff-workspace :is(
+    .settings-save-bar,
+    .courses-actions--sticky-save
+) {
+    background: #071d15;
+    border-color: rgba(255,255,255,.10);
+}
+
+html[data-theme="dark"] .staff-workspace :is(
+    .stock-database-prompt,
+    .credit-database-prompt,
+    .epos-security-note,
+    .competition-verification-check
+) {
+    background: #292517;
+    border-color: #4a4021;
+}
+
+@media (max-width: 820px) {
+    .staff-theme-toggle {
+        order: 2;
+    }
+}
+
+/* Dark-mode text and compact status surfaces for modules with legacy hard-coded colours. */
+html[data-theme="dark"] :is(
+    .tee-sheet-intro h1,
+    .staff-admin-intro h1,
+    .staff-card-heading h2,
+    .staff-directory-toolbar h2,
+    .competition-intro h1,
+    .competition-card__header h2,
+    .competition-section__header h3,
+    .competition-dialog__header h2,
+    .competition-confirm-card h3,
+    .competition-summary-card strong,
+    .competition-row strong,
+    .credit-disabled-card h2,
+    .credit-summary-card strong,
+    .credit-card__header h2,
+    .epos-disabled-card h2,
+    .epos-summary-card strong,
+    .epos-control-card h2
+) {
+    color: #9bd7bb;
+}
+
+html[data-theme="dark"] :is(
+    .competition-intro p:last-child,
+    .competition-card__header p,
+    .competition-section__header p,
+    .competition-dialog__header p,
+    .competition-row span,
+    .competition-row small,
+    .competition-summary-card span,
+    .competition-summary-card small,
+    .competition-results-table td,
+    .competition-field > span,
+    .competition-field > small,
+    .credit-intro__subtitle,
+    .credit-disabled-card p,
+    .credit-summary-card span,
+    .credit-summary-card small,
+    .epos-intro__subtitle,
+    .epos-disabled-card p,
+    .epos-summary-card span,
+    .epos-summary-card small
+) {
+    color: var(--color-text-muted);
+}
+
+html[data-theme="dark"] :is(
+    .credit-role-badge,
+    .epos-role-badge,
+    .stock-role-badge
+) {
+    background: #182720;
+    color: var(--color-text-muted);
+    border-color: var(--color-border-strong);
+}
+
+html[data-theme="dark"] .competition-dialog__header {
+    background: #182720;
+    border-bottom-color: var(--color-border);
+}
+
+html[data-theme="dark"] .competition-dialog__panel {
+    background: #101914;
+}
+
+html[data-theme="dark"] .competition-member-result {
+    background: var(--color-surface);
+    color: var(--color-text);
+    border-bottom-color: var(--color-border);
+}
+
+html[data-theme="dark"] .competition-member-result:hover {
+    background: var(--color-surface-muted);
+}

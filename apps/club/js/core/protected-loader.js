@@ -3,6 +3,24 @@
 
     const loaderScript = document.currentScript;
 
+    const THEME_STORAGE_KEY = "paryx_clubhub_theme";
+
+    function applySavedTheme() {
+        let theme = "light";
+
+        try {
+            if (window.localStorage.getItem(THEME_STORAGE_KEY) === "dark") {
+                theme = "dark";
+            }
+        } catch (error) {
+            /* Local storage may be unavailable in a restricted browser. */
+        }
+
+        document.documentElement.dataset.theme = theme;
+    }
+
+    applySavedTheme();
+
     if (!loaderScript) {
         console.error("Paryx protected loader could not identify its script element.");
         return;

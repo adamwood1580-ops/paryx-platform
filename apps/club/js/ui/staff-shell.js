@@ -3,6 +3,58 @@
 
     window.Paryx = window.Paryx || {};
 
+    const THEME_STORAGE_KEY = "paryx_clubhub_theme";
+
+    function currentTheme() {
+        return document.documentElement.dataset.theme === "dark"
+            ? "dark"
+            : "light";
+    }
+
+    function updateThemeToggle() {
+        const button = document.getElementById("staffThemeToggle");
+
+        if (!button) {
+            return;
+        }
+
+        const dark = currentTheme() === "dark";
+        const label = button.querySelector(".staff-theme-toggle__label");
+
+        button.setAttribute("aria-pressed", dark ? "true" : "false");
+        button.setAttribute(
+            "aria-label",
+            dark ? "Switch to light mode" : "Switch to dark mode"
+        );
+
+        if (label) {
+            label.textContent = dark ? "Light mode" : "Dark mode";
+        }
+    }
+
+    function setTheme(theme, persist) {
+        const nextTheme = theme === "dark" ? "dark" : "light";
+        document.documentElement.dataset.theme = nextTheme;
+
+        const themeMeta = document.querySelector('meta[name="theme-color"]');
+        if (themeMeta) {
+            themeMeta.setAttribute(
+                "content",
+                nextTheme === "dark" ? "#0d1712" : "#064831"
+            );
+        }
+
+        if (persist !== false) {
+            try {
+                window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+            } catch (error) {
+                console.warn("ClubHub could not save the theme preference:", error);
+            }
+        }
+
+        updateThemeToggle();
+    }
+
     const NAV_ITEMS = [
         {
             key: "dashboard",
@@ -209,6 +261,22 @@
                         Staff workspace
                     </span>
 
+                    <button
+                        id="staffThemeToggle"
+                        class="staff-theme-toggle"
+                        type="button"
+                        aria-pressed="false"
+                        aria-label="Switch to dark mode"
+                    >
+                        <span
+                            class="staff-theme-toggle__track"
+                            aria-hidden="true"
+                        >
+                            <span class="staff-theme-toggle__thumb"></span>
+                        </span>
+                        <span class="staff-theme-toggle__label">Dark mode</span>
+                    </button>
+
                     <a
                         id="staffConsoleLink"
                         class="staff-console-link"
@@ -264,6 +332,19 @@
                 </div>
             `;
         }
+
+        updateThemeToggle();
+
+        document
+            .getElementById("staffThemeToggle")
+            ?.addEventListener(
+                "click",
+                function () {
+                    setTheme(
+                        currentTheme() === "dark" ? "light" : "dark"
+                    );
+                }
+            );
 
         document
             .getElementById("staffSignOut")
