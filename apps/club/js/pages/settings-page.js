@@ -3,8 +3,8 @@
 
     window.Paryx = window.Paryx || {};
 
-    const BRANDING_BUCKET =
-        "club-branding";
+    const BRANDING_FUNCTION =
+        "admin-upload-club-logo";
 
     const MAX_LOGO_BYTES =
         2 * 1024 * 1024;
@@ -104,6 +104,201 @@
             error?.details ||
             String(error || "Unknown error")
         );
+    }
+
+    async function edgeFunctionErrorMessage(
+        error,
+        fallback
+    ) {
+        let message =
+            error?.message ||
+            fallback;
+
+        try {
+            const response =
+                error?.context;
+
+            if (
+                response &&
+                typeof response.clone === "function"
+            ) {
+                const clone =
+                    response.clone();
+
+                const contentType =
+                    clone.headers
+                        ?.get("content-type") ||
+                    "";
+
+                if (
+                    contentType.includes(
+                        "application/json"
+                    )
+                ) {
+                    const body =
+                        await clone.json();
+
+                    message =
+                        body?.error ||
+                        body?.message ||
+                        message;
+                } else {
+                    const text =
+                        await clone.text();
+
+                    if (text.trim()) {
+                        message =
+                            text.trim();
+                    }
+                }
+            }
+        } catch {
+            // Keep the original Functions error.
+        }
+
+        if (
+            message ===
+            "Failed to send a request to the Edge Function"
+        ) {
+            return (
+                "The club-logo upload function could not be reached. " +
+                "Deploy the admin-upload-club-logo Edge Function, then retry."
+            );
+        }
+
+        return message;
+    }
+
+    async function invokeBrandingFunction(
+        body
+    ) {
+        const client =
+            getClient();
+
+        if (
+            !client.functions ||
+            typeof client.functions.invoke !==
+                "function"
+        ) {
+            throw new Error(
+                "The Paryx upload service is unavailable."
+            );
+        }
+
+        const {
+            data: sessionData,
+            error: sessionError
+        } = await client.auth.getSession();
+
+        const accessToken =
+            sessionData?.session
+                ?.access_token ||
+            "";
+
+        if (
+            sessionError ||
+            !accessToken
+        ) {
+            throw (
+                sessionError ||
+                new Error(
+                    "Your ClubHub session is not ready. Sign in again and retry."
+                )
+            );
+        }
+
+        const {
+            data,
+            error
+        } = await client.functions.invoke(
+            BRANDING_FUNCTION,
+            {
+                headers: {
+                    Authorization:
+                        `Bearer ${accessToken}`
+                },
+                body
+            }
+        );
+
+        if (error) {
+            throw new Error(
+                await edgeFunctionErrorMessage(
+                    error,
+                    "Club logo upload failed."
+                )
+            );
+        }
+
+        if (data?.error) {
+            throw new Error(
+                data.error
+            );
+        }
+
+        return data || {};
+    }
+
+    function fileToBase64(file) {
+        return new Promise(function (
+            resolve,
+            reject
+        ) {
+            const reader =
+                new FileReader();
+
+            reader.addEventListener(
+                "load",
+                function () {
+                    const result =
+                        String(
+                            reader.result ||
+                            ""
+                        );
+
+                    const commaIndex =
+                        result.indexOf(",");
+
+                    if (
+                        commaIndex < 0 ||
+                        !result
+                            .slice(
+                                commaIndex + 1
+                            )
+                            .trim()
+                    ) {
+                        reject(
+                            new Error(
+                                "The selected logo could not be read."
+                            )
+                        );
+                        return;
+                    }
+
+                    resolve(
+                        result.slice(
+                            commaIndex + 1
+                        )
+                    );
+                },
+                { once: true }
+            );
+
+            reader.addEventListener(
+                "error",
+                function () {
+                    reject(
+                        reader.error ||
+                        new Error(
+                            "The selected logo could not be read."
+                        )
+                    );
+                },
+                { once: true }
+            );
+
+            reader.readAsDataURL(file);
+        });
     }
 
     function escapeHtml(value) {
@@ -539,34 +734,55 @@
         const file =
             state.pendingLogoFile;
 
-        const extension =
-            validateLogo(file);
+        validateLogo(file);
+
+        elements.settingsSaveHint.textContent =
+            "Uploading club logo…";
+
+        const base64 =
+            await fileToBase64(file);
+
+        const result =
+            await invokeBrandingFunction({
+                action: "upload",
+                clubId: state.clubId,
+                fileName:
+                    file.name ||
+                    "club-logo",
+                mimeType:
+                    file.type,
+                base64
+            });
 
         const path =
-            `${state.clubId}/logo-${Date.now()}.${extension}`;
+            String(
+                result?.path ||
+                ""
+            ).trim();
 
-        const client =
-            getClient();
-
-        const {
-            error
-        } = await client.storage
-            .from(BRANDING_BUCKET)
-            .upload(
-                path,
-                file,
-                {
-                    cacheControl: "3600",
-                    upsert: false,
-                    contentType: file.type
-                }
+        if (!path) {
+            throw new Error(
+                "The logo upload completed without returning a storage path."
             );
-
-        if (error) {
-            throw error;
         }
 
         return path;
+    }
+
+    async function removeLogoPath(path) {
+        const safePath =
+            String(path || "")
+                .trim();
+
+        if (!safePath) {
+            return;
+        }
+
+        await invokeBrandingFunction({
+            action: "delete",
+            clubId: state.clubId,
+            path: safePath
+        });
     }
 
     async function removeOldLogo(
@@ -581,14 +797,9 @@
         }
 
         try {
-            const { error } = await getClient()
-                .storage
-                .from(BRANDING_BUCKET)
-                .remove([oldPath]);
-
-            if (error) {
-                throw error;
-            }
+            await removeLogoPath(
+                oldPath
+            );
         } catch (error) {
             console.warn(
                 "Paryx saved the new configuration but could not remove the previous logo:",
@@ -786,16 +997,9 @@
         } catch (error) {
             if (uploadedLogoPath && !configurationSaved) {
                 try {
-                    const { error: cleanupError } = await getClient()
-                        .storage
-                        .from(BRANDING_BUCKET)
-                        .remove([
-                            uploadedLogoPath
-                        ]);
-
-                    if (cleanupError) {
-                        throw cleanupError;
-                    }
+                    await removeLogoPath(
+                        uploadedLogoPath
+                    );
                 } catch (cleanupError) {
                     console.warn(
                         "Paryx could not clean up the unsuccessful logo upload:",
