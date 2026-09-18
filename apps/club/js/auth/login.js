@@ -200,6 +200,30 @@
         }
     }
 
+    let selectedStaffAccess = null;
+
+    const MODULE_ROUTES = {
+        dashboard: "dashboard.html",
+        tee_sheet: "tee-sheet.html",
+        members: "members.html",
+        member_credit: "club-credit.html",
+        calendar: "calendar.html",
+        competitions: "competitions.html",
+        courses: "courses.html",
+        stock_inventory: "stock.html",
+        epos_integration: "epos.html",
+        settings: "settings.html"
+    };
+
+    const ROLE_LANDING_MODULES = {
+        starter: ["tee_sheet"],
+        reception: ["tee_sheet", "competitions", "member_credit", "stock_inventory"],
+        professional: ["tee_sheet", "competitions", "member_credit", "stock_inventory", "epos_integration"],
+        greenkeeper: ["tee_sheet", "courses", "settings"],
+        manager: ["dashboard", "tee_sheet"],
+        club_admin: ["dashboard", "tee_sheet"]
+    };
+
     async function resolveStaffAccess(userId) {
         const {
             data,
@@ -236,6 +260,7 @@
         );
 
         if (!authorised.length) {
+            selectedStaffAccess = null;
             return [];
         }
 
@@ -264,6 +289,8 @@
                 return row.is_primary === true;
             }) ||
             authorised[0];
+
+        selectedStaffAccess = selected;
 
         try {
             window.localStorage.setItem(
@@ -294,7 +321,9 @@
             parameters.get("returnTo");
 
         /*
-         * Only allow a local relative destination.
+         * Only allow a local relative destination. The protected
+         * shell will still enforce the role/module boundary if the
+         * requested page is not available to this staff account.
          */
         if (
             returnTo &&
@@ -305,7 +334,47 @@
             return returnTo;
         }
 
-        return "dashboard.html";
+        const role =
+            String(
+                selectedStaffAccess?.staff_role ||
+                ""
+            )
+                .trim()
+                .toLowerCase();
+
+        const enabledModules = new Set(
+            Array.isArray(
+                selectedStaffAccess?.enabled_modules
+            )
+                ? selectedStaffAccess.enabled_modules
+                : []
+        );
+
+        const preferredModules =
+            ROLE_LANDING_MODULES[role] ||
+            [];
+
+        for (const moduleKey of preferredModules) {
+            if (
+                enabledModules.has(moduleKey) &&
+                MODULE_ROUTES[moduleKey]
+            ) {
+                return MODULE_ROUTES[moduleKey];
+            }
+        }
+
+        for (const moduleKey of enabledModules) {
+            if (MODULE_ROUTES[moduleKey]) {
+                return MODULE_ROUTES[moduleKey];
+            }
+        }
+
+        return (
+            MODULE_ROUTES[
+                preferredModules[0]
+            ] ||
+            "dashboard.html"
+        );
     }
 
     function openDestination() {

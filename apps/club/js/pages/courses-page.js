@@ -3,12 +3,14 @@
 
     window.Paryx = window.Paryx || {};
 
-    const ADMIN_ROLES = new Set([
+    const COURSE_ROLES = new Set([
+        "greenkeeper",
         "manager",
         "club_admin"
     ]);
 
     const ROLE_LABELS = {
+        greenkeeper: "Greenkeeper",
         manager: "Manager",
         club_admin: "Club Admin"
     };
@@ -3326,7 +3328,7 @@
                     .trim()
                     .toLowerCase();
 
-            if (!ADMIN_ROLES.has(role)) {
+            if (!COURSE_ROLES.has(role)) {
                 throw new Error(
                     "Club management access required."
                 );

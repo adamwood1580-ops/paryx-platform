@@ -7,6 +7,15 @@
         "starter",
         "reception",
         "professional",
+        "greenkeeper",
+        "manager",
+        "club_admin"
+    ]);
+
+    const BOOKING_ROLES = new Set([
+        "starter",
+        "reception",
+        "professional",
         "manager",
         "club_admin"
     ]);
@@ -713,19 +722,31 @@
                         </div>
 
                         <div class="tee-sheet-row__actions">
-                            ${row.booking_id ? `
-                                <button
-                                    class="tee-sheet-row__action tee-sheet-row__action--primary"
-                                    type="button"
-                                    data-action="manage-booking"
-                                >
-                                    Manage
-                                </button>
-                            ` : past ? `
+                            ${row.booking_id ? (
+                                BOOKING_ROLES.has(state.role)
+                                    ? `
+                                        <button
+                                            class="tee-sheet-row__action tee-sheet-row__action--primary"
+                                            type="button"
+                                            data-action="manage-booking"
+                                        >
+                                            Manage
+                                        </button>
+                                    `
+                                    : `
+                                        <button
+                                            class="tee-sheet-row__action tee-sheet-row__action--secondary"
+                                            type="button"
+                                            data-action="availability"
+                                        >
+                                            Availability
+                                        </button>
+                                    `
+                            ) : past ? `
                                 <span class="tee-sheet-row__past-action">
                                     Historical
                                 </span>
-                            ` : row.operational_status === "open" ? `
+                            ` : row.operational_status === "open" && BOOKING_ROLES.has(state.role) ? `
                                 <button
                                     class="tee-sheet-row__action tee-sheet-row__action--primary"
                                     type="button"
@@ -2049,11 +2070,19 @@
             }
 
             if (button.dataset.action === "book") {
+                if (!BOOKING_ROLES.has(state.role)) {
+                    return;
+                }
+
                 openCreateBooking(row);
                 return;
             }
 
             if (button.dataset.action === "manage-booking") {
+                if (!BOOKING_ROLES.has(state.role)) {
+                    return;
+                }
+
                 openEditBooking(row);
                 return;
             }

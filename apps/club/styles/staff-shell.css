@@ -167,7 +167,15 @@ html.auth-protected.auth-ready body {
     }
     .staff-nav__item { flex: 0 0 auto; }
     .staff-nav__item--disabled { display: none; }
-    .staff-sidebar__footer { display: none; }
+    .staff-sidebar__footer {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: var(--space-2) var(--space-4);
+        margin-top: var(--space-2);
+        padding: var(--space-3) var(--space-2) 0;
+    }
+    .staff-sidebar__footer > span { margin-right: auto; }
     .staff-topbar { position: static; padding: var(--space-3) var(--space-4); }
     .staff-club-switcher { min-width: 0; flex: 1; }
     .staff-club-switcher__select { max-width: 100%; }

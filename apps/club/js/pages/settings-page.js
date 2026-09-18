@@ -15,7 +15,14 @@
         accent: "#E5C45F"
     };
 
+    const SETTINGS_ROLES = new Set([
+        "greenkeeper",
+        "manager",
+        "club_admin"
+    ]);
+
     const ROLE_LABELS = {
+        greenkeeper: "Greenkeeper",
         manager: "Manager",
         club_admin: "Club Admin"
     };
@@ -897,11 +904,11 @@
 
             if (
                 !activeClub?.id ||
-                !window.Paryx
-                    .clubContext
-                    .isAdminRole(
-                        activeClub.role
-                    )
+                !SETTINGS_ROLES.has(
+                    String(activeClub.role || "")
+                        .trim()
+                        .toLowerCase()
+                )
             ) {
                 throw new Error(
                     "Club management access required."

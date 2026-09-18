@@ -4,9 +4,34 @@
     window.Paryx = window.Paryx || {};
 
     const NAV_ITEMS = [
-        { key: "dashboard", label: "Dashboard", href: "dashboard.html", moduleKey: "dashboard" },
-        { key: "teesheet", label: "Tee Sheet", href: "tee-sheet.html", moduleKey: "tee_sheet" },
-        { key: "members", label: "Members", href: "members.html", moduleKey: "members" },
+        {
+            key: "dashboard",
+            label: "Dashboard",
+            href: "dashboard.html",
+            moduleKey: "dashboard",
+            roles: ["manager", "club_admin"]
+        },
+        {
+            key: "teesheet",
+            label: "Tee Sheet",
+            href: "tee-sheet.html",
+            moduleKey: "tee_sheet",
+            roles: [
+                "starter",
+                "reception",
+                "professional",
+                "greenkeeper",
+                "manager",
+                "club_admin"
+            ]
+        },
+        {
+            key: "members",
+            label: "Members",
+            href: "members.html",
+            moduleKey: "members",
+            roles: ["manager", "club_admin"]
+        },
         {
             key: "credit",
             label: "Club Credit",
@@ -26,7 +51,13 @@
             moduleKey: "members",
             adminOnly: true
         },
-        { key: "calendar", label: "Calendar", href: "calendar.html", moduleKey: "calendar" },
+        {
+            key: "calendar",
+            label: "Calendar",
+            href: "calendar.html",
+            moduleKey: "calendar",
+            roles: ["manager", "club_admin"]
+        },
         {
             key: "competitions",
             label: "Competitions",
@@ -39,7 +70,13 @@
                 "club_admin"
             ]
         },
-        { key: "courses", label: "Courses", href: "courses.html", moduleKey: "courses" },
+        {
+            key: "courses",
+            label: "Courses",
+            href: "courses.html",
+            moduleKey: "courses",
+            roles: ["greenkeeper", "manager", "club_admin"]
+        },
         {
             key: "stock",
             label: "Stock",
@@ -63,7 +100,13 @@
                 "club_admin"
             ]
         },
-        { key: "settings", label: "Settings", href: "settings.html", moduleKey: "settings" }
+        {
+            key: "settings",
+            label: "Settings",
+            href: "settings.html",
+            moduleKey: "settings",
+            roles: ["greenkeeper", "manager", "club_admin"]
+        }
     ];
 
     const ROLE_LABELS = {
@@ -420,8 +463,16 @@
                 !allowedRoles.length ||
                 allowedRoles.includes(activeClub.role);
 
+            const adminAllowed =
+                link.dataset.staffAdminOnly !== "true" ||
+                ["manager", "club_admin"].includes(
+                    activeClub.role
+                );
+
             link.hidden = !(
-                enabled.has(moduleKey) && roleAllowed
+                enabled.has(moduleKey) &&
+                roleAllowed &&
+                adminAllowed
             );
         });
 
@@ -429,10 +480,21 @@
             return link.classList.contains("is-active");
         });
 
-        if (activeLink?.hidden && currentPage !== "dashboard") {
-            window.location.replace(
-                "dashboard.html?reason=module"
-            );
+        if (activeLink?.hidden) {
+            const fallbackLink =
+                moduleLinks.find(function (link) {
+                    return !link.hidden;
+                });
+
+            if (fallbackLink?.getAttribute("href")) {
+                window.location.replace(
+                    fallbackLink.getAttribute("href")
+                );
+            } else {
+                window.location.replace(
+                    "login.html?reason=access"
+                );
+            }
         }
     }
 

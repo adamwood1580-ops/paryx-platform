@@ -462,6 +462,7 @@ Deno.serve(
                             "courses",
                         p_allowed_roles:
                             [
+                                "greenkeeper",
                                 "manager",
                                 "club_admin"
                             ]

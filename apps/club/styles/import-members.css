@@ -391,3 +391,42 @@
         align-items: center;
     }
 }
+
+
+/* v0.30.4: keep the import workflow inside narrow ClubHub viewports. */
+.admin-import-page,
+.admin-import-card,
+.admin-import-card__heading,
+.admin-import-card__heading > div:first-child,
+.admin-import-card__heading > div:first-child > div,
+.admin-file-picker,
+.admin-preview-wrap {
+    min-width: 0;
+    max-width: 100%;
+}
+
+.admin-import-page {
+    overflow-x: hidden;
+}
+
+.admin-file-picker__meta {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 47.99rem) {
+    .admin-import-card__heading {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .admin-import-card__heading > .admin-text-button {
+        justify-self: start;
+        max-width: 100%;
+        white-space: normal;
+    }
+
+    .admin-validation-grid {
+        grid-template-columns: 1fr;
+    }
+}

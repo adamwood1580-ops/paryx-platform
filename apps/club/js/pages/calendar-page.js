@@ -367,6 +367,9 @@
                     ? "Away"
                     : "",
             event.venue || "",
+            event.status === "cancelled"
+                ? "Cancelled"
+                : "",
             event.series_id ? "Recurring" : ""
         ].filter(Boolean);
 
@@ -783,10 +786,36 @@
         }
 
         if (elements.dayDialogMeta) {
-            elements.dayDialogMeta.textContent =
-                events.length
-                    ? `${events.length} event${events.length === 1 ? "" : "s"} scheduled. Create, edit or delete below.`
-                    : "No events are scheduled. Create the first event for this day.";
+            const cancelledCount =
+                events.filter(function (event) {
+                    return event.status === "cancelled";
+                }).length;
+
+            const scheduledCount =
+                events.length -
+                cancelledCount;
+
+            if (!events.length) {
+                elements.dayDialogMeta.textContent =
+                    "No events are scheduled. Create the first event for this day.";
+            } else {
+                const summary = [];
+
+                if (scheduledCount) {
+                    summary.push(
+                        `${scheduledCount} event${scheduledCount === 1 ? "" : "s"} scheduled`
+                    );
+                }
+
+                if (cancelledCount) {
+                    summary.push(
+                        `${cancelledCount} cancelled`
+                    );
+                }
+
+                elements.dayDialogMeta.textContent =
+                    `${summary.join(" · ")}. Create, edit or delete below.`;
+            }
         }
 
         if (!events.length) {

@@ -440,6 +440,17 @@
 
     function canEditMember(member) {
         if (
+            ["staff", "visitor", "guest"].includes(
+                String(
+                    member.membership_type ||
+                    ""
+                ).toLowerCase()
+            )
+        ) {
+            return false;
+        }
+
+        if (
             member.membership_role ===
                 "club_admin" &&
             state.adminRole !==
@@ -590,6 +601,22 @@
                                 >
                                     Edit details
                                 </button>
+                            `
+                            : ""
+                    }
+
+                    ${
+                        member.membership_type === "staff"
+                            ? `
+                                <a
+                                    class="admin-member-action"
+                                    href="staff.html?email=${encodeURIComponent(
+                                        member.email ||
+                                        ""
+                                    )}"
+                                >
+                                    Manage staff access
+                                </a>
                             `
                             : ""
                     }
