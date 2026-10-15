@@ -226,6 +226,7 @@
 
         [
             "token_hash",
+            "code",
             "type",
             "error",
             "error_code",
@@ -393,6 +394,59 @@
             } catch (error) {
                 console.error(
                     "Paryx password link verification error:",
+                    error
+                );
+
+                showMessage(
+                    error?.message ||
+                    (
+                        isRecovery()
+                            ? "This password reset link is invalid or has expired."
+                            : "This invitation link is invalid or has expired."
+                    ),
+                    "error"
+                );
+
+                return;
+            }
+        }
+
+        const code =
+            query.get(
+                "code"
+            );
+
+        if (code) {
+            try {
+                const {
+                    data,
+                    error
+                } =
+                    await window.supabaseClient
+                        .auth
+                        .exchangeCodeForSession(
+                            code
+                        );
+
+                if (
+                    error ||
+                    !data?.session
+                ) {
+                    throw (
+                        error ||
+                        new Error(
+                            "No authenticated session was created."
+                        )
+                    );
+                }
+
+                clearAuthParameters();
+                clearMessage();
+                setSessionReady(true);
+                return;
+            } catch (error) {
+                console.error(
+                    "Paryx password code exchange error:",
                     error
                 );
 

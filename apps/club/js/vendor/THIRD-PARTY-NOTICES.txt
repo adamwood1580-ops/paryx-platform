@@ -1,0 +1,8 @@
+Barcode camera decoder: @zxing/browser 0.2.1
+https://github.com/zxing-js/browser
+MIT license: see ZXING-LICENSE.txt.
+
+The browser bundle includes ZXing decoding code from @zxing/library.
+https://github.com/zxing-js/library
+Apache License 2.0: see ZXING-LIBRARY-LICENSE.txt.
+The distributed decoder has not been modified.

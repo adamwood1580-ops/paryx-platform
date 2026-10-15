@@ -41,7 +41,7 @@
         competitions: ["../js/pages/competitions-page.js"],
         teesheet: ["../js/pages/tee-sheet-page.js"],
         staff: ["../js/pages/staff-page.js"],
-        stock: ["../js/pages/stock-page.js"],
+        stock: ["../js/vendor/zxing-browser.min.js", "../js/pages/stock-barcode.js", "../js/pages/stock-page.js"],
         epos: ["../js/pages/epos-page.js"],
         credit: ["../js/pages/club-credit-page.js"]
     };

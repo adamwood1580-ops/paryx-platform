@@ -153,6 +153,23 @@ function redirectAllowed(
                 "/apps/club/html/set-password.html"
             );
 
+        const isDesktop =
+            url.protocol ===
+                "paryx:" &&
+            url.hostname ===
+                "auth" &&
+            [
+                "/invite",
+                "/recovery",
+                "/set-password"
+            ].includes(
+                url.pathname
+            );
+
+        if (isDesktop) {
+            return url.toString();
+        }
+
         if (
             correctPage &&
             (

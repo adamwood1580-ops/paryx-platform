@@ -336,3 +336,15 @@
     background: #861f1f;
     filter: none;
 }
+
+/* Barcode lookup and camera */
+.stock-scan-row { display: flex; flex-wrap: wrap; align-items: end; gap: .75rem; padding: 1rem 1.15rem; border-bottom: 1px solid #edf1ef; }
+.stock-scan-row .stock-field { flex: 1 1 220px; }
+.stock-scan-row p { flex-basis: 100%; margin: 0; color: #45554e; font-size: .85rem; }
+.stock-barcode-field { display: flex; gap: .5rem; }
+.stock-barcode-field input { min-width: 0; }
+.stock-field small { font-weight: normal; color: #607068; }
+.stock-camera-body { padding: 1.2rem; }
+.stock-camera-body video { width: 100%; min-height: 160px; max-height: 45vh; border-radius: .7rem; background: #12231c; object-fit: contain; }
+#stockProductError { margin: 1rem 1.4rem 0; }
+@media (max-width: 720px) { .stock-scan-row > button { flex: 1 1 140px; } }

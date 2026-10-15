@@ -646,6 +646,26 @@
         }
     }
 
+    function getStaffInviteRedirect() {
+        const desktopRedirect =
+            String(
+                window.ParyxDesktop?.inviteRedirectUrl ||
+                ""
+            ).trim();
+
+        if (
+            desktopRedirect ===
+            "paryx://auth/invite"
+        ) {
+            return desktopRedirect;
+        }
+
+        return new URL(
+            "set-password.html",
+            window.location.href
+        ).href;
+    }
+
     async function inviteStaff(event) {
         event.preventDefault();
 
@@ -698,10 +718,7 @@
 
         try {
             const redirectTo =
-                new URL(
-                    "set-password.html",
-                    window.location.href
-                ).href;
+                getStaffInviteRedirect();
 
             if (!state.clubId) {
                 throw new Error(

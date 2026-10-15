@@ -1,0 +1,75 @@
+{
+  "name": "paryx-clubhub-desktop",
+  "version": "0.31.0",
+  "description": "Paryx ClubHub Windows desktop client",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "sync:web": "node scripts/sync-web-assets.js",
+    "start": "npm run sync:web && electron .",
+    "pack:win": "npm run sync:web && electron-builder --win dir --x64",
+    "dist:win": "npm run sync:web && electron-builder --win nsis --x64",
+    "dist:portable": "npm run sync:web && electron-builder --win portable --x64"
+  },
+  "devDependencies": {
+    "electron": "44.5.1",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "uk.co.paryx.clubhub",
+    "productName": "Paryx ClubHub",
+    "asar": true,
+    "files": [
+      "main.js",
+      "preload.js",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "web",
+        "to": "web",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "protocols": [
+      {
+        "name": "Paryx authentication links",
+        "schemes": [
+          "paryx"
+        ]
+      }
+    ],
+    "win": {
+      "icon": "build/paryx.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Paryx ClubHub",
+      "artifactName": "Paryx-ClubHub-Setup-${version}-${arch}.${ext}"
+    },
+    "portable": {
+      "artifactName": "Paryx-ClubHub-Portable-${version}-${arch}.${ext}"
+    }
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.80.0"
+  }
+}

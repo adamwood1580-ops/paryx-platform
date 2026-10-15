@@ -383,6 +383,26 @@
         );
     }
 
+    function getPasswordRecoveryRedirect() {
+        const desktopRedirect =
+            String(
+                window.ParyxDesktop?.recoveryRedirectUrl ||
+                ""
+            ).trim();
+
+        if (
+            desktopRedirect ===
+            "paryx://auth/recovery"
+        ) {
+            return desktopRedirect;
+        }
+
+        return new URL(
+            "set-password.html",
+            window.location.href
+        ).href;
+    }
+
     /* =========================================================
        TIMEOUT MESSAGE
        ========================================================= */
@@ -519,10 +539,7 @@
                                 email,
                                 {
                                     redirectTo:
-                                        new URL(
-                                            "set-password.html",
-                                            window.location.href
-                                        ).href
+                                        getPasswordRecoveryRedirect()
                                 }
                             );
 

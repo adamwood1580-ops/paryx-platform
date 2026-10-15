@@ -47,10 +47,20 @@
         productMap: new Map(),
         summary: null,
         activity: [],
-        searchTimer: null
+        searchTimer: null,
+        scanBusy: false,
+        scannedCode: ""
     };
 
     const elements = {
+        scanForm: document.getElementById("stockScanForm"),
+        scanCode: document.getElementById("stockScanCode"),
+        scanFind: document.getElementById("stockScanFind"),
+        scanCamera: document.getElementById("stockScanCamera"),
+        scanStatus: document.getElementById("stockScanStatus"),
+        createScanned: document.getElementById("stockCreateScanned"),
+        productCamera: document.getElementById("stockProductCamera"),
+        productError: document.getElementById("stockProductError"),
         clubName: document.getElementById("stockClubName"),
         roleBadge: document.getElementById("stockRoleBadge"),
         error: document.getElementById("stockError"),
@@ -494,6 +504,7 @@
         elements.productForm.querySelectorAll("input, select, textarea").forEach(function (field) {
             if (field.type !== "hidden") field.disabled = !editable;
         });
+        elements.productCamera.hidden = !editable;
         elements.saveProduct.hidden = !editable;
         elements.adjustStock.hidden = !editable || !elements.productId.value;
         elements.removeProduct.hidden = !editable || !elements.productId.value;
@@ -524,6 +535,7 @@
 
     function openProductDialog(product = null) {
         clearMessages();
+        elements.productError.hidden = true;
         const editing = Boolean(product);
         elements.productDialogTitle.textContent = editing ? "Manage product" : "Add product";
         elements.productId.value = product?.product_id || "";
@@ -543,6 +555,57 @@
         elements.openingField.hidden = editing;
         setProductFormEditable(state.canManage);
         elements.productDialog.showModal();
+    }
+
+    async function findScannedProduct(value) {
+        if (state.scanBusy || !state.moduleEnabled) return;
+        const code = String(value || "").trim();
+        elements.createScanned.hidden = true;
+        state.scannedCode = "";
+        if (!code || code.length > 120) {
+            elements.scanStatus.textContent = "Scan or enter a barcode (up to 120 characters).";
+            return;
+        }
+        state.scanBusy = true;
+        elements.scanFind.disabled = elements.scanCamera.disabled = true;
+        elements.scanStatus.textContent = "Finding product...";
+        try {
+            // Query the club backend so newly added stock is found without refreshing the page.
+            const { data, error } = await getClient().rpc("stock_list_products", {
+                p_club_id: state.clubId, p_search: code, p_filter: "all"
+            });
+            if (error) throw error;
+            const matches = (Array.isArray(data) ? data : []).filter(product =>
+                normaliseLookup(product.barcode) === normaliseLookup(code));
+            if (matches.length > 1) throw new Error("More than one product uses this barcode. Check the stock records.");
+            if (matches.length) {
+                const product = matches[0];
+                state.productMap.set(product.product_id, product);
+                elements.scanStatus.textContent = `Found ${product.product_name}.`;
+                elements.scanCode.value = "";
+                openProductDialog(product);
+            } else {
+                state.scannedCode = code;
+                elements.scanStatus.textContent = state.canManage
+                    ? `Barcode ${code} is not in this club's catalogue. Create a product and enter its name and prices once.`
+                    : `Barcode ${code} is not in this club's catalogue. Ask a stock manager to add it.`;
+                elements.createScanned.hidden = !state.canManage;
+            }
+        } catch (error) {
+            elements.scanStatus.textContent = error?.message || "Barcode lookup failed. Try again.";
+        } finally {
+            state.scanBusy = false;
+            elements.scanFind.disabled = elements.scanCamera.disabled = false;
+        }
+    }
+
+    function fillProductBarcode(value) {
+        elements.productBarcode.value = String(value).trim();
+        // A scanned barcode provides a usable SKU for new records; preserve custom SKUs.
+        if (!elements.productId.value && !elements.productSku.value.trim()) {
+            elements.productSku.value = elements.productBarcode.value.slice(0, 80);
+        }
+        elements.productName.focus();
     }
 
     function closeProductDialog() {
@@ -589,6 +652,7 @@
         event.preventDefault();
         if (!state.canManage) return;
         clearMessages();
+        elements.productError.hidden = true;
         elements.saveProduct.disabled = true;
         try {
             const editing = Boolean(elements.productId.value);
@@ -611,10 +675,15 @@
             });
             if (error) throw error;
             closeProductDialog();
+            elements.createScanned.hidden = true;
+            state.scannedCode = "";
             await refreshAll();
             showSuccess(editing ? "Product updated." : "Product added.");
         } catch (error) {
-            showError(error);
+            elements.productError.hidden = false;
+            elements.productError.textContent = error?.code === "23505"
+                ? "This barcode or SKU already belongs to a product in this club. Scan it from Find stock to open that record."
+                : (error?.message || "Product could not be saved.");
         } finally {
             elements.saveProduct.disabled = false;
         }
@@ -754,6 +823,35 @@
     }
 
     function bindControls() {
+        elements.scanForm.addEventListener("submit", function (event) {
+            event.preventDefault();
+            findScannedProduct(elements.scanCode.value);
+        });
+        elements.scanCode.addEventListener("input", function () {
+            elements.createScanned.hidden = true;
+            state.scannedCode = "";
+        });
+        elements.scanCamera.addEventListener("click", function () {
+            window.Paryx.barcodeCamera.open(function (code) {
+                elements.scanCode.value = code;
+                findScannedProduct(code);
+            });
+        });
+        elements.createScanned.addEventListener("click", function () {
+            if (!state.canManage || !state.scannedCode) return;
+            openProductDialog();
+            fillProductBarcode(state.scannedCode);
+        });
+        elements.productCamera.addEventListener("click", function () {
+            if (state.canManage) window.Paryx.barcodeCamera.open(fillProductBarcode);
+        });
+        // Scanner Enter must finish barcode entry, never submit a half-filled product.
+        elements.productBarcode.addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                fillProductBarcode(elements.productBarcode.value);
+            }
+        });
         elements.addProduct.addEventListener("click", function () { openProductDialog(); });
         elements.refresh.addEventListener("click", function () { refreshAll().catch(showError); });
         [
