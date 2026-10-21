@@ -1,6 +1,9 @@
 (function () {
     "use strict";
 
+    // Version marker for confirming the deployed club-detail script.
+    window.PARYX_CONSOLE_CLUBS_BUILD = "hotel-toggle-fix-v2-20261021";
+
     const state = {
         rows: [],
         role: null,
