@@ -1207,3 +1207,21 @@ body {
         grid-template-columns: 1fr;
     }
 }
+
+/* Hotel Mode configuration is exclusively editable in Paryx Console. */
+.hotel-console-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    margin: 1rem 0 1.35rem;
+}
+.hotel-console-grid .console-field { display: grid; gap: .35rem; min-width: 0; }
+.hotel-console-grid input { width: 100%; box-sizing: border-box; }
+.hotel-console-subheading { margin: 1.5rem 0 .35rem; }
+.hotel-console-note { font-size: .85rem; opacity: .8; }
+.hotel-console-permissions input { width: 1.15rem; height: 1.15rem; }
+.hotel-console-permissions td { text-align: center; }
+@media (max-width: 680px) {
+    .hotel-console-grid { grid-template-columns: 1fr; }
+    .hotel-console-permissions th, .hotel-console-permissions td { padding: .45rem; }
+}

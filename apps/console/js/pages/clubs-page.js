@@ -7,7 +7,8 @@
         isOwner: false,
         canManage: false,
         selectedClub: null,
-        moduleCatalog: []
+        moduleCatalog: [],
+        hotelData: null
     };
 
     const elements = {
@@ -180,6 +181,9 @@
             document.getElementById(
                 "clubModuleReadOnlyNote"
             ),
+
+        hotelRoles: document.getElementById("hotelModeRolePermissions"),
+        hotelReadOnly: document.getElementById("hotelModeReadOnlyNote"),
 
         metricMembers:
             document.getElementById(
@@ -902,6 +906,97 @@
         );
     }
 
+    const HOTEL_ROLE_LABELS = {
+        starter: "Starter",
+        reception: "Reception",
+        professional: "Professional",
+        greenkeeper: "Greenkeeper",
+        manager: "Manager",
+        club_admin: "Club Admin"
+    };
+
+    const HOTEL_INPUTS = {
+        hotel_booking_days: "hotelBookingDays",
+        society_booking_days: "societyBookingDays",
+        member_booking_days: "hotelMemberDays",
+        visitor_booking_days: "hotelVisitorDays",
+        hotel_allocation_percent: "hotelAllocationPercent",
+        member_allocation_percent: "hotelMemberPercent",
+        hotel_release_days: "hotelReleaseDays",
+        member_release_days: "memberReleaseDays"
+    };
+
+    function renderHotelMode(data) {
+        state.hotelData = data;
+        const config = data?.config || {};
+        document.getElementById("hotelModeEnabled").checked =
+            config.enabled === true;
+
+        Object.entries(HOTEL_INPUTS).forEach(function ([key, id]) {
+            document.getElementById(id).value = String(config[key] ?? "");
+        });
+
+        const permissions = data?.permissions || {};
+        elements.hotelRoles.innerHTML = Object.entries(HOTEL_ROLE_LABELS)
+            .map(function ([role, label]) {
+                const entry = permissions[role] || {};
+                const checked = function (key) {
+                    return entry[key] === true ? "checked" : "";
+                };
+                return `<tr data-hotel-role="${role}">
+                    <th scope="row">${escapeHtml(label)}</th>
+                    <td><input aria-label="${escapeHtml(label)} Hotel bookings" type="checkbox" data-hotel-access="can_manage_hotel" ${checked("can_manage_hotel")} /></td>
+                    <td><input aria-label="${escapeHtml(label)} Society groups" type="checkbox" data-hotel-access="can_manage_societies" ${checked("can_manage_societies")} /></td>
+                    <td><input aria-label="${escapeHtml(label)} Overrides" type="checkbox" data-hotel-access="can_override" ${checked("can_override")} /></td>
+                </tr>`;
+            }).join("");
+        applyHotelEditState();
+    }
+
+    function applyHotelEditState() {
+        const inputs = document.getElementById("hotelModeConsolePanel")
+            .querySelectorAll("input");
+        inputs.forEach(function (input) { input.disabled = !state.canManage; });
+        elements.hotelReadOnly.hidden = state.canManage;
+    }
+
+    function collectHotelMode() {
+        const config = {
+            enabled: document.getElementById("hotelModeEnabled").checked
+        };
+        Object.entries(HOTEL_INPUTS).forEach(function ([key, id]) {
+            const element = document.getElementById(id);
+            if (!element.checkValidity() || !element.value.trim()) {
+                throw new Error(`Enter a valid value for ${key.replaceAll("_", " ")}.`);
+            }
+            config[key] = Number(element.value);
+        });
+        if (config.hotel_allocation_percent + config.member_allocation_percent > 100) {
+            throw new Error("Hotel and member allocations cannot exceed 100% combined.");
+        }
+        if (config.hotel_release_days >= config.hotel_booking_days ||
+            config.member_release_days >= config.member_booking_days) {
+            throw new Error("A release deadline must be earlier than its booking window.");
+        }
+
+        const permissions = {};
+        elements.hotelRoles.querySelectorAll("[data-hotel-role]")
+            .forEach(function (row) {
+                const access = {};
+                row.querySelectorAll("[data-hotel-access]")
+                    .forEach(function (input) {
+                        access[input.dataset.hotelAccess] = input.checked;
+                    });
+                if (access.can_override &&
+                    !access.can_manage_hotel && !access.can_manage_societies) {
+                    throw new Error("Override access needs Hotel or Society access for " +
+                        HOTEL_ROLE_LABELS[row.dataset.hotelRole] + ".");
+                }
+                permissions[row.dataset.hotelRole] = access;
+            });
+        return { config, permissions };
+    }
+
     function setMetric(
         element,
         value
@@ -944,6 +1039,7 @@
 
         elements.moduleReadOnly.hidden =
             state.canManage;
+        applyHotelEditState();
     }
 
     function renderClubDetail(detail) {
@@ -1069,7 +1165,8 @@
         try {
             const [
                 detailResponse,
-                moduleResponse
+                moduleResponse,
+                hotelResponse
             ] =
                 await Promise.all([
                     window
@@ -1090,7 +1187,10 @@
                                 p_club_id:
                                     clubId
                             }
-                        )
+                        ),
+                    window.supabaseClient.rpc("platform_hotel_mode_get", {
+                        p_club_id: clubId
+                    })
                 ]);
 
             if (detailResponse.error) {
@@ -1099,6 +1199,10 @@
 
             if (moduleResponse.error) {
                 throw moduleResponse.error;
+            }
+
+            if (hotelResponse.error) {
+                throw hotelResponse.error;
             }
 
             const detail =
@@ -1121,6 +1225,7 @@
             renderDetailModules(
                 moduleResponse.data
             );
+            renderHotelMode(hotelResponse.data);
         } catch (error) {
             elements.dialog.close();
 
@@ -1154,13 +1259,14 @@
             "Saving…";
 
         try {
+            const hotelPayload = collectHotelMode();
             const {
                 error
             } =
                 await window
                     .supabaseClient
                         .rpc(
-                        "platform_update_club_configuration_v2",
+                        "platform_update_club_configuration_hotel",
                         {
                             p_club_id:
                                 state.selectedClub
@@ -1181,7 +1287,9 @@
                             p_modules:
                                 collectModules(
                                     elements.detailModuleGrid
-                                )
+                                ),
+                            p_hotel_config: hotelPayload.config,
+                            p_hotel_permissions: hotelPayload.permissions
                         }
                     );
 
