@@ -1,0 +1,15 @@
+/* ClubHub Hotel Mode controls (Console owns activation only) */
+.hotel-club-settings[hidden], .hotel-club-settings [hidden] {display:none !important;}
+.hotel-club-form {display:grid;gap:1rem;}
+.hotel-club-settings h3 {font-size:1.05rem; margin:1.25rem 0 .25rem; color:var(--color-primary);}
+.hotel-club-note {font-size:.87rem;color:var(--color-text-muted);line-height:1.55; margin:.4rem 0 1rem;}
+.hotel-club-table-wrap {max-width:100%;overflow-x:auto;margin:1rem 0;}
+.hotel-club-table {width:100%;border-collapse:collapse;font-size:.87rem;min-width:660px;}
+.hotel-club-table th,.hotel-club-table td {padding:.6rem .5rem;text-align:left;border-bottom:1px solid var(--color-border-brand);vertical-align:middle;}
+.hotel-club-table th {font-weight:700;}
+.hotel-club-table input[type="date"],.hotel-club-table input[type="time"],.hotel-club-table select {min-width:0;width:100%;padding:.5rem;background:var(--color-surface);color:var(--color-text);border:1px solid var(--color-border-brand);border-radius:6px;}
+.hotel-club-table input[type="checkbox"] {height:1.15rem;width:1.15rem;accent-color:var(--color-primary);}
+.hotel-club-table .settings-secondary-button {padding:.5rem .7rem;min-width:unset;}
+.hotel-club-actions {display:flex;gap:1rem;justify-content:flex-end;margin-top:1rem;}
+.hotel-club-settings .settings-field select,.hotel-club-settings .settings-field input {width:100%;}
+@media (max-width:720px) {.hotel-club-actions>* {width:100%;}}

@@ -335,70 +335,20 @@
             <div class="console-panel__header">
                 <div>
                     <h2>Hotel Mode</h2>
-                    <small>Console-only: resort availability policy and staff permissions for this club.</small>
+                    <small>Console enables this module. All availability policies and staff permissions are managed within ClubHub Settings.</small>
                 </div>
             </div>
-
             <label class="console-module-card">
                 <span class="console-module-card__body">
                     <strong>Enable Hotel Mode for this club</strong>
-                    <small>Disabled for ordinary clubs. Resort booking rules apply only when this is enabled.</small>
+                    <small>When enabled, ClubHub managers configure allocations, booking windows and release rules.</small>
                 </span>
                 <span class="console-switch">
                     <input id="hotelModeEnabled" type="checkbox" />
                     <span class="console-switch__track" aria-hidden="true"></span>
                 </span>
             </label>
-
-            <div class="hotel-console-grid" id="hotelModeFields">
-                <label class="console-field"><span>Hotel guest advance booking (days)</span>
-                    <input type="number" id="hotelBookingDays" min="1" max="730" required /></label>
-                <label class="console-field"><span>Society advance booking (days)</span>
-                    <input type="number" id="societyBookingDays" min="1" max="730" required /></label>
-                <label class="console-field"><span>Member advance booking (days)</span>
-                    <input type="number" id="hotelMemberDays" min="1" max="365" required /></label>
-                <label class="console-field"><span>Standard visitor advance booking (days)</span>
-                    <input type="number" id="hotelVisitorDays" min="1" max="365" required /></label>
-                <label class="console-field"><span>Hotel protected allocation (%)</span>
-                    <input type="number" id="hotelAllocationPercent" min="0" max="90" required /></label>
-                <label class="console-field"><span>Member protected allocation (%)</span>
-                    <input type="number" id="hotelMemberPercent" min="0" max="90" required /></label>
-                <label class="console-field"><span>Hotel allocation releases (days before play)</span>
-                    <input type="number" id="hotelReleaseDays" min="0" max="90" required /></label>
-                <label class="console-field"><span>Member allocation releases (days before play)</span>
-                    <input type="number" id="memberReleaseDays" min="0" max="90" required /></label>
-            </div>
-
-            <h3 class="hotel-console-subheading">Tee-time allocation method</h3>
-            <p class="hotel-console-note">Choose whether to distribute protected slots by percentage, or assign exact playing periods. Hotel Mode and all rules remain Console-controlled.</p>
-            <label class="console-field hotel-console-allocation-picker">
-                <span>Allocation method</span>
-                <select id="hotelAllocationMode">
-                    <option value="percentage">Percentage distribution (current method)</option>
-                    <option value="time_bands">Specific time allocations</option>
-                </select>
-            </label>
-            <div id="hotelTimeRulesPanel" hidden>
-                <p class="hotel-console-note">Add repeating weekday periods or one-off date overrides. Date overrides take precedence over weekly periods. Course-specific periods take precedence over all-course periods at the same level. Uncovered tee times use the percentages above. Times use the club's local timezone, and the end time is exclusive.</p>
-                <div class="console-table-wrap">
-                    <table class="console-table hotel-console-time-table">
-                        <thead><tr><th>Period</th><th>Day / Date</th><th>Course</th><th>Start</th><th>End</th><th>Priority</th><th></th></tr></thead>
-                        <tbody id="hotelTimeRules"></tbody>
-                    </table>
-                </div>
-                <button type="button" class="console-button hotel-console-add-rule" id="hotelAddTimeRule">+ Add time allocation</button>
-                <p class="hotel-console-note">Rules never cancel or move existing bookings. Check the ClubHub tee sheet to see allocations and release dates after saving.</p>
-            </div>
-
-            <h3 class="hotel-console-subheading">Staff permissions</h3>
-            <p class="hotel-console-note">Configured only here in Console. ClubHub staff cannot grant themselves Hotel Mode permissions.</p>
-            <div class="console-table-wrap">
-                <table class="console-table hotel-console-permissions">
-                    <thead><tr><th>ClubHub role</th><th>Hotel bookings</th><th>Society groups</th><th>Overrides</th></tr></thead>
-                    <tbody id="hotelModeRolePermissions"></tbody>
-                </table>
-            </div>
-            <p class="hotel-console-note" id="hotelModeReadOnlyNote" hidden>Platform Support can inspect but cannot change Hotel Mode.</p>
+            <p class="console-account-note" id="hotelModeReadOnlyNote" hidden>Platform Support can inspect this switch but cannot change it.</p>
         </section>
 
         <section class="console-account-section">
