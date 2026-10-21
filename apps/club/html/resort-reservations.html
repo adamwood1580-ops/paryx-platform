@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en" class="auth-protected">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#064831" />
+  <link rel="stylesheet" href="../styles/tokens.css" />
+  <link rel="stylesheet" href="../styles/app-shell.css" />
+  <link rel="stylesheet" href="../styles/components.css" />
+  <link rel="stylesheet" href="../styles/staff-shell.css?v=0.30.7" />
+  <link rel="stylesheet" href="../styles/resort-reservations.css?v=0.31.3" />
+  <link rel="manifest" href="../json/manifest.json" />
+  <link rel="apple-touch-icon" href="../assets/paryx-apple-touch-icon.png" />
+  <link rel="icon" type="image/png" href="../assets/paryx-favicon.png" />
+  <title>Hotel &amp; Society Reservations | Paryx</title>
+  <script src="../js/core/protected-loader.js?loader=0.31.3" defer></script>
+</head>
+<body data-page="resort">
+<div class="staff-shell">
+  <aside class="staff-sidebar" data-staff-sidebar></aside>
+  <div class="staff-workspace">
+    <header class="staff-topbar" data-staff-header></header>
+    <main class="app-main resort-page">
+      <section class="resort-heading">
+        <div>
+          <p class="page-heading__eyebrow">Resort operations</p>
+          <h1>Hotel &amp; Society Reservations</h1>
+          <p>Confirm hotel golf at booking, or reserve consecutive tee times for a society.</p>
+        </div>
+        <a class="resort-button secondary" href="tee-sheet.html">View tee sheet</a>
+      </section>
+      <p id="resortError" class="admin-error" role="alert" hidden></p>
+      <p id="resortSuccess" class="resort-success" role="status" hidden></p>
+      <section id="resortContent" hidden>
+        <section class="resort-panel">
+          <div class="resort-tabs" role="group" aria-label="Reservation type">
+            <button id="resortHotelTab" type="button" class="resort-tab active" aria-pressed="true">Hotel guest</button>
+            <button id="resortSocietyTab" type="button" class="resort-tab" aria-pressed="false">Society group</button>
+          </div>
+          <h2 id="resortFormTitle">Confirm a hotel golf booking</h2>
+          <p id="resortFormHint">Select the exact tee time and link the accommodation reference. This is a confirmed golf booking, not a request.</p>
+          <form id="resortForm">
+            <div class="resort-fields">
+              <label>Course <select id="resortCourse" required></select></label>
+              <label>Playing date <input id="resortDate" type="date" required /></label>
+              <label>First tee time <select id="resortStart" required><option value="">Select course and date</option></select></label>
+              <label>Number of golfers <input id="resortPlayers" type="number" min="1" max="128" value="2" required /></label>
+              <label id="resortLeadLabel">Lead guest / organiser <input id="resortLead" type="text" maxlength="150" required placeholder="Full name" /></label>
+              <label>Contact telephone <input id="resortContact" type="tel" maxlength="80" placeholder="Optional" /></label>
+              <label>Accommodation booking reference <input id="resortRef" type="text" maxlength="100" placeholder="Hotel reservation ID (if applicable)" /></label>
+              <label id="resortHoldLabel" hidden>Booking status
+                <select id="resortStatus">
+                  <option value="provisional">Provisional hold (expires automatically)</option>
+                  <option value="confirmed">Confirmed society booking</option>
+                </select>
+              </label>
+              <label id="resortExpiryLabel" hidden>Hold duration
+                <select id="resortHoldHours"><option value="12">12 hours</option><option value="24" selected>24 hours</option><option value="48">48 hours</option></select>
+              </label>
+              <label class="resort-wide">Golfer names <small id="resortNamesHint">One full name per line; required for hotel bookings.</small>
+                <textarea id="resortNames" rows="4" placeholder="One golfer on each line"></textarea>
+              </label>
+              <label id="resortOverrideLabel" class="resort-wide" hidden><span><input id="resortOverride" type="checkbox" style="width:auto;min-height:0;margin-right:.4rem" /> Use Console-authorised override for member-priority tee times (audited)</span></label>
+              <label class="resort-wide">Booking notes <textarea id="resortNotes" rows="2" maxlength="2000" placeholder="Optional operational notes"></textarea></label>
+            </div>
+            <p id="resortPreview" class="resort-preview" aria-live="polite"></p>
+            <button id="resortCreate" class="resort-button" type="submit">Confirm hotel tee time</button>
+          </form>
+        </section>
+        <section class="resort-panel">
+          <div class="resort-list-heading">
+            <div><h2>Reservations</h2><p>Confirmed hotel tee times and society bookings from one live tee sheet.</p></div>
+            <button id="resortRefresh" type="button" class="resort-button secondary">Refresh</button>
+          </div>
+          <div class="resort-filter">
+            <label>From <input type="date" id="resortFrom" /></label>
+            <label>To <input type="date" id="resortTo" /></label>
+            <button class="resort-button secondary" id="resortApplyFilter" type="button">Apply</button>
+          </div>
+          <p id="resortEmpty" class="resort-empty">Loading reservations…</p>
+          <div id="resortReservations" class="resort-reservations"></div>
+        </section>
+      </section>
+    </main>
+  </div>
+</div>
+</body>
+</html>

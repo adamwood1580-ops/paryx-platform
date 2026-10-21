@@ -1,0 +1,34 @@
+.resort-page{max-width:1400px;margin:auto;display:grid;gap:1.25rem}
+.resort-heading,.resort-list-heading{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.resort-heading h1{margin:.15rem 0;font-size:clamp(1.45rem,3vw,2rem)}
+.resort-heading p,.resort-list-heading p,.resort-panel>p{color:var(--color-text-muted,#66766c);margin:.3rem 0 .8rem}
+.resort-panel{padding:1.35rem;background:var(--surface,#fff);border:1px solid var(--border-color,#d5ddd8);border-radius:16px;display:grid;gap:.9rem}
+.resort-panel h2{margin:0;font-size:1.15rem}
+.resort-tabs{display:flex;gap:.55rem;flex-wrap:wrap}
+.resort-tab,.resort-button{border-radius:9px;border:1px solid #0b5b42;padding:.72rem 1rem;cursor:pointer;background:#0b5b42;color:white;text-decoration:none;font:inherit;font-weight:600}
+.resort-tab{background:transparent;color:var(--color-text,#16382d);border-color:var(--border-color,#b9cfc4)}
+.resort-tab.active{background:#0b5b42;color:#fff}
+.resort-button.secondary{color:#0b5b42;background:var(--surface,#fff)}
+.resort-button:disabled{opacity:.55;cursor:not-allowed}
+.resort-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}
+.resort-fields label,.resort-filter label{display:flex;flex-direction:column;gap:.4rem;font-weight:600;font-size:.92rem;min-width:0}
+.resort-fields small{font-weight:400;color:var(--color-text-muted,#66766c)}
+.resort-fields input,.resort-fields select,.resort-fields textarea,.resort-filter input{background:var(--surface,#fff);border:1px solid var(--border-color,#b9cfc4);color:inherit;border-radius:8px;min-height:42px;padding:.65rem;max-width:100%;width:100%;font:inherit}
+.resort-fields textarea{resize:vertical}
+.resort-wide{grid-column:1/-1}
+.resort-preview{background:var(--surface-subtle,#eff7f1);border-radius:8px;padding:.7rem;color:var(--color-text,#16382d);font-size:.94rem;margin:0}
+.resort-filter{display:flex;gap:.8rem;align-items:end;flex-wrap:wrap}
+.resort-filter label{min-width:160px;flex:1}
+.resort-reservations{display:grid;gap:.75rem}
+.resort-reservation{padding:1rem;border:1px solid var(--border-color,#c9d7ce);border-radius:11px;display:grid;gap:.4rem}
+.resort-reservation__header{display:flex;justify-content:space-between;align-items:center;gap:.8rem;flex-wrap:wrap}
+.resort-reservation__meta{font-size:.91rem;color:var(--color-text-muted,#66766c)}
+.resort-reservation__actions{display:flex;gap:.55rem;flex-wrap:wrap;margin-top:.45rem}
+.resort-pill{display:inline-block;border-radius:100px;padding:.25rem .65rem;font-size:.8rem;font-weight:700;background:#dce9f6;color:#244c72}
+.resort-pill--confirmed{background:#ddf0e3;color:#225b35}
+.resort-pill--cancelled,.resort-pill--expired{background:#f3e5e5;color:#833c3c}
+.resort-success{background:#d8f4e4;color:#195536;border-radius:9px;padding:.85rem}
+.resort-empty{color:var(--color-text-muted,#66766c)}
+@media(max-width:680px){.resort-panel{padding:.95rem}.resort-fields{grid-template-columns:1fr}.resort-heading{align-items:flex-start}}
+
+.resort-pill--partially_changed{background:#fff0d6;color:#7b5317}

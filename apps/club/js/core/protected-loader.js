@@ -40,6 +40,7 @@
         calendar: ["../js/pages/calendar-page.js"],
         competitions: ["../js/pages/competitions-page.js"],
         teesheet: ["../js/pages/tee-sheet-page.js"],
+        resort: ["../js/pages/resort-reservations-page.js"],
         staff: ["../js/pages/staff-page.js"],
         stock: ["../js/vendor/zxing-browser.min.js", "../js/pages/stock-barcode.js", "../js/pages/stock-page.js"],
         epos: ["../js/pages/epos-page.js"],

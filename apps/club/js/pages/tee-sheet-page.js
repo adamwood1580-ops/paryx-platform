@@ -51,6 +51,8 @@
         schedules: [],
         teeTimes: [],
         hotelMode: { enabled: false, slots: new Map(), canManageHotel: false },
+        resortHolds: new Map(),
+        canManageResort: false,
         events: [],
         booking: {
             mode: "create",
@@ -430,6 +432,7 @@
         if (!state.courseId || !state.playDate) {
             state.teeTimes = [];
             state.hotelMode = { enabled: false, slots: new Map(), canManageHotel: false };
+            state.resortHolds = new Map();
             renderTeeSheet();
             return;
         }
@@ -464,12 +467,26 @@
             showError("Hotel Mode allocation labels could not load. Apply SQL migration 057, then refresh the tee sheet. Existing booking controls remain in force.");
         }
 
+        let holds = new Map();
+        let canManageResort = false;
+        try {
+            const overlay = await rpc("resort_staff_overlay", args);
+            (Array.isArray(overlay) ? overlay : []).forEach(function (hold) {
+                if (hold?.tee_time_id) holds.set(String(hold.tee_time_id), hold);
+            });
+            const caps = await rpc("resort_staff_context", {p_club_id: state.clubId});
+            canManageResort = caps?.enabled === true && (caps.can_hotel || caps.can_society);
+        } catch (error) {
+            console.warn("Stage 3 resort overlay unavailable", error);
+        }
         // Do not mix allocations from an earlier date with the new tee sheet.
         if (state.courseId !== args.p_course_id || state.playDate !== args.p_play_date) {
             return;
         }
         state.teeTimes = teeTimes;
         state.hotelMode = hotelMode;
+        state.resortHolds = holds;
+        state.canManageResort = canManageResort;
         renderTeeSheet();
     }
 
@@ -577,6 +594,8 @@
         if (!elements.hotelBanner || !elements.hotelCount) {
             return;
         }
+        const resortLink = document.getElementById("resortBookingLink");
+        if (resortLink) resortLink.hidden = !state.canManageResort;
         elements.hotelBanner.hidden = !state.hotelMode.enabled;
         if (!state.hotelMode.enabled) {
             return;
@@ -692,6 +711,7 @@
             .map(function (row) {
                 const status = rowStatus(row);
                 const priority = allocationFor(row);
+                const societyHold = state.resortHolds.get(String(row.tee_time_id)) || null;
                 const hotelLockedForStaff = Boolean(priority && priority.allocation === "hotel"
                     && !priority.released && !state.hotelMode.canManageHotel);
                 const eventMarkup = row.club_event_id
@@ -796,7 +816,8 @@
                                 ${eventMarkup}
                             </div>
                             ${allocationMarkup(row)}
-                            ${bookingMarkup}
+                            ${societyHold ? `<span class="tee-sheet-hotel-chip tee-sheet-hotel-chip--hotel">Society hold until ${escapeHtml(new Date(societyHold.hold_expires_at).toLocaleString("en-GB"))}</span>` : ""}
+                            ${societyHold ? `<div class="tee-sheet-row__booking">Provisionally reserved for society · managed in Hotel &amp; Society</div>` : bookingMarkup}
                         </div>
 
                         <div class="tee-sheet-row__capacity">
@@ -805,7 +826,7 @@
                         </div>
 
                         <div class="tee-sheet-row__actions">
-                            ${row.booking_id ? (
+                            ${societyHold ? `<span class="tee-sheet-row__past-action">Society hold</span>` : row.booking_id ? (
                                 BOOKING_ROLES.has(state.role)
                                     ? `
                                         <button

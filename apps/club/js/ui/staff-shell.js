@@ -78,6 +78,14 @@
             ]
         },
         {
+            key: "resort",
+            label: "Hotel & Society",
+            href: "resort-reservations.html",
+            moduleKey: "tee_sheet",
+            roles: ["starter","reception","professional","manager","club_admin"],
+            resortOnly: true
+        },
+        {
             key: "members",
             label: "Members",
             href: "members.html",
@@ -224,6 +232,7 @@
                         href="${item.href}"
                         ${item.adminOnly ? 'data-staff-admin-only="true"' : ""}
                         ${item.moduleKey ? `data-club-module="${item.moduleKey}" hidden` : ""}
+                        ${item.resortOnly ? 'data-resort-nav="true"' : ""}
                         ${Array.isArray(item.roles) ? `data-staff-roles="${item.roles.join(",")}"` : ""}
                     >
                         ${item.label}
@@ -508,6 +517,19 @@
             );
 
         hydrateClubModules(activeClub);
+        const resortLink = document.querySelector('[data-resort-nav="true"]');
+        if (resortLink) {
+            resortLink.hidden = true;
+            if (Array.isArray(activeClub.modules) && activeClub.modules.includes("tee_sheet")) {
+                window.supabaseClient?.rpc("resort_staff_context", {p_club_id: activeClub.id})
+                    .then(({data, error}) => {
+                        if (error || !data || !data.enabled) return;
+                        const latest = window.Paryx?.clubContext?.getActiveClub?.();
+                        if (latest?.id !== activeClub.id) return;
+                        resortLink.hidden = !(data.can_hotel || data.can_society);
+                    }).catch(() => { resortLink.hidden = true; });
+            }
+        }
     }
 
     function hydrateClubModules(activeClub) {
