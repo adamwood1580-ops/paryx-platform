@@ -22,6 +22,8 @@
         deepLinkHandled: false,
         period: "morning",
         showUnavailable: false,
+        visibleBookingDays: 14,
+        datePage: 0,
         visibleLimit: 15
     };
 
@@ -192,31 +194,69 @@
         if (elements.courseField) {
             elements.courseField.hidden = courseMode?.single_course_mode === true && state.courses.length === 1;
         }
+        // Calendar window is Console-managed; preserve the old 14-date UI if SQL is absent.
+        try {
+            const visibleDays = Number(await P.rpc("hotel_mode_player_visible_days", {
+                p_club_id: state.clubId
+            }));
+            state.visibleBookingDays = Number.isFinite(visibleDays)
+                ? Math.max(1, Math.min(366, visibleDays)) : 14;
+        } catch (error) {
+            state.visibleBookingDays = 14;
+            console.warn("Hotel Mode date window unavailable; using default.", error);
+        }
+        state.datePage = 0;
+        if (requestedDate) {
+            const localToday = new Date();
+            const target = new Date(`${requestedDate}T12:00:00`);
+            const today = new Date(localToday.getFullYear(), localToday.getMonth(), localToday.getDate(), 12);
+            const index = Math.round((target - today) / 86400000);
+            if (index >= 0 && index < state.visibleBookingDays) state.datePage = Math.floor(index / 14);
+        }
+        const selected = new Date(`${state.date}T12:00:00`);
+        const current = new Date();
+        const dayZero = new Date(current.getFullYear(), current.getMonth(), current.getDate(), 12);
+        const offset = Math.round((selected - dayZero) / 86400000);
+        if (!Number.isFinite(offset) || offset < 0 || offset >= state.visibleBookingDays) {
+            state.date = P.isoDate(current);
+            state.datePage = 0;
+        }
         await loadTees();
     }
 
     function renderDates() {
         const today = new Date();
         const dates = [];
-        for (let index = 0; index < 14; index += 1) {
+        const totalDays = Math.max(1, Math.min(366, Number(state.visibleBookingDays || 14)));
+        const lastPage = Math.ceil(totalDays / 14) - 1;
+        state.datePage = Math.max(0, Math.min(lastPage, state.datePage));
+        const firstIndex = state.datePage * 14;
+        for (let index = firstIndex; index < Math.min(totalDays, firstIndex + 14); index += 1) {
             const date = new Date(today.getFullYear(), today.getMonth(), today.getDate() + index);
             dates.push({ iso: P.isoDate(date), date, index });
         }
 
-        elements.dateStrip.innerHTML = dates.map(function (item) {
+        const previous = state.datePage > 0
+            ? '<button type="button" class="date" data-date-nav="-1">◀ Earlier</button>' : '';
+        const next = state.datePage < lastPage
+            ? '<button type="button" class="date" data-date-nav="1">Later ▶</button>' : '';
+        elements.dateStrip.innerHTML = previous + dates.map(function (item) {
             return `
                 <button class="date ${item.iso === state.date ? "active" : ""}" type="button" data-date="${item.iso}">
                     <strong>${item.index === 0 ? "Today" : new Intl.DateTimeFormat("en-GB", { weekday: "short" }).format(item.date)}</strong>
                     <span>${new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" }).format(item.date)}</span>
                 </button>
             `;
-        }).join("");
+        }).join("") + next;
     }
 
     function closedStatus(row) {
         if (row.operational_status === "reserved") return row.event_title || "Reserved";
         if (row.operational_status === "competition") return row.event_title || "Competition";
         if (row.operational_status === "maintenance") return "Course maintenance";
+        if (row.operational_status === "hotel_priority") return "Hotel priority";
+        if (row.operational_status === "member_priority") return "Member priority";
+        if (row.operational_status === "booking_window") return "Booking not yet open";
         return "Unavailable";
     }
 
@@ -658,6 +698,17 @@
             loadTees();
         });
         elements.dateStrip.addEventListener("click", function (event) {
+            const nav = event.target.closest("[data-date-nav]");
+            if (nav) {
+                state.datePage += Number(nav.dataset.dateNav);
+                const current = new Date();
+                const pageStart = new Date(current.getFullYear(), current.getMonth(), current.getDate() + state.datePage * 14);
+                state.date = P.isoDate(pageStart);
+                state.period = "morning";
+                state.visibleLimit = 15;
+                loadTees();
+                return;
+            }
             const button = event.target.closest("[data-date]");
             if (button) {
                 state.date = button.dataset.date;
