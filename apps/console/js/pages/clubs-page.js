@@ -960,7 +960,6 @@
 
         elements.moduleReadOnly.hidden =
             state.canManage;
-        applyHotelEditState();
     }
 
     function renderClubDetail(detail) {
