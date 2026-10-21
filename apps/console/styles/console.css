@@ -1225,3 +1225,20 @@ body {
     .hotel-console-grid { grid-template-columns: 1fr; }
     .hotel-console-permissions th, .hotel-console-permissions td { padding: .45rem; }
 }
+
+/* Paryx Hotel Mode: Console-owned weekly and date-specific allocations. */
+.hotel-console-allocation-picker { display:grid; gap:.4rem; max-width:520px; margin:.6rem 0 1rem; }
+.hotel-console-allocation-picker select,
+.hotel-console-time-table select,
+.hotel-console-time-table input { width:100%; min-width:110px; box-sizing:border-box;
+    padding:.53rem .45rem; border:1px solid var(--color-border, #cbd5e1);
+    border-radius:.45rem; background:var(--color-surface, #fff); color:var(--color-text, #192b36); font:inherit; }
+.hotel-console-time-table { min-width:870px; }
+.hotel-console-time-table th { white-space:nowrap; }
+.hotel-console-time-table td { vertical-align:middle; }
+.hotel-console-time-table td:first-child select { min-width:130px; }
+.hotel-console-time-table input[type="date"] { min-width:140px; }
+.hotel-console-time-table input[type="time"] { min-width:105px; }
+.hotel-console-time-table .hotel-rule-remove { white-space:nowrap; }
+.hotel-console-add-rule { margin-top:.75rem; }
+.hotel-console-time-table [hidden] { display:none !important; }

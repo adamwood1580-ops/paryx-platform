@@ -8,7 +8,8 @@
         canManage: false,
         selectedClub: null,
         moduleCatalog: [],
-        hotelData: null
+        hotelData: null,
+        hotelCourses: []
     };
 
     const elements = {
@@ -183,6 +184,10 @@
             ),
 
         hotelRoles: document.getElementById("hotelModeRolePermissions"),
+        hotelAllocationMode: document.getElementById("hotelAllocationMode"),
+        hotelTimeRulesPanel: document.getElementById("hotelTimeRulesPanel"),
+        hotelTimeRules: document.getElementById("hotelTimeRules"),
+        hotelAddTimeRule: document.getElementById("hotelAddTimeRule"),
         hotelReadOnly: document.getElementById("hotelModeReadOnlyNote"),
 
         metricMembers:
@@ -926,8 +931,106 @@
         member_release_days: "memberReleaseDays"
     };
 
+    const HOTEL_WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+    function hotelRuleSelect(name, options, current) {
+        return `<select data-rule-field="${name}">${options.map(function (option) {
+            return `<option value="${escapeHtml(String(option.value))}" ${String(option.value) === String(current) ? "selected" : ""}>${escapeHtml(option.text)}</option>`;
+        }).join("")}</select>`;
+    }
+
+    function hotelRuleMarkup(rule) {
+        const dateRule = !!rule.specific_date;
+        const courseOptions = [{ value: "", text: "All courses" }].concat(
+            state.hotelCourses.map(function (course) {
+                return { value: course.id, text: course.name };
+            })
+        );
+        const weekdays = HOTEL_WEEKDAYS.map(function (day, i) {
+            return { value: i, text: day };
+        });
+        return `<tr data-hotel-time-rule>
+            <td>${hotelRuleSelect("scope", [{value:"weekday",text:"Weekly"},{value:"date",text:"Specific date"}], dateRule ? "date" : "weekday")}</td>
+            <td>
+                <span data-rule-weekday ${dateRule ? "hidden" : ""}>${hotelRuleSelect("weekday",weekdays, rule.weekday ?? 1)}</span>
+                <span data-rule-date ${dateRule ? "" : "hidden"}><input type="date" data-rule-field="specific_date" value="${escapeHtml(rule.specific_date || "")}" ${dateRule ? "required" : "disabled"} /></span>
+            </td>
+            <td>${hotelRuleSelect("course_id",courseOptions,rule.course_id || "")}</td>
+            <td><input type="time" data-rule-field="start_time" value="${escapeHtml(rule.start_time || "09:00")}" required /></td>
+            <td><input type="time" data-rule-field="end_time" value="${escapeHtml(rule.end_time || "11:00")}" required /></td>
+            <td>${hotelRuleSelect("allocation", [
+                {value:"hotel",text:"Hotel priority"},{value:"member",text:"Member priority"},{value:"general",text:"General"}
+            ],rule.allocation || "hotel")}</td>
+            <td><button type="button" class="console-button hotel-rule-remove" data-remove-hotel-rule>Remove</button></td>
+        </tr>`;
+    }
+
+    function hotelUpdateRuleScope(row) {
+        const dateRule = row.querySelector('[data-rule-field="scope"]').value === "date";
+        row.querySelector("[data-rule-weekday]").hidden = dateRule;
+        row.querySelector("[data-rule-date]").hidden = !dateRule;
+        const dateInput = row.querySelector('[data-rule-field="specific_date"]');
+        dateInput.disabled = !dateRule || !state.canManage;
+        dateInput.required = dateRule;
+        row.querySelector('[data-rule-field="weekday"]').disabled = dateRule || !state.canManage;
+    }
+
+    function hotelRefreshAllocationMode() {
+        const active = elements.hotelAllocationMode.value === "time_bands";
+        elements.hotelTimeRulesPanel.hidden = !active;
+        elements.hotelTimeRulesPanel.querySelectorAll("input,select,button")
+            .forEach(function (field) { field.disabled = !active || !state.canManage; });
+        if (active) elements.hotelTimeRules.querySelectorAll("[data-hotel-time-rule]")
+            .forEach(hotelUpdateRuleScope);
+    }
+
+    function hotelAddRule(rule) {
+        elements.hotelTimeRules.insertAdjacentHTML("beforeend",hotelRuleMarkup(rule || {}));
+        const row = elements.hotelTimeRules.lastElementChild;
+        hotelUpdateRuleScope(row);
+        applyHotelEditState();
+    }
+
+    function hotelCollectRules() {
+        const rules = [];
+        elements.hotelTimeRules.querySelectorAll("[data-hotel-time-rule]").forEach(function (row, i) {
+            const field = function (name) {
+                return row.querySelector(`[data-rule-field="${name}"]`).value;
+            };
+            const dateRule = field("scope") === "date";
+            const start = field("start_time");
+            const end = field("end_time");
+            const special = field("specific_date");
+            if (!start || !end || start >= end) {
+                throw new Error(`Rule ${i+1}: end time must be later than start time.`);
+            }
+            if (dateRule && !special) {
+                throw new Error(`Rule ${i+1}: choose a specific date.`);
+            }
+            rules.push({
+                course_id: field("course_id") || null,
+                weekday: dateRule ? null : Number(field("weekday")),
+                specific_date: dateRule ? special : null,
+                start_time: start,
+                end_time: end,
+                allocation: field("allocation")
+            });
+        });
+        if (rules.length > 200) throw new Error("Maximum 200 time allocations per club.");
+        for (let i=0;i<rules.length;i++) for (let j=i+1;j<rules.length;j++) {
+            const a = rules[i], b = rules[j];
+            if (a.course_id === b.course_id && a.weekday === b.weekday &&
+                a.specific_date === b.specific_date && a.start_time < b.end_time &&
+                b.start_time < a.end_time) {
+                throw new Error(`Time allocations ${i+1} and ${j+1} overlap for the same day and course.`);
+            }
+        }
+        return rules;
+    }
+
     function renderHotelMode(data) {
         state.hotelData = data;
+        state.hotelCourses = Array.isArray(data?.courses) ? data.courses : [];
         const config = data?.config || {};
         document.getElementById("hotelModeEnabled").checked =
             config.enabled === true;
@@ -935,6 +1038,11 @@
         Object.entries(HOTEL_INPUTS).forEach(function ([key, id]) {
             document.getElementById(id).value = String(config[key] ?? "");
         });
+
+        elements.hotelAllocationMode.value = config.allocation_mode || "percentage";
+        elements.hotelTimeRules.innerHTML = "";
+        (config.allocation_rules || []).forEach(hotelAddRule);
+        hotelRefreshAllocationMode();
 
         const permissions = data?.permissions || {};
         elements.hotelRoles.innerHTML = Object.entries(HOTEL_ROLE_LABELS)
@@ -955,15 +1063,20 @@
 
     function applyHotelEditState() {
         const inputs = document.getElementById("hotelModeConsolePanel")
-            .querySelectorAll("input");
+            .querySelectorAll("input, select, button");
         inputs.forEach(function (input) { input.disabled = !state.canManage; });
+        hotelRefreshAllocationMode();
         elements.hotelReadOnly.hidden = state.canManage;
     }
 
     function collectHotelMode() {
         const config = {
-            enabled: document.getElementById("hotelModeEnabled").checked
+            enabled: document.getElementById("hotelModeEnabled").checked,
+            allocation_mode: elements.hotelAllocationMode.value
         };
+        if (config.allocation_mode === "time_bands") {
+            config.allocation_rules = hotelCollectRules();
+        }
         Object.entries(HOTEL_INPUTS).forEach(function ([key, id]) {
             const element = document.getElementById(id);
             if (!element.checkValidity() || !element.value.trim()) {
@@ -1579,6 +1692,18 @@
             }
         }
     );
+
+    elements.hotelAllocationMode.addEventListener("change", hotelRefreshAllocationMode);
+    elements.hotelAddTimeRule.addEventListener("click",function () { hotelAddRule(); });
+    elements.hotelTimeRules.addEventListener("click",function (event) {
+        const remove = event.target.closest("[data-remove-hotel-rule]");
+        if (remove && state.canManage) remove.closest("[data-hotel-time-rule]").remove();
+    });
+    elements.hotelTimeRules.addEventListener("change",function (event) {
+        if (event.target.matches('[data-rule-field="scope"]')) {
+            hotelUpdateRuleScope(event.target.closest("[data-hotel-time-rule]"));
+        }
+    });
 
     elements.detailForm
         .addEventListener(

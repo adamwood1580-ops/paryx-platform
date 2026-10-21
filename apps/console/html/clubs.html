@@ -342,7 +342,7 @@
             <label class="console-module-card">
                 <span class="console-module-card__body">
                     <strong>Enable Hotel Mode for this club</strong>
-                    <small>Disabled for ordinary golf clubs. Phase 1 stores settings only; booking rules activate in Phase 2.</small>
+                    <small>Disabled for ordinary clubs. Resort booking rules apply only when this is enabled.</small>
                 </span>
                 <span class="console-switch">
                     <input id="hotelModeEnabled" type="checkbox" />
@@ -367,6 +367,27 @@
                     <input type="number" id="hotelReleaseDays" min="0" max="90" required /></label>
                 <label class="console-field"><span>Member allocation releases (days before play)</span>
                     <input type="number" id="memberReleaseDays" min="0" max="90" required /></label>
+            </div>
+
+            <h3 class="hotel-console-subheading">Tee-time allocation method</h3>
+            <p class="hotel-console-note">Choose whether to distribute protected slots by percentage, or assign exact playing periods. Hotel Mode and all rules remain Console-controlled.</p>
+            <label class="console-field hotel-console-allocation-picker">
+                <span>Allocation method</span>
+                <select id="hotelAllocationMode">
+                    <option value="percentage">Percentage distribution (current method)</option>
+                    <option value="time_bands">Specific time allocations</option>
+                </select>
+            </label>
+            <div id="hotelTimeRulesPanel" hidden>
+                <p class="hotel-console-note">Add repeating weekday periods or one-off date overrides. Date overrides take precedence over weekly periods. Course-specific periods take precedence over all-course periods at the same level. Uncovered tee times use the percentages above. Times use the club's local timezone, and the end time is exclusive.</p>
+                <div class="console-table-wrap">
+                    <table class="console-table hotel-console-time-table">
+                        <thead><tr><th>Period</th><th>Day / Date</th><th>Course</th><th>Start</th><th>End</th><th>Priority</th><th></th></tr></thead>
+                        <tbody id="hotelTimeRules"></tbody>
+                    </table>
+                </div>
+                <button type="button" class="console-button hotel-console-add-rule" id="hotelAddTimeRule">+ Add time allocation</button>
+                <p class="hotel-console-note">Rules never cancel or move existing bookings. Check the ClubHub tee sheet to see allocations and release dates after saving.</p>
             </div>
 
             <h3 class="hotel-console-subheading">Staff permissions</h3>
