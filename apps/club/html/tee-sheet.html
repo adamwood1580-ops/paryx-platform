@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="../styles/app-shell.css" />
     <link rel="stylesheet" href="../styles/components.css" />
     <link rel="stylesheet" href="../styles/staff-shell.css?v=0.30.7" />
-    <link rel="stylesheet" href="../styles/tee-sheet.css" />
+    <link rel="stylesheet" href="../styles/tee-sheet.css?v=hotel-2b" />
     <link rel="manifest" href="../json/manifest.json" />
     <link rel="apple-touch-icon" href="../assets/paryx-apple-touch-icon.png" />
     <link rel="icon" type="image/png" href="../assets/paryx-favicon.png" />
@@ -65,6 +65,19 @@
                     <button id="generateTeeSheetButton" class="tee-sheet-button" type="button">
                         Generate / refresh
                     </button>
+                </section>
+
+                <section id="hotelModeTeeSheetBanner" class="tee-sheet-hotel-banner" aria-label="Hotel Mode allocations" hidden>
+                    <div class="tee-sheet-hotel-banner__header">
+                        <strong>Hotel Mode allocations</strong>
+                        <span id="hotelModeTeeSheetCount"></span>
+                    </div>
+                    <div class="tee-sheet-hotel-banner__legend" aria-label="Tee time priority legend">
+                        <span class="tee-sheet-hotel-chip tee-sheet-hotel-chip--hotel">Hotel priority</span>
+                        <span class="tee-sheet-hotel-chip tee-sheet-hotel-chip--member">Member priority</span>
+                        <span class="tee-sheet-hotel-chip tee-sheet-hotel-chip--general">General</span>
+                    </div>
+                    <p>Allocation shows who has priority before the release date. Confirmed bookings are unaffected. Booking rules and permissions are managed in Console.</p>
                 </section>
 
                 <section class="tee-sheet-summary" aria-label="Tee sheet summary">
