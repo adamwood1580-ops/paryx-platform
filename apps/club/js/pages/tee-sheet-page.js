@@ -50,9 +50,6 @@
         playDate: todayIso(),
         schedules: [],
         teeTimes: [],
-        hotelMode: { enabled: false, slots: new Map(), canManageHotel: false },
-        resortHolds: new Map(),
-        canManageResort: false,
         events: [],
         booking: {
             mode: "create",
@@ -65,6 +62,8 @@
             checkedInAt: null,
             bookingSource: null
         },
+        quickSearch: "",
+        viewFilter: "all",
         initialised: false
     };
 
@@ -89,8 +88,13 @@
         loadStatus: document.getElementById("teeSheetLoadStatus"),
         empty: document.getElementById("teeSheetEmpty"),
         rows: document.getElementById("teeSheetRows"),
-        hotelBanner: document.getElementById("hotelModeTeeSheetBanner"),
-        hotelCount: document.getElementById("hotelModeTeeSheetCount"),
+        quickSearch: document.getElementById("teeSheetQuickSearch"),
+        viewFilter: document.getElementById("teeSheetViewFilter"),
+        clearFilters: document.getElementById("teeSheetClearFilters"),
+        filterEmpty: document.getElementById("teeSheetFilterEmpty"),
+        visibleCount: document.getElementById("teeSheetVisibleCount"),
+        eventCount: document.getElementById("teeSheetEventCount"),
+        bookingExtraDetails: document.getElementById("bookingExtraDetails"),
         earlierTimes: document.getElementById("earlierTeeTimesButton"),
         eventsEmpty: document.getElementById("teeSheetEventsEmpty"),
         events: document.getElementById("teeSheetEvents"),
@@ -431,62 +435,18 @@
     async function loadTeeSheet() {
         if (!state.courseId || !state.playDate) {
             state.teeTimes = [];
-            state.hotelMode = { enabled: false, slots: new Map(), canManageHotel: false };
-            state.resortHolds = new Map();
             renderTeeSheet();
             return;
         }
 
-        const args = {
-            p_club_id: state.clubId,
-            p_course_id: state.courseId,
-            p_play_date: state.playDate
-        };
-        const teeTimes = normaliseRows(await rpc("staff_get_tee_sheet", args));
-        let hotelMode = { enabled: false, slots: new Map(), canManageHotel: false };
+        state.teeTimes = normaliseRows(
+            await rpc("staff_get_tee_sheet", {
+                p_club_id: state.clubId,
+                p_course_id: state.courseId,
+                p_play_date: state.playDate
+            })
+        );
 
-        try {
-            const result = await rpc("staff_get_hotel_mode_tee_sheet", args);
-            if (result && result.enabled === true) {
-                const slots = new Map();
-                (Array.isArray(result.slots) ? result.slots : []).forEach(function (slot) {
-                    if (slot && slot.tee_time_id) {
-                        slots.set(String(slot.tee_time_id), slot);
-                    }
-                });
-                hotelMode = {
-                    enabled: true,
-                    slots: slots,
-                    canManageHotel: result.can_manage_hotel === true
-                };
-            }
-        } catch (error) {
-            // Don't take the existing tee sheet offline if the optional
-            // visibility RPC is not installed yet. Booking guards stay in SQL.
-            console.warn("Hotel Mode allocation display could not load", error);
-            showError("Hotel Mode allocation labels could not load. Apply SQL migration 057, then refresh the tee sheet. Existing booking controls remain in force.");
-        }
-
-        let holds = new Map();
-        let canManageResort = false;
-        try {
-            const overlay = await rpc("resort_staff_overlay", args);
-            (Array.isArray(overlay) ? overlay : []).forEach(function (hold) {
-                if (hold?.tee_time_id) holds.set(String(hold.tee_time_id), hold);
-            });
-            const caps = await rpc("resort_staff_context", {p_club_id: state.clubId});
-            canManageResort = caps?.enabled === true && (caps.can_hotel || caps.can_society);
-        } catch (error) {
-            console.warn("Stage 3 resort overlay unavailable", error);
-        }
-        // Do not mix allocations from an earlier date with the new tee sheet.
-        if (state.courseId !== args.p_course_id || state.playDate !== args.p_play_date) {
-            return;
-        }
-        state.teeTimes = teeTimes;
-        state.hotelMode = hotelMode;
-        state.resortHolds = holds;
-        state.canManageResort = canManageResort;
         renderTeeSheet();
     }
 
@@ -532,7 +492,7 @@
             return Boolean(row.booking_id);
         }).length;
         const open = state.teeTimes.filter(function (row) {
-            return row.operational_status === "open" && !row.booking_id;
+            return row.operational_status === "open" && !row.booking_id && !isPastTeeTime(row);
         }).length;
         const unavailable = state.teeTimes.filter(function (row) {
             return row.operational_status !== "open";
@@ -557,54 +517,6 @@
         elements.bookedCount.textContent = String(booked);
         elements.playerCount.textContent = String(players);
         elements.unavailableCount.textContent = String(unavailable);
-    }
-
-    function allocationFor(row) {
-        if (!state.hotelMode.enabled) {
-            return null;
-        }
-        return state.hotelMode.slots.get(String(row.tee_time_id)) || null;
-    }
-
-    function allocationMarkup(row) {
-        const slot = allocationFor(row);
-        if (!slot) {
-            return "";
-        }
-        const type = slot.allocation;
-        const label = type === "hotel" ? "Hotel priority"
-            : type === "member" ? "Member priority" : "General";
-        const suffix = (type === "hotel" || type === "member")
-            ? (slot.released ? " · Released to general access"
-                : (slot.release_on ? " · Releases " + friendlyAllocationDate(slot.release_on) : ""))
-            : "";
-        return `<span class="tee-sheet-hotel-chip tee-sheet-hotel-chip--${escapeHtml(type)}" title="Allocation policy (does not describe the booking occupant)">${escapeHtml(label + suffix)}</span>`;
-    }
-
-    function friendlyAllocationDate(iso) {
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(String(iso || ""))) {
-            return String(iso || "");
-        }
-        const parts = iso.split("-");
-        const date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-        return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" }).format(date);
-    }
-
-    function renderHotelBanner() {
-        if (!elements.hotelBanner || !elements.hotelCount) {
-            return;
-        }
-        const resortLink = document.getElementById("resortBookingLink");
-        if (resortLink) resortLink.hidden = !state.canManageResort;
-        elements.hotelBanner.hidden = !state.hotelMode.enabled;
-        if (!state.hotelMode.enabled) {
-            return;
-        }
-        const allocations = Array.from(state.hotelMode.slots.values());
-        const hotel = allocations.filter(function (item) { return item.allocation === "hotel"; }).length;
-        const member = allocations.filter(function (item) { return item.allocation === "member"; }).length;
-        const general = allocations.length - hotel - member;
-        elements.hotelCount.textContent = `${hotel} hotel · ${member} member · ${general} general`;
     }
 
     function rowStatus(row) {
@@ -696,24 +608,44 @@
         });
     }
 
+    function matchesTeeSheetFilters(row) {
+        const status = rowStatus(row);
+        if (state.viewFilter === "open" && (status !== "open" || isPastTeeTime(row))) return false;
+        if (state.viewFilter === "booked" && status !== "booked") return false;
+        if (state.viewFilter === "unavailable" && (status === "open" || status === "booked")) return false;
+
+        const query = state.quickSearch.trim().toLocaleLowerCase();
+        if (!query) return true;
+        const fields = [
+            shortTime(row.start_time), row.lead_name, row.contact_number,
+            row.event_title, row.tee_time_notes,
+            ...(Array.isArray(row.player_names) ? row.player_names : [])
+        ];
+        return fields.some(function (field) {
+            return String(field || "").toLocaleLowerCase().includes(query);
+        });
+    }
+
     function renderTeeSheet() {
         renderSummary();
-        renderHotelBanner();
+        const filtered = state.teeTimes.filter(matchesTeeSheetFilters);
+        const hasFilters = Boolean(state.quickSearch.trim()) || state.viewFilter !== "all";
         elements.empty.hidden = state.teeTimes.length > 0;
+        elements.filterEmpty.hidden = !state.teeTimes.length || filtered.length > 0;
+        elements.clearFilters.hidden = !hasFilters;
+        elements.visibleCount.textContent = state.teeTimes.length
+            ? `${filtered.length} of ${state.teeTimes.length} tee times shown`
+            : "";
 
-        if (!state.teeTimes.length) {
+        if (!state.teeTimes.length || !filtered.length) {
             elements.rows.innerHTML = "";
             elements.earlierTimes.hidden = true;
             return;
         }
 
-        elements.rows.innerHTML = state.teeTimes
+        elements.rows.innerHTML = filtered
             .map(function (row) {
                 const status = rowStatus(row);
-                const priority = allocationFor(row);
-                const societyHold = state.resortHolds.get(String(row.tee_time_id)) || null;
-                const hotelLockedForStaff = Boolean(priority && priority.allocation === "hotel"
-                    && !priority.released && !state.hotelMode.canManageHotel);
                 const eventMarkup = row.club_event_id
                     ? `
                         <span class="tee-sheet-row__event">
@@ -815,9 +747,7 @@
                                 }
                                 ${eventMarkup}
                             </div>
-                            ${allocationMarkup(row)}
-                            ${societyHold ? `<span class="tee-sheet-hotel-chip tee-sheet-hotel-chip--hotel">Society hold until ${escapeHtml(new Date(societyHold.hold_expires_at).toLocaleString("en-GB"))}</span>` : ""}
-                            ${societyHold ? `<div class="tee-sheet-row__booking">Provisionally reserved for society · managed in Hotel &amp; Society</div>` : bookingMarkup}
+                            ${bookingMarkup}
                         </div>
 
                         <div class="tee-sheet-row__capacity">
@@ -826,7 +756,7 @@
                         </div>
 
                         <div class="tee-sheet-row__actions">
-                            ${societyHold ? `<span class="tee-sheet-row__past-action">Society hold</span>` : row.booking_id ? (
+                            ${row.booking_id ? (
                                 BOOKING_ROLES.has(state.role)
                                     ? `
                                         <button
@@ -834,7 +764,7 @@
                                             type="button"
                                             data-action="manage-booking"
                                         >
-                                            Manage
+                                            View / edit
                                         </button>
                                     `
                                     : `
@@ -843,36 +773,27 @@
                                             type="button"
                                             data-action="availability"
                                         >
-                                            Availability
+                                            Change status
                                         </button>
                                     `
                             ) : past ? `
                                 <span class="tee-sheet-row__past-action">
                                     Historical
                                 </span>
-                            ` : row.operational_status === "open" && BOOKING_ROLES.has(state.role) && hotelLockedForStaff ? `
-                                <span class="tee-sheet-row__past-action" title="Hotel Mode access is granted in Console">Hotel access required</span>
-                                <button
-                                    class="tee-sheet-row__action tee-sheet-row__action--secondary"
-                                    type="button"
-                                    data-action="availability"
-                                >
-                                    Availability
-                                </button>
                             ` : row.operational_status === "open" && BOOKING_ROLES.has(state.role) ? `
                                 <button
                                     class="tee-sheet-row__action tee-sheet-row__action--primary"
                                     type="button"
                                     data-action="book"
                                 >
-                                    Book
+                                    Add booking
                                 </button>
                                 <button
                                     class="tee-sheet-row__action tee-sheet-row__action--secondary"
                                     type="button"
                                     data-action="availability"
                                 >
-                                    Availability
+                                    Change status
                                 </button>
                             ` : `
                                 <button
@@ -880,7 +801,7 @@
                                     type="button"
                                     data-action="availability"
                                 >
-                                    Availability
+                                    Change status
                                 </button>
                             `}
                         </div>
@@ -889,7 +810,12 @@
             })
             .join("");
 
-        focusCurrentTeeTime();
+        if (hasFilters) {
+            elements.earlierTimes.hidden = true;
+            elements.rows.scrollTop = 0;
+        } else {
+            focusCurrentTeeTime();
+        }
     }
 
     function defaultAction(event) {
@@ -928,6 +854,8 @@
     }
 
     function renderEvents() {
+        elements.eventCount.textContent = state.events.length === 1
+            ? "1 today" : `${state.events.length} today`;
         elements.eventsEmpty.hidden = state.events.length > 0;
 
         if (!state.events.length) {
@@ -1019,7 +947,7 @@
             showError(error);
         } finally {
             elements.generate.disabled = false;
-            elements.generate.textContent = "Generate / refresh";
+            elements.generate.textContent = "Generate tee times";
         }
     }
 
@@ -1515,6 +1443,7 @@
         elements.bookingMemberSearch.value = "";
         elements.bookingGuestName.value = "";
         elements.moveBookingPanel.hidden = true;
+        elements.bookingExtraDetails.open = false;
         elements.cancelBooking.hidden = true;
         elements.moveBooking.hidden = true;
         elements.saveBooking.textContent = "Create booking";
@@ -1600,6 +1529,7 @@
             elements.bookingType.value = detail.booking_type || "joinable";
             elements.bookingContactNumber.value = detail.contact_number || "";
             elements.bookingNotes.value = detail.notes || "";
+            elements.bookingExtraDetails.open = Boolean(detail.contact_number || detail.notes);
             elements.bookingMemberSearch.value = "";
             elements.bookingGuestName.value = "";
             elements.bookingDialogTitle.textContent = "Manage booking";
@@ -2162,6 +2092,23 @@
             "click",
             showEarlierTeeTimes
         );
+
+        elements.quickSearch.addEventListener("input", function () {
+            state.quickSearch = elements.quickSearch.value;
+            renderTeeSheet();
+        });
+        elements.viewFilter.addEventListener("change", function () {
+            state.viewFilter = elements.viewFilter.value;
+            renderTeeSheet();
+        });
+        elements.clearFilters.addEventListener("click", function () {
+            state.quickSearch = "";
+            state.viewFilter = "all";
+            elements.quickSearch.value = "";
+            elements.viewFilter.value = "all";
+            renderTeeSheet();
+            elements.quickSearch.focus();
+        });
 
         elements.generate.addEventListener("click", generateDay);
         elements.manageSchedules.addEventListener("click", openSchedules);

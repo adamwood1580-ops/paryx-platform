@@ -8,7 +8,8 @@
     <link rel="stylesheet" href="../styles/app-shell.css" />
     <link rel="stylesheet" href="../styles/components.css" />
     <link rel="stylesheet" href="../styles/staff-shell.css?v=0.30.7" />
-    <link rel="stylesheet" href="../styles/tee-sheet.css?v=hotel-2b" />
+    <link rel="stylesheet" href="../styles/tee-sheet.css" />
+    <link rel="stylesheet" href="../styles/tee-sheet-ux.css?v=0.31.7" />
     <link rel="manifest" href="../json/manifest.json" />
     <link rel="apple-touch-icon" href="../assets/paryx-apple-touch-icon.png" />
     <link rel="icon" type="image/png" href="../assets/paryx-favicon.png" />
@@ -31,19 +32,13 @@
                         <p id="teeSheetClubName">Loading club information…</p>
                     </div>
 
-                    <button
-                        id="manageSchedulesButton"
-                        class="tee-sheet-button tee-sheet-button--secondary"
-                        type="button"
-                    >
-                        Booking schedules
-                    </button>
+                    <p class="tee-ux-intro-note">Find a time, then book or manage players.</p>
                 </section>
 
                 <section id="teeSheetError" class="admin-error" role="alert" hidden></section>
                 <section id="teeSheetSuccess" class="tee-sheet-success" role="status" hidden></section>
 
-                <section class="tee-sheet-toolbar card" aria-label="Tee sheet controls">
+                <section class="tee-sheet-toolbar card tee-ux-toolbar" aria-label="Choose tee sheet date and course">
                     <label id="teeSheetCourseField" class="tee-sheet-field tee-sheet-field--course">
                         <span>Course</span>
                         <select id="teeSheetCourseSelect"></select>
@@ -52,42 +47,27 @@
                     <div class="tee-sheet-date-nav">
                         <button id="previousDayButton" type="button" aria-label="Previous day">‹</button>
                         <label class="tee-sheet-field">
-                            <span>Date</span>
+                            <span>Playing date</span>
                             <input id="teeSheetDate" type="date" />
                         </label>
                         <button id="nextDayButton" type="button" aria-label="Next day">›</button>
                     </div>
 
-                    <button id="todayTeeSheetButton" class="tee-sheet-button tee-sheet-button--secondary" type="button">
-                        Today
-                    </button>
-
-                    <button id="generateTeeSheetButton" class="tee-sheet-button" type="button">
-                        Generate / refresh
-                    </button>
+                    <button id="todayTeeSheetButton" class="tee-sheet-button tee-sheet-button--secondary" type="button">Today</button>
                 </section>
 
-                <section id="hotelModeTeeSheetBanner" class="tee-sheet-hotel-banner" aria-label="Hotel Mode allocations" hidden>
-                    <div class="tee-sheet-hotel-banner__header">
-                        <strong>Hotel Mode allocations</strong>
-                        <span id="hotelModeTeeSheetCount"></span>
+                <details class="tee-ux-tools">
+                    <summary>Tee sheet tools <span>Schedules and generating tee times</span></summary>
+                    <div class="tee-ux-tools__content">
+                        <button id="generateTeeSheetButton" class="tee-sheet-button tee-sheet-button--secondary" type="button">Generate tee times</button>
+                        <button id="manageSchedulesButton" class="tee-sheet-button tee-sheet-button--secondary" type="button">Booking schedules</button>
+                        <p>Usually needed only when setting up or changing the tee sheet.</p>
                     </div>
-                    <div class="tee-sheet-hotel-banner__legend" aria-label="Tee time priority legend">
-                        <span class="tee-sheet-hotel-chip tee-sheet-hotel-chip--hotel">Hotel priority</span>
-                        <span class="tee-sheet-hotel-chip tee-sheet-hotel-chip--member">Member priority</span>
-                        <span class="tee-sheet-hotel-chip tee-sheet-hotel-chip--general">General</span>
-                    </div>
-                    <p>Allocation shows who has priority before the release date. Confirmed bookings are unaffected. Booking rules and permissions are managed in Console.</p>
-                    <a id="resortBookingLink" href="resort-reservations.html" hidden>Manage Hotel &amp; Society Reservations →</a>
-                </section>
+                </details>
 
-                <section class="tee-sheet-summary" aria-label="Tee sheet summary">
+                <section class="tee-sheet-summary tee-ux-summary" aria-label="Booking overview">
                     <article>
-                        <span>Total tee times</span>
-                        <strong id="teeSheetTotalCount">0</strong>
-                    </article>
-                    <article>
-                        <span>Open</span>
+                        <span>Available times</span>
                         <strong id="teeSheetOpenCount">0</strong>
                     </article>
                     <article>
@@ -98,17 +78,21 @@
                         <span>Players</span>
                         <strong id="teeSheetPlayerCount">0</strong>
                     </article>
-                    <article>
-                        <span>Event / unavailable</span>
-                        <strong id="teeSheetUnavailableCount">0</strong>
-                    </article>
                 </section>
+
+                <details class="tee-ux-more-counts">
+                    <summary>More daily figures</summary>
+                    <div class="tee-ux-more-counts__grid">
+                        <div><span>Total tee times</span><strong id="teeSheetTotalCount">0</strong></div>
+                        <div><span>Unavailable or reserved</span><strong id="teeSheetUnavailableCount">0</strong></div>
+                    </div>
+                </details>
 
                 <section class="tee-sheet-layout">
                     <div class="tee-sheet-main card">
                         <div class="tee-sheet-section-heading">
                             <div>
-                                <p class="page-heading__eyebrow">Daily inventory</p>
+                                <p class="page-heading__eyebrow">Bookings and availability</p>
                                 <h2 id="teeSheetDayTitle">Tee times</h2>
                             </div>
 
@@ -126,32 +110,49 @@
                             </div>
                         </div>
 
+                        <div class="tee-ux-find" role="search" aria-label="Find tee times">
+                            <label class="tee-sheet-field tee-ux-find__search">
+                                <span>Find a booking</span>
+                                <input id="teeSheetQuickSearch" type="search" autocomplete="off" placeholder="Player, time or phone number" />
+                            </label>
+                            <label class="tee-sheet-field">
+                                <span>Show</span>
+                                <select id="teeSheetViewFilter">
+                                    <option value="all">All tee times</option>
+                                    <option value="open">Available</option>
+                                    <option value="booked">Booked</option>
+                                    <option value="unavailable">Unavailable</option>
+                                </select>
+                            </label>
+                            <button id="teeSheetClearFilters" class="tee-sheet-button tee-sheet-button--secondary" type="button" hidden>Clear</button>
+                        </div>
+                        <p class="tee-ux-results-count" id="teeSheetVisibleCount" aria-live="polite"></p>
+
                         <div id="teeSheetEmpty" class="tee-sheet-empty" hidden>
                             <strong>No tee times have been generated for this date.</strong>
-                            <p>Create a booking schedule, then generate the day.</p>
+                            <p>Open <b>Tee sheet tools</b> to create a schedule or generate tee times.</p>
+                        </div>
+                        <div id="teeSheetFilterEmpty" class="tee-sheet-empty" hidden>
+                            <strong>No matching tee times.</strong>
+                            <p>Try another player, time or filter.</p>
                         </div>
 
                         <div id="teeSheetRows" class="tee-sheet-rows" aria-live="polite"></div>
                     </div>
 
                     <aside class="tee-sheet-events card">
-                        <div class="tee-sheet-section-heading">
-                            <div>
-                                <p class="page-heading__eyebrow">Calendar</p>
-                                <h2>Events this day</h2>
+                        <details class="tee-ux-events-disclosure" id="teeSheetEventsDisclosure">
+                            <summary><span>Calendar events</span><span id="teeSheetEventCount">0 today</span></summary>
+                            <div class="tee-ux-events-content">
+                                <div class="tee-ux-events-heading">
+                                    <h2>Events on this day</h2>
+                                    <a href="calendar.html">Open calendar</a>
+                                </div>
+                                <p class="tee-sheet-events__hint">Use an event to reserve or block times on the tee sheet.</p>
+                                <div id="teeSheetEventsEmpty" class="tee-sheet-events__empty" hidden>No events scheduled for this date.</div>
+                                <div id="teeSheetEvents" class="tee-sheet-event-list"></div>
                             </div>
-                            <a href="calendar.html">Calendar</a>
-                        </div>
-
-                        <p class="tee-sheet-events__hint">
-                            Allocate calendar events to the tee sheet. For example, a men's roll-up can reserve four consecutive tee times from its start time.
-                        </p>
-
-                        <div id="teeSheetEventsEmpty" class="tee-sheet-events__empty" hidden>
-                            No calendar events on this date.
-                        </div>
-
-                        <div id="teeSheetEvents" class="tee-sheet-event-list"></div>
+                        </details>
                     </aside>
                 </section>
             </main>
@@ -265,8 +266,8 @@
                 <section class="tee-sheet-booking-players">
                     <div class="tee-sheet-booking-section-heading">
                         <div>
-                            <h3>Players</h3>
-                            <p>Add club members and named guests.</p>
+                            <h3>Who is playing?</h3>
+                            <p>Find a member or enter a guest name.</p>
                         </div>
                         <strong id="bookingCapacity">0 / 4</strong>
                     </div>
@@ -292,7 +293,7 @@
                             <input id="bookingGuestName" type="text" placeholder="Guest name" />
                         </label>
                         <button id="addBookingGuestButton" class="tee-sheet-button tee-sheet-button--secondary" type="button">
-                            Add guest
+                            Add
                         </button>
                     </div>
                 </section>
@@ -322,15 +323,19 @@
                         </select>
                     </label>
 
-                    <label class="tee-sheet-field">
-                        <span>Contact number</span>
-                        <input id="bookingContactNumber" type="tel" placeholder="Optional" />
-                    </label>
-
-                    <label class="tee-sheet-field">
-                        <span>Notes</span>
-                        <textarea id="bookingNotes" rows="4" placeholder="Optional staff note"></textarea>
-                    </label>
+                    <details class="tee-ux-booking-extra" id="bookingExtraDetails">
+                        <summary>Contact details and notes <span>Optional</span></summary>
+                        <div class="tee-ux-booking-extra__fields">
+                            <label class="tee-sheet-field">
+                                <span>Contact number</span>
+                                <input id="bookingContactNumber" type="tel" placeholder="Optional" />
+                            </label>
+                            <label class="tee-sheet-field">
+                                <span>Staff notes</span>
+                                <textarea id="bookingNotes" rows="3" placeholder="Optional note"></textarea>
+                            </label>
+                        </div>
+                    </details>
 
                     <div id="moveBookingPanel" class="tee-sheet-move-panel" hidden>
                         <div class="tee-sheet-booking-section-heading">

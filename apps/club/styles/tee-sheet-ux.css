@@ -1,0 +1,74 @@
+/* ClubHub UX Phase 2: task-first tee sheet. Layout only; do not gate permissions through CSS. */
+.tee-sheet-page { max-width: 90rem; gap: 1rem; }
+.tee-sheet-intro { align-items: center; }
+.tee-sheet-intro h1 { font-family: inherit; font-size: clamp(1.9rem, 3vw, 2.55rem); font-weight: 800; line-height: 1.15; }
+.tee-sheet-intro p:last-child { font-size: .93rem; }
+.tee-ux-intro-note { max-width: 22rem; text-align: right; }
+.tee-sheet-toolbar.tee-ux-toolbar { grid-template-columns: minmax(190px, 1fr) minmax(290px, 1fr) auto; padding: 1rem; }
+.tee-ux-tools, .tee-ux-more-counts { border: 1px solid var(--color-border-brand); border-radius: 14px; background: var(--color-surface); }
+.tee-ux-tools > summary, .tee-ux-more-counts > summary { cursor: pointer; padding: .78rem 1rem; color: var(--color-text); font-weight: 750; }
+.tee-ux-tools > summary span { color: var(--color-text-muted); font-size: .8rem; font-weight: 400; margin-left: .55rem; }
+.tee-ux-tools__content { display: flex; align-items: center; flex-wrap: wrap; gap: .65rem; border-top: 1px solid var(--color-border-brand); padding: .85rem 1rem; }
+.tee-ux-tools__content p { margin: 0; font-size: .79rem; color: var(--color-text-muted); }
+.tee-sheet-summary.tee-ux-summary { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .7rem; }
+.tee-ux-summary article { padding: .85rem 1rem; box-shadow: none; }
+.tee-ux-summary strong { font-size: 1.55rem; }
+.tee-ux-more-counts { margin-top: -.2rem; }
+.tee-ux-more-counts summary { font-size: .83rem; padding: .68rem 1rem; }
+.tee-ux-more-counts__grid { display: flex; flex-wrap: wrap; gap: 2rem; padding: .7rem 1rem 1rem; border-top: 1px solid var(--color-border-brand); }
+.tee-ux-more-counts__grid div { display: flex; align-items: baseline; gap: .65rem; }
+.tee-ux-more-counts__grid span { font-size: .82rem; color: var(--color-text-muted); }
+.tee-ux-more-counts__grid strong { color: var(--color-primary); font-size: 1.15rem; }
+.tee-sheet-layout { grid-template-columns: minmax(0, 1fr); }
+.tee-sheet-events { order: 0; }
+.tee-ux-find { display: flex; align-items: end; flex-wrap: wrap; gap: .75rem; padding: .9rem 1.1rem .4rem; }
+.tee-ux-find .tee-sheet-field { min-width: 170px; }
+.tee-ux-find__search { flex: 1 1 270px; }
+.tee-ux-find__search input { max-width: none; }
+.tee-ux-results-count { margin: 0; padding: .2rem 1.1rem .8rem; color: var(--color-text-muted); font-size: .78rem; }
+.tee-sheet-section-heading { padding: .9rem 1.1rem; }
+.tee-sheet-row { grid-template-columns: 80px minmax(0, 1fr) 78px minmax(116px, auto); padding: .7rem 1rem; }
+.tee-sheet-row__action { min-height: 42px; white-space: nowrap; }
+.tee-ux-events-disclosure > summary { display: flex; justify-content: space-between; gap: 1rem; align-items: center; cursor: pointer; padding: 1rem 1.2rem; font-weight: 750; color: var(--color-text); }
+.tee-ux-events-disclosure > summary span:last-child { font-weight: 500; font-size: .85rem; color: var(--color-text-muted); }
+.tee-ux-events-content { border-top: 1px solid var(--color-border-brand); padding: 1rem; }
+.tee-ux-events-heading { display: flex; justify-content: space-between; align-items: center; gap: .5rem; }
+.tee-ux-events-heading h2 { margin: 0; color: var(--color-text); font-size: 1rem; }
+.tee-ux-events-heading a { color: var(--color-primary); }
+.tee-ux-events-content .tee-sheet-events__hint { margin: .6rem 0; font-size: .83rem; }
+.tee-ux-booking-extra { border: 1px solid var(--color-border-brand); border-radius: 12px; background: var(--color-surface); }
+.tee-ux-booking-extra summary { cursor: pointer; padding: .75rem; font-weight: 700; color: var(--color-text); font-size: .9rem; }
+.tee-ux-booking-extra summary span { float: right; color: var(--color-text-muted); font-size: .77rem; font-weight: 400; }
+.tee-ux-booking-extra__fields { padding: .3rem .75rem .8rem; display: grid; gap: .75rem; }
+.tee-ux-tools > summary:focus-visible, .tee-ux-more-counts > summary:focus-visible, .tee-ux-events-disclosure > summary:focus-visible, .tee-ux-booking-extra > summary:focus-visible { outline: 2px solid var(--color-primary); outline-offset: -3px; }
+.tee-ux-find :focus-visible, .tee-sheet-row__action:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+body[data-page="teesheet"] [hidden] { display: none !important; }
+@media (max-width: 850px) {
+ .tee-sheet-toolbar.tee-ux-toolbar { grid-template-columns: 1fr 1fr; }
+ .tee-sheet-toolbar.tee-ux-toolbar #todayTeeSheetButton { grid-column: 1 / -1; }
+ .tee-sheet-row { grid-template-columns: 73px minmax(0, 1fr) 77px; }
+ .tee-sheet-row__actions { grid-column: 2 / 4; justify-content: flex-start; }
+}
+@media (max-width: 600px) {
+ .tee-sheet-intro { align-items: flex-start; }
+ .tee-ux-intro-note { text-align: left; }
+ .tee-sheet-toolbar.tee-ux-toolbar { grid-template-columns: 1fr; }
+ .tee-sheet-toolbar.tee-ux-toolbar #todayTeeSheetButton { grid-column: auto; }
+ .tee-sheet-summary.tee-ux-summary { grid-template-columns: repeat(3, minmax(0,1fr)); }
+ .tee-ux-summary article { padding: .65rem .5rem; }
+ .tee-ux-summary span { font-size: .67rem; letter-spacing: 0; }
+ .tee-ux-summary strong { font-size: 1.25rem; }
+ .tee-ux-tools > summary span { display: block; margin: .25rem 0 0; }
+ .tee-ux-find { flex-direction: column; align-items: stretch; }
+ .tee-ux-find .tee-sheet-field { min-width: 0; width: 100%; }
+ .tee-ux-find__search { flex: none; }
+ .tee-sheet-row { grid-template-columns: 63px minmax(0, 1fr) 64px; gap: .35rem; padding: .7rem .55rem; }
+ .tee-sheet-row > time { font-size: 1.1rem; }
+ .tee-sheet-row__meta { gap: .3rem; }
+ .tee-sheet-row__booking span { overflow-wrap: anywhere; }
+ .tee-sheet-row__actions { justify-content: flex-end; }
+ .tee-sheet-row__action { width: auto; padding: .5rem .65rem; }
+ .tee-ux-tools__content { align-items: stretch; }
+ .tee-ux-tools__content button { flex: 1 1 100%; }
+ .tee-sheet-booking-layout { grid-template-columns: 1fr; }
+}
