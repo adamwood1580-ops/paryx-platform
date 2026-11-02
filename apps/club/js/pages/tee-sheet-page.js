@@ -51,6 +51,8 @@
         schedules: [],
         teeTimes: [],
         events: [],
+        teeSheetSearch: "",
+        teeSheetFilter: "all",
         booking: {
             mode: "create",
             maxPlayers: 4,
@@ -62,8 +64,6 @@
             checkedInAt: null,
             bookingSource: null
         },
-        quickSearch: "",
-        viewFilter: "all",
         initialised: false
     };
 
@@ -79,6 +79,9 @@
         today: document.getElementById("todayTeeSheetButton"),
         generate: document.getElementById("generateTeeSheetButton"),
         manageSchedules: document.getElementById("manageSchedulesButton"),
+        dayStatus: document.getElementById("teeSheetDayStatus"),
+        teeSheetSearch: document.getElementById("teeSheetSearch"),
+        teeSheetFilter: document.getElementById("teeSheetFilter"),
         totalCount: document.getElementById("teeSheetTotalCount"),
         openCount: document.getElementById("teeSheetOpenCount"),
         bookedCount: document.getElementById("teeSheetBookedCount"),
@@ -88,13 +91,6 @@
         loadStatus: document.getElementById("teeSheetLoadStatus"),
         empty: document.getElementById("teeSheetEmpty"),
         rows: document.getElementById("teeSheetRows"),
-        quickSearch: document.getElementById("teeSheetQuickSearch"),
-        viewFilter: document.getElementById("teeSheetViewFilter"),
-        clearFilters: document.getElementById("teeSheetClearFilters"),
-        filterEmpty: document.getElementById("teeSheetFilterEmpty"),
-        visibleCount: document.getElementById("teeSheetVisibleCount"),
-        eventCount: document.getElementById("teeSheetEventCount"),
-        bookingExtraDetails: document.getElementById("bookingExtraDetails"),
         earlierTimes: document.getElementById("earlierTeeTimesButton"),
         eventsEmpty: document.getElementById("teeSheetEventsEmpty"),
         events: document.getElementById("teeSheetEvents"),
@@ -140,6 +136,7 @@
         bookingGuestName: document.getElementById("bookingGuestName"),
         addBookingGuest: document.getElementById("addBookingGuestButton"),
         bookingType: document.getElementById("bookingType"),
+        bookingBuggies: document.getElementById("bookingBuggies"),
         bookingContactNumber: document.getElementById("bookingContactNumber"),
         bookingNotes: document.getElementById("bookingNotes"),
         bookingOperationalStatus: document.getElementById("bookingOperationalStatus"),
@@ -195,6 +192,33 @@
             .replaceAll(">", "&gt;")
             .replaceAll('"', "&quot;")
             .replaceAll("'", "&#039;");
+    }
+
+
+
+    function parseBookingNotes(value) {
+        const raw = String(value || "");
+        const match = raw.match(/\[\[BUGGIES:(\d+)\]\]/i);
+        const buggyCount = match ? Math.max(0, Number(match[1] || 0)) : 0;
+        const cleanNotes = raw.replace(/\[\[BUGGIES:\d+\]\]\s*/ig, "").trim();
+        return { buggyCount, cleanNotes };
+    }
+
+    function buildBookingNotes(notes, buggyCount) {
+        const parts = [];
+        const count = Math.max(0, Number(buggyCount || 0));
+        if (count > 0) {
+            parts.push(`[[BUGGIES:${count}]]`);
+        }
+        const text = String(notes || "").trim();
+        if (text) {
+            parts.push(text);
+        }
+        return parts.join("\n");
+    }
+
+    function bookingMetaFromRow(row) {
+        return parseBookingNotes(row.booking_notes || row.notes || "");
     }
 
     function clearMessages() {
@@ -492,31 +516,38 @@
             return Boolean(row.booking_id);
         }).length;
         const open = state.teeTimes.filter(function (row) {
-            return row.operational_status === "open" && !row.booking_id && !isPastTeeTime(row);
+            return row.operational_status === "open" && !row.booking_id;
         }).length;
-        const unavailable = state.teeTimes.filter(function (row) {
-            return row.operational_status !== "open";
-        }).length;
+        const buggyCount = state.teeTimes.reduce(function (totalBuggies, row) {
+            if (!row.booking_id) {
+                return totalBuggies;
+            }
+            return totalBuggies + bookingMetaFromRow(row).buggyCount;
+        }, 0);
 
         const players = state.teeTimes.reduce(function (totalPlayers, row) {
             if (!row.booking_id) {
                 return totalPlayers;
             }
 
-            return (
-                totalPlayers +
-                Number(
-                    row.player_count ||
-                    0
-                )
-            );
+            return totalPlayers + Number(row.player_count || 0);
         }, 0);
 
         elements.totalCount.textContent = String(total);
         elements.openCount.textContent = String(open);
         elements.bookedCount.textContent = String(booked);
         elements.playerCount.textContent = String(players);
-        elements.unavailableCount.textContent = String(unavailable);
+        elements.unavailableCount.textContent = String(buggyCount);
+
+        if (elements.dayStatus) {
+            if (booked > 0) {
+                elements.dayStatus.textContent = `${booked} booking${booked === 1 ? "" : "s"} loaded`;
+            } else if (total > 0) {
+                elements.dayStatus.textContent = "Ready for bookings";
+            } else {
+                elements.dayStatus.textContent = "No tee times generated";
+            }
+        }
     }
 
     function rowStatus(row) {
@@ -608,44 +639,78 @@
         });
     }
 
-    function matchesTeeSheetFilters(row) {
-        const status = rowStatus(row);
-        if (state.viewFilter === "open" && (status !== "open" || isPastTeeTime(row))) return false;
-        if (state.viewFilter === "booked" && status !== "booked") return false;
-        if (state.viewFilter === "unavailable" && (status === "open" || status === "booked")) return false;
 
-        const query = state.quickSearch.trim().toLocaleLowerCase();
-        if (!query) return true;
-        const fields = [
-            shortTime(row.start_time), row.lead_name, row.contact_number,
-            row.event_title, row.tee_time_notes,
-            ...(Array.isArray(row.player_names) ? row.player_names : [])
-        ];
-        return fields.some(function (field) {
-            return String(field || "").toLocaleLowerCase().includes(query);
+    function teeSheetMatchesFilter(row) {
+        const filter = state.teeSheetFilter || "all";
+        const meta = bookingMetaFromRow(row);
+
+        if (filter === "booked") {
+            return Boolean(row.booking_id);
+        }
+        if (filter === "open") {
+            return row.operational_status === "open" && !row.booking_id;
+        }
+        if (filter === "buggy") {
+            return Boolean(row.booking_id) && meta.buggyCount > 0;
+        }
+        if (filter === "unavailable") {
+            return row.operational_status !== "open" && !row.booking_id;
+        }
+        return true;
+    }
+
+    function teeSheetMatchesSearch(row) {
+        const query = String(state.teeSheetSearch || "").trim().toLowerCase();
+        if (!query) {
+            return true;
+        }
+
+        const meta = bookingMetaFromRow(row);
+        const haystack = [
+            shortTime(row.start_time),
+            bookingNames(row),
+            row.contact_number,
+            row.lead_name,
+            row.event_title,
+            row.booking_type,
+            meta.cleanNotes,
+            String(row.player_count || "")
+        ].join(" ").toLowerCase();
+
+        return haystack.includes(query);
+    }
+
+    function visibleTeeTimes() {
+        return state.teeTimes.filter(function (row) {
+            return teeSheetMatchesFilter(row) && teeSheetMatchesSearch(row);
         });
     }
 
     function renderTeeSheet() {
         renderSummary();
-        const filtered = state.teeTimes.filter(matchesTeeSheetFilters);
-        const hasFilters = Boolean(state.quickSearch.trim()) || state.viewFilter !== "all";
-        elements.empty.hidden = state.teeTimes.length > 0;
-        elements.filterEmpty.hidden = !state.teeTimes.length || filtered.length > 0;
-        elements.clearFilters.hidden = !hasFilters;
-        elements.visibleCount.textContent = state.teeTimes.length
-            ? `${filtered.length} of ${state.teeTimes.length} tee times shown`
-            : "";
 
-        if (!state.teeTimes.length || !filtered.length) {
+        if (!state.teeTimes.length) {
+            elements.empty.hidden = false;
+            elements.empty.innerHTML = "<strong>No tee times have been generated for this date.</strong><p>Create a booking schedule, then generate the day.</p>";
             elements.rows.innerHTML = "";
             elements.earlierTimes.hidden = true;
             return;
         }
 
-        elements.rows.innerHTML = filtered
+        const rowsToRender = visibleTeeTimes();
+        elements.empty.hidden = rowsToRender.length > 0;
+
+        if (!rowsToRender.length) {
+            elements.empty.innerHTML = "<strong>No tee times match your search.</strong><p>Clear the search or change the filter to see more bookings.</p>";
+            elements.rows.innerHTML = "";
+            elements.earlierTimes.hidden = true;
+            return;
+        }
+
+        elements.rows.innerHTML = rowsToRender
             .map(function (row) {
                 const status = rowStatus(row);
+                const meta = bookingMetaFromRow(row);
                 const eventMarkup = row.club_event_id
                     ? `
                         <span class="tee-sheet-row__event">
@@ -654,46 +719,25 @@
                     `
                     : "";
 
-                const past =
-                    isPastTeeTime(
-                        row
-                    );
-
-                const source =
-                    row.booking_source === "staff"
-                        ? "Staff"
-                        : row.booking_source === "website"
-                            ? "Website visitor"
-                            : "Player";
-
-                const checkIn =
-                    row.staff_checked_in_at
-                        ? ` · Checked in ${escapeHtml(
-                            formatCheckInTime(
-                                row.staff_checked_in_at
-                            ) ||
-                            ""
-                        )}`
-                        : "";
-
-                const contact =
-                    row.contact_number
-                        ? ` · ${escapeHtml(
-                            row.contact_number
-                        )}`
-                        : "";
+                const past = isPastTeeTime(row);
+                const source = row.booking_source === "staff"
+                    ? "Staff"
+                    : row.booking_source === "website"
+                        ? "Website"
+                        : "Player";
 
                 const bookingMarkup = row.booking_id
                     ? `
                         <div class="tee-sheet-row__booking">
                             <strong>${escapeHtml(bookingNames(row))}</strong>
-                            <span>
-                                ${escapeHtml(String(row.player_count || 1))} player${Number(row.player_count || 1) === 1 ? "" : "s"}
-                                · ${escapeHtml(row.booking_type || "booking")}
-                                · ${escapeHtml(source)}
-                                ${contact}
-                                ${checkIn}
-                            </span>
+                            <div class="tee-sheet-row__booking-line">
+                                <span class="tee-sheet-row__detail">${escapeHtml(row.booking_type || "booking")}</span>
+                                <span class="tee-sheet-row__detail">${escapeHtml(source)}</span>
+                                ${row.contact_number ? `<span class="tee-sheet-row__detail">${escapeHtml(row.contact_number)}</span>` : ""}
+                                ${row.staff_checked_in_at ? `<span class="tee-sheet-row__detail">Checked in ${escapeHtml(formatCheckInTime(row.staff_checked_in_at) || "")}</span>` : ""}
+                                <span class="tee-sheet-row__pill tee-sheet-row__pill--capacity">${escapeHtml(String(row.player_count || 0))}/${escapeHtml(String(row.max_players || 4))} players</span>
+                                ${meta.buggyCount > 0 ? `<span class="tee-sheet-row__pill tee-sheet-row__pill--buggy">Buggy x${escapeHtml(String(meta.buggyCount))}</span>` : ""}
+                            </div>
                         </div>
                     `
                     : `
@@ -727,32 +771,11 @@
                                 <span class="tee-sheet-status tee-sheet-status--${escapeHtml(status)}">
                                     ${escapeHtml(status === "booked" ? "Booked" : (STATUS_LABELS[row.operational_status] || row.operational_status))}
                                 </span>
-                                ${
-                                    row.staff_checked_in_at
-                                        ? `
-                                            <span class="tee-sheet-row__checked-in">
-                                                Checked in
-                                            </span>
-                                        `
-                                        : ""
-                                }
-                                ${
-                                    past && !row.booking_id
-                                        ? `
-                                            <span class="tee-sheet-row__past">
-                                                Past
-                                            </span>
-                                        `
-                                        : ""
-                                }
+                                ${row.staff_checked_in_at ? `<span class="tee-sheet-row__checked-in">Checked in</span>` : ""}
+                                ${past && !row.booking_id ? `<span class="tee-sheet-row__past">Past</span>` : ""}
                                 ${eventMarkup}
                             </div>
                             ${bookingMarkup}
-                        </div>
-
-                        <div class="tee-sheet-row__capacity">
-                            <span>Capacity</span>
-                            <strong>${escapeHtml(String(row.player_count || 0))}/${escapeHtml(String(row.max_players || 4))}</strong>
                         </div>
 
                         <div class="tee-sheet-row__actions">
@@ -764,7 +787,7 @@
                                             type="button"
                                             data-action="manage-booking"
                                         >
-                                            View / edit
+                                            Manage
                                         </button>
                                     `
                                     : `
@@ -773,7 +796,7 @@
                                             type="button"
                                             data-action="availability"
                                         >
-                                            Change status
+                                            Availability
                                         </button>
                                     `
                             ) : past ? `
@@ -786,14 +809,14 @@
                                     type="button"
                                     data-action="book"
                                 >
-                                    Add booking
+                                    Book
                                 </button>
                                 <button
                                     class="tee-sheet-row__action tee-sheet-row__action--secondary"
                                     type="button"
                                     data-action="availability"
                                 >
-                                    Change status
+                                    Availability
                                 </button>
                             ` : `
                                 <button
@@ -801,7 +824,7 @@
                                     type="button"
                                     data-action="availability"
                                 >
-                                    Change status
+                                    Availability
                                 </button>
                             `}
                         </div>
@@ -810,12 +833,7 @@
             })
             .join("");
 
-        if (hasFilters) {
-            elements.earlierTimes.hidden = true;
-            elements.rows.scrollTop = 0;
-        } else {
-            focusCurrentTeeTime();
-        }
+        focusCurrentTeeTime();
     }
 
     function defaultAction(event) {
@@ -854,8 +872,6 @@
     }
 
     function renderEvents() {
-        elements.eventCount.textContent = state.events.length === 1
-            ? "1 today" : `${state.events.length} today`;
         elements.eventsEmpty.hidden = state.events.length > 0;
 
         if (!state.events.length) {
@@ -947,7 +963,7 @@
             showError(error);
         } finally {
             elements.generate.disabled = false;
-            elements.generate.textContent = "Generate tee times";
+            elements.generate.textContent = "Generate / refresh";
         }
     }
 
@@ -1438,12 +1454,12 @@
         elements.bookingId.value = "";
         elements.bookingTeeTimeId.value = row?.tee_time_id || "";
         elements.bookingType.value = "joinable";
+        elements.bookingBuggies.value = "0";
         elements.bookingContactNumber.value = "";
         elements.bookingNotes.value = "";
         elements.bookingMemberSearch.value = "";
         elements.bookingGuestName.value = "";
         elements.moveBookingPanel.hidden = true;
-        elements.bookingExtraDetails.open = false;
         elements.cancelBooking.hidden = true;
         elements.moveBooking.hidden = true;
         elements.saveBooking.textContent = "Create booking";
@@ -1524,12 +1540,13 @@
                 row.booking_source ||
                 "player";
 
+            const bookingNotesMeta = parseBookingNotes(detail.notes || "");
             elements.bookingId.value = detail.booking_id;
             elements.bookingTeeTimeId.value = detail.tee_time_id;
             elements.bookingType.value = detail.booking_type || "joinable";
+            elements.bookingBuggies.value = String(bookingNotesMeta.buggyCount || 0);
             elements.bookingContactNumber.value = detail.contact_number || "";
-            elements.bookingNotes.value = detail.notes || "";
-            elements.bookingExtraDetails.open = Boolean(detail.contact_number || detail.notes);
+            elements.bookingNotes.value = bookingNotesMeta.cleanNotes || "";
             elements.bookingMemberSearch.value = "";
             elements.bookingGuestName.value = "";
             elements.bookingDialogTitle.textContent = "Manage booking";
@@ -1566,7 +1583,7 @@
             bookingType: elements.bookingType.value || "joinable",
             leadName: bookingLeadName(),
             contactNumber: elements.bookingContactNumber.value || null,
-            notes: elements.bookingNotes.value || null
+            notes: buildBookingNotes(elements.bookingNotes.value, elements.bookingBuggies.value) || null
         };
     }
 
@@ -2093,23 +2110,6 @@
             showEarlierTeeTimes
         );
 
-        elements.quickSearch.addEventListener("input", function () {
-            state.quickSearch = elements.quickSearch.value;
-            renderTeeSheet();
-        });
-        elements.viewFilter.addEventListener("change", function () {
-            state.viewFilter = elements.viewFilter.value;
-            renderTeeSheet();
-        });
-        elements.clearFilters.addEventListener("click", function () {
-            state.quickSearch = "";
-            state.viewFilter = "all";
-            elements.quickSearch.value = "";
-            elements.viewFilter.value = "all";
-            renderTeeSheet();
-            elements.quickSearch.focus();
-        });
-
         elements.generate.addEventListener("click", generateDay);
         elements.manageSchedules.addEventListener("click", openSchedules);
 
@@ -2362,6 +2362,12 @@
             state.role = role;
             elements.clubName.textContent = state.clubName;
             elements.date.value = state.playDate;
+            if (elements.teeSheetSearch) {
+                elements.teeSheetSearch.value = state.teeSheetSearch;
+            }
+            if (elements.teeSheetFilter) {
+                elements.teeSheetFilter.value = state.teeSheetFilter;
+            }
 
             if (!ADMIN_ROLES.has(role)) {
                 elements.manageSchedules.hidden = true;

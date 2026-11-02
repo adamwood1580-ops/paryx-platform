@@ -1022,42 +1022,239 @@
     }
 }
 
-/* Hotel Mode Phase 2B: read-only allocations on the existing tee sheet. */
-.tee-sheet-hotel-banner {
-    padding: .85rem 1.1rem;
-    border: 1px solid var(--color-border-brand);
-    border-radius: 16px;
-    background: var(--color-surface, #fff);
-}
-.tee-sheet-hotel-banner[hidden] { display: none !important; }
-.tee-sheet-hotel-banner__header {
-    display: flex;
-    justify-content: space-between;
+
+/* =========================================================
+   TEE SHEET UX V0.31.8 — LIGHTSPEED-INSPIRED CLEANUP
+   ========================================================= */
+
+.tee-sheet-intro--lightspeed {
     align-items: center;
-    flex-wrap: wrap;
-    gap: .5rem;
-    color: var(--color-primary);
 }
-.tee-sheet-hotel-banner__header > span { font-size: .82rem; font-weight: 700; }
-.tee-sheet-hotel-banner__legend { display: flex; flex-wrap: wrap; gap: .4rem; margin: .5rem 0; }
-.tee-sheet-hotel-banner p { margin: 0; font-size: .82rem; color: var(--color-text-muted); }
-.tee-sheet-hotel-chip {
+
+.tee-sheet-intro__status {
+    min-width: 180px;
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--color-border-brand);
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: var(--shadow-card);
+}
+
+.tee-sheet-intro__status-label {
+    display: block;
+    color: var(--color-text-muted);
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.tee-sheet-intro__status strong {
+    display: block;
+    margin-top: 0.2rem;
+    color: var(--color-primary);
+    font-size: 1rem;
+}
+
+.tee-sheet-toolbar--lightspeed {
+    display: grid;
+    gap: 1rem;
+}
+
+.tee-sheet-toolbar__top,
+.tee-sheet-toolbar__bottom {
+    display: grid;
+    gap: 0.9rem;
+}
+
+.tee-sheet-toolbar__top {
+    grid-template-columns: minmax(220px, 1fr) minmax(240px, 320px) auto;
+    align-items: end;
+}
+
+.tee-sheet-toolbar__bottom {
+    grid-template-columns: minmax(0, 1fr) minmax(220px, 260px);
+    align-items: end;
+}
+
+.tee-sheet-field--search input {
+    padding-right: 1rem;
+}
+
+.tee-sheet-summary--lightspeed article {
+    border-radius: 16px;
+}
+
+.tee-sheet-layout--lightspeed {
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
+    gap: 1.2rem;
+}
+
+.tee-sheet-tools {
+    padding: 0;
+    overflow: hidden;
+}
+
+.tee-sheet-tools__panel {
+    border: 0;
+}
+
+.tee-sheet-tools__panel > summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.1rem 1.2rem;
+    cursor: pointer;
+    list-style: none;
+}
+
+.tee-sheet-tools__panel > summary::-webkit-details-marker {
+    display: none;
+}
+
+.tee-sheet-tools__panel > summary h2 {
+    margin: 0.15rem 0 0;
+    color: var(--color-primary);
+    font-size: 1.25rem;
+}
+
+.tee-sheet-tools__panel > summary::after {
+    content: "▾";
+    color: var(--color-text-muted);
+    font-size: 1rem;
+    font-weight: 800;
+}
+
+.tee-sheet-tools__panel:not([open]) > summary::after {
+    content: "▸";
+}
+
+.tee-sheet-tools__content {
+    display: grid;
+    gap: 1rem;
+    padding: 0 1.2rem 1.2rem;
+}
+
+.tee-sheet-tools__actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+.tee-sheet-section-heading--lightspeed {
+    padding-bottom: 0.9rem;
+}
+
+.tee-sheet-section-heading--tools {
+    padding: 0;
+    border-bottom: 0;
+}
+
+.tee-sheet-rows--lightspeed {
+    padding: 0.5rem 0.85rem 0.85rem;
+    gap: 0.6rem;
+    border-top: 1px solid #e8ece9;
+}
+
+.tee-sheet-rows--lightspeed .tee-sheet-row {
+    grid-template-columns: 84px minmax(0, 1fr) auto;
+    gap: 0.9rem;
+    min-height: 0;
+    padding: 0.9rem 1rem;
+    border: 1px solid #e2e8e3;
+    border-radius: 16px;
+    box-shadow: 0 10px 28px rgba(1, 31, 22, 0.05);
+}
+
+.tee-sheet-rows--lightspeed .tee-sheet-row > time {
+    align-self: start;
+    font-size: 1.15rem;
+}
+
+.tee-sheet-row__booking-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem;
+    margin-top: 0.18rem;
+}
+
+.tee-sheet-row__detail {
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+}
+
+.tee-sheet-row__pill {
     display: inline-flex;
     align-items: center;
-    width: fit-content;
-    max-width: 100%;
-    padding: .22rem .55rem;
-    border: 1px solid transparent;
+    min-height: 26px;
+    padding: 0.18rem 0.62rem;
     border-radius: 999px;
-    font-size: .71rem;
-    font-weight: 700;
-    line-height: 1.3;
-    white-space: normal;
+    background: #eef2ef;
+    color: var(--color-primary);
+    font-size: 0.75rem;
+    font-weight: 800;
 }
-.tee-sheet-hotel-chip--hotel { background: #e5efff; border-color: #c4dcff; color: #174779; }
-.tee-sheet-hotel-chip--member { background: #e7f6ea; border-color: #bde7c4; color: #23623a; }
-.tee-sheet-hotel-chip--general { background: #f0f2f5; border-color: #dce0e6; color: #435061; }
-.tee-sheet-row__main > .tee-sheet-hotel-chip { margin-top: .35rem; }
+
+.tee-sheet-row__pill--buggy {
+    background: #eef5ff;
+    color: #2d4c95;
+}
+
+.tee-sheet-row__pill--capacity {
+    background: #f6f7f6;
+    color: var(--color-text);
+}
+
+.tee-sheet-row__actions {
+    align-self: center;
+}
+
+.tee-sheet-row__actions .tee-sheet-row__action {
+    min-width: 104px;
+}
+
+@media (max-width: 1100px) {
+    .tee-sheet-toolbar__top {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .tee-sheet-toolbar__top .tee-sheet-button {
+        grid-column: 1 / -1;
+    }
+
+    .tee-sheet-toolbar__bottom,
+    .tee-sheet-layout--lightspeed,
+    .tee-sheet-tools__actions {
+        grid-template-columns: 1fr;
+    }
+}
+
 @media (max-width: 760px) {
-    .tee-sheet-hotel-banner__header { align-items: flex-start; }
+    .tee-sheet-intro__status {
+        width: 100%;
+    }
+
+    .tee-sheet-toolbar__top,
+    .tee-sheet-toolbar__bottom {
+        grid-template-columns: 1fr;
+    }
+
+    .tee-sheet-rows--lightspeed .tee-sheet-row {
+        grid-template-columns: 1fr;
+    }
+
+    .tee-sheet-rows--lightspeed .tee-sheet-row > time {
+        font-size: 1.05rem;
+    }
+
+    .tee-sheet-row__actions {
+        grid-column: auto;
+        justify-content: stretch;
+    }
+
+    .tee-sheet-row__actions .tee-sheet-row__action {
+        flex: 1 1 120px;
+    }
 }
