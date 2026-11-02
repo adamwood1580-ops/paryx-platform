@@ -1,0 +1,76 @@
+/* Paryx ClubHub UX foundation — 0.31.6. No permission logic lives in CSS. */
+/* Respect dynamic role/module hiding even where existing rules set display:flex. */
+.staff-shell [hidden], .admin-page [hidden] { display: none !important; }
+
+/* Navigation: four everyday destinations and one expandable tool drawer. */
+.staff-more { margin-top: .7rem; padding-top: .7rem; border-top: 1px solid rgba(255,255,255,.14); }
+.staff-more__toggle {
+    width: 100%; display: flex; justify-content: space-between; align-items: center;
+    padding: .8rem; border: 0; border-radius: var(--radius-md);
+    color: rgba(255,255,255,.88); background: rgba(255,255,255,.06);
+    cursor: pointer; font: inherit; font-size: var(--font-size-sm); font-weight: 700;
+}
+.staff-more__toggle:hover, .staff-more__toggle:focus-visible { background: rgba(255,255,255,.13); }
+.staff-more__toggle:focus-visible { outline: 2px solid var(--color-accent-light); outline-offset: 2px; }
+.staff-more__chevron { font-size: 1.3rem; line-height: 1; transition: transform .15s ease; }
+.staff-more__toggle[aria-expanded="true"] .staff-more__chevron { transform: rotate(180deg); }
+.staff-nav--secondary { margin-top: .45rem; padding-left: .5rem; }
+.staff-nav--secondary .staff-nav__item { min-height: 2.5rem; font-size: .85rem; }
+
+/* ClubHub home: obvious actions first; stats/configuration available on request. */
+.admin-page { max-width: 70rem; }
+.admin-intro { align-items: center; }
+.admin-intro__title { font-family: inherit; font-size: clamp(2rem, 5vw, 2.6rem); font-weight: 800; }
+.clubhub-section-heading h2 { margin: 0; font-size: clamp(1.25rem, 2.5vw, 1.55rem); color: var(--color-text); }
+.clubhub-section-heading p { margin: .3rem 0 1.2rem; color: var(--color-text-muted); }
+.clubhub-quick-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 1rem; }
+.clubhub-quick-action {
+    min-height: 6.5rem; display: grid; grid-template-columns: auto minmax(0,1fr) auto;
+    align-items: center; gap: .95rem; padding: 1.2rem;
+    background: var(--color-surface); color: var(--color-text); border: 1px solid var(--color-border-brand);
+    border-radius: var(--radius-lg); text-decoration: none; box-shadow: var(--shadow-card);
+}
+.clubhub-quick-action:hover { border-color: var(--color-primary); transform: translateY(-1px); }
+.clubhub-quick-action:focus-visible { outline: 3px solid var(--color-accent-dark); outline-offset: 2px; }
+.clubhub-quick-action__icon { display: grid; place-items: center; width: 3rem; height: 3rem; font-size: 1.5rem; background: var(--color-primary-light); border-radius: .8rem; }
+.clubhub-quick-action strong { display: block; font-size: 1.1rem; color: var(--color-text); }
+.clubhub-quick-action small { display: block; margin-top: .3rem; color: var(--color-text-muted); font-size: .83rem; line-height: 1.4; }
+.clubhub-quick-action__arrow { color: var(--color-text-muted); font-size: 1.7rem; }
+.admin-next-event { margin-top: 1.4rem; }
+.clubhub-disclosure {
+    margin-top: 1.15rem; border-radius: var(--radius-lg); border: 1px solid var(--color-border);
+    color: var(--color-text); background: var(--color-surface); overflow: hidden;
+}
+.clubhub-disclosure summary { cursor: pointer; padding: 1rem 1.15rem; font-weight: 700; }
+.clubhub-disclosure summary span { float: right; font-weight: 400; color: var(--color-text-muted); font-size: .82rem; margin-left: .5rem; }
+.clubhub-disclosure summary:focus-visible { outline: 2px solid var(--color-primary); outline-offset: -3px; }
+.clubhub-disclosure[open] summary { border-bottom: 1px solid var(--color-border); }
+.clubhub-disclosure .admin-stat-grid { padding: 1rem; margin-bottom: 0; }
+.clubhub-tool-list { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: .5rem; padding: .85rem; }
+.clubhub-tool-list a { display: flex; align-items: center; justify-content: space-between; min-height: 2.9rem;
+    padding: .8rem .9rem; border-radius: var(--radius-md); border: 1px solid var(--color-border);
+    color: var(--color-text); text-decoration: none; font-weight: 600; }
+.clubhub-tool-list a:hover { background: var(--color-surface-muted); }
+.clubhub-tool-list a:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.clubhub-tool-list a span { font-size: 1.3rem; color: var(--color-text-muted); }
+.admin-updated { margin-top: 1.3rem; }
+
+@media (max-width: 820px) {
+    .staff-more { margin-top: .5rem; padding-top: .5rem; }
+    .staff-nav--secondary { display: flex; flex-wrap: wrap; overflow-x: visible; }
+    .staff-more__toggle { max-width: 20rem; }
+    .staff-sidebar { overflow-x: visible; }
+}
+@media (max-width: 600px) {
+    .clubhub-quick-grid { grid-template-columns: 1fr; gap: .7rem; }
+    .clubhub-quick-action { min-height: 5.25rem; padding: .95rem; }
+    .clubhub-tool-list { grid-template-columns: 1fr; }
+    .admin-intro { align-items: flex-start; }
+    .admin-role-badge { font-size: .69rem; }
+    .clubhub-disclosure summary span { font-size: .75rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .clubhub-quick-action, .staff-more__chevron { transition: none; transform: none !important; }
+}
+
+.clubhub-quick-action__icon svg { width: 1.65rem; height: 1.65rem; fill: none; stroke: var(--color-primary); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }

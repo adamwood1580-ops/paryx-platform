@@ -78,14 +78,6 @@
             ]
         },
         {
-            key: "resort",
-            label: "Hotel & Society",
-            href: "resort-reservations.html",
-            moduleKey: "tee_sheet",
-            roles: ["starter","reception","professional","manager","club_admin"],
-            resortOnly: true
-        },
-        {
             key: "members",
             label: "Members",
             href: "members.html",
@@ -204,8 +196,18 @@
             .replaceAll("'", "&#039;");
     }
 
-    function navMarkup() {
+    // Keep the everyday tasks immediately visible. Less frequent tools
+    // are still available to authorised staff through one "More" control.
+    const PRIMARY_NAV_KEYS = new Set([
+        "dashboard", "teesheet", "members", "calendar"
+    ]);
+
+    function navMarkup(group) {
         return NAV_ITEMS
+            .filter(function (item) {
+                const isPrimary = PRIMARY_NAV_KEYS.has(item.key);
+                return group === "primary" ? isPrimary : !isPrimary;
+            })
             .map(function (item) {
                 const active =
                     item.key === currentPage ||
@@ -232,7 +234,6 @@
                         href="${item.href}"
                         ${item.adminOnly ? 'data-staff-admin-only="true"' : ""}
                         ${item.moduleKey ? `data-club-module="${item.moduleKey}" hidden` : ""}
-                        ${item.resortOnly ? 'data-resort-nav="true"' : ""}
                         ${Array.isArray(item.roles) ? `data-staff-roles="${item.roles.join(",")}"` : ""}
                     >
                         ${item.label}
@@ -242,7 +243,21 @@
             .join("");
     }
 
+    function installUxStyles() {
+        if (document.getElementById("paryxClubHubUxStyles")) {
+            return;
+        }
+
+        const stylesheet = document.createElement("link");
+        stylesheet.id = "paryxClubHubUxStyles";
+        stylesheet.rel = "stylesheet";
+        stylesheet.href = "../styles/clubhub-ux.css?v=" +
+            encodeURIComponent(window.Paryx?.assetVersion || "0.31.6");
+        document.head.appendChild(stylesheet);
+    }
+
     function renderShell() {
+        installUxStyles();
         if (sidebar) {
             sidebar.innerHTML = `
                 <div class="staff-brand">
@@ -259,11 +274,32 @@
                 </div>
 
                 <nav
-                    class="staff-nav"
-                    aria-label="Paryx navigation"
+                    class="staff-nav staff-nav--primary"
+                    aria-label="Everyday tasks"
                 >
-                    ${navMarkup()}
+                    ${navMarkup("primary")}
                 </nav>
+
+                <div class="staff-more" id="staffMoreGroup" hidden>
+                    <button
+                        class="staff-more__toggle"
+                        id="staffMoreToggle"
+                        type="button"
+                        aria-expanded="false"
+                        aria-controls="staffMoreLinks"
+                    >
+                        <span>More tools</span>
+                        <span class="staff-more__chevron" aria-hidden="true">⌄</span>
+                    </button>
+                    <nav
+                        class="staff-nav staff-nav--secondary"
+                        id="staffMoreLinks"
+                        aria-label="Additional tools"
+                        hidden
+                    >
+                        ${navMarkup("more")}
+                    </nav>
+                </div>
 
                 <div class="staff-sidebar__footer">
                     <span id="staffRole">
@@ -343,6 +379,18 @@
         }
 
         updateThemeToggle();
+
+        document.getElementById("staffMoreToggle")?.addEventListener(
+            "click",
+            function () {
+                const links = document.getElementById("staffMoreLinks");
+                const toggle = document.getElementById("staffMoreToggle");
+                if (!links || !toggle) return;
+
+                links.hidden = !links.hidden;
+                toggle.setAttribute("aria-expanded", String(!links.hidden));
+            }
+        );
 
         document
             .getElementById("staffThemeToggle")
@@ -517,19 +565,6 @@
             );
 
         hydrateClubModules(activeClub);
-        const resortLink = document.querySelector('[data-resort-nav="true"]');
-        if (resortLink) {
-            resortLink.hidden = true;
-            if (Array.isArray(activeClub.modules) && activeClub.modules.includes("tee_sheet")) {
-                window.supabaseClient?.rpc("resort_staff_context", {p_club_id: activeClub.id})
-                    .then(({data, error}) => {
-                        if (error || !data || !data.enabled) return;
-                        const latest = window.Paryx?.clubContext?.getActiveClub?.();
-                        if (latest?.id !== activeClub.id) return;
-                        resortLink.hidden = !(data.can_hotel || data.can_society);
-                    }).catch(() => { resortLink.hidden = true; });
-            }
-        }
     }
 
     function hydrateClubModules(activeClub) {
@@ -578,6 +613,32 @@
                 adminAllowed
             );
         });
+
+        // More tools only appears when this club/role can use something
+        // inside it. A selected secondary page automatically expands it.
+        const moreGroup = document.getElementById("staffMoreGroup");
+        const moreLinks = document.getElementById("staffMoreLinks");
+        const moreToggle = document.getElementById("staffMoreToggle");
+        if (moreGroup && moreLinks && moreToggle) {
+            const permittedLinks = Array.from(
+                moreLinks.querySelectorAll("[data-club-module]")
+            ).filter(function (link) { return !link.hidden; });
+            const hasTools = permittedLinks.length > 0;
+            moreGroup.hidden = !hasTools;
+
+            if (!hasTools) {
+                moreLinks.hidden = true;
+            } else if (permittedLinks.some(function (link) {
+                return link.classList.contains("is-active");
+            })) {
+                moreLinks.hidden = false;
+            }
+
+            moreToggle.setAttribute(
+                "aria-expanded",
+                String(hasTools && !moreLinks.hidden)
+            );
+        }
 
         const activeLink = moduleLinks.find(function (link) {
             return link.classList.contains("is-active");
