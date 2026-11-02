@@ -833,7 +833,14 @@
             })
             .join("");
 
-        focusCurrentTeeTime();
+        if (state.teeSheetSearch || state.teeSheetFilter !== "all") {
+            // Filtering should show the matching results from the top,
+            // not jump back to the current clock time.
+            elements.rows.scrollTop = 0;
+            elements.earlierTimes.hidden = true;
+        } else {
+            focusCurrentTeeTime();
+        }
     }
 
     function defaultAction(event) {
@@ -2112,6 +2119,21 @@
 
         elements.generate.addEventListener("click", generateDay);
         elements.manageSchedules.addEventListener("click", openSchedules);
+
+        // The v0.31.8 layout uses these new IDs. Keep the controls optional
+        // so an older, cached HTML page cannot break every booking action.
+        if (elements.teeSheetSearch) {
+            elements.teeSheetSearch.addEventListener("input", function () {
+                state.teeSheetSearch = elements.teeSheetSearch.value || "";
+                renderTeeSheet();
+            });
+        }
+        if (elements.teeSheetFilter) {
+            elements.teeSheetFilter.addEventListener("change", function () {
+                state.teeSheetFilter = elements.teeSheetFilter.value || "all";
+                renderTeeSheet();
+            });
+        }
 
         elements.rows.addEventListener("click", function (event) {
             const button = event.target.closest("[data-action]");
