@@ -13,3 +13,40 @@
 .hotel-club-actions {display:flex;gap:1rem;justify-content:flex-end;margin-top:1rem;}
 .hotel-club-settings .settings-field select,.hotel-club-settings .settings-field input {width:100%;}
 @media (max-width:720px) {.hotel-club-actions>* {width:100%;}}
+
+/* Hotel Mode in Settings > Bookings (compact layout). */
+.settings-page .hotel-club-settings { display: block; }
+.settings-page .hotel-club-settings[hidden],
+.settings-page .hotel-club-settings [hidden] { display: none !important; }
+.hotel-club-header { display:flex;align-items:start;gap:14px; }
+.hotel-club-state {display:flex;align-items:center;justify-content:space-between;gap:16px;padding:10px 14px;border-radius:12px;background:var(--color-surface,#f7faf8);border:1px solid var(--color-border-brand);margin-bottom:14px;}
+.hotel-club-state strong {display:block;color:var(--color-primary);font-size:.95rem;}
+.hotel-club-state .hotel-club-note {margin:3px 0 0;}
+.hotel-club-badge {display:inline-flex;white-space:nowrap;border-radius:999px;padding:5px 10px;background:#eef2ef;color:var(--color-text-muted);font-size:.75rem;font-weight:800;}
+.hotel-club-badge.is-enabled {background:#e6f5eb;color:#12613f;}
+.hotel-club-entry {display:flex;justify-content:space-between;align-items:center;gap:14px;padding:13px 14px;margin-bottom:14px;border:1px solid var(--color-border-brand);border-radius:12px;}
+.hotel-club-entry strong,.hotel-club-entry span {display:block;}
+.hotel-club-entry strong {color:var(--color-primary);font-size:.92rem;}
+.hotel-club-entry span {margin-top:3px;color:var(--color-text-muted);font-size:.81rem;}
+.hotel-club-entry a {text-decoration:none;white-space:nowrap;}
+.hotel-club-fields {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+.hotel-club-allocation {padding:14px;border-radius:12px;border:1px solid var(--color-border-brand);}
+.hotel-club-allocation > .settings-field {max-width:460px;}
+.hotel-club-allocation .hotel-club-note {margin:8px 0 0;}
+.hotel-club-rule-header {display:flex;justify-content:space-between;gap:8px;padding-top:15px;color:var(--color-primary);font-size:.88rem;}
+.hotel-club-rule-header span {color:var(--color-text-muted);}
+.hotel-club-advanced__content,.hotel-club-permissions__content {padding:12px 15px 16px;border-top:1px solid var(--color-border-brand);}
+.hotel-club-advanced__content .hotel-club-note {margin:0 0 12px;}
+.hotel-club-permissions {margin-top:14px;}
+.hotel-club-form {gap:14px;}
+.hotel-club-permissions button:disabled {cursor:not-allowed;opacity:.5;}
+.hotel-club-settings .settings-primary-button:disabled {cursor:not-allowed;opacity:.5;}
+.hotel-club-settings .hotel-club-table th,.hotel-club-settings .hotel-club-table td {white-space:nowrap;}
+@media(max-width:700px) {
+  .hotel-club-fields {grid-template-columns:1fr;}
+  .hotel-club-rule-header {display:block;}
+  .hotel-club-state {align-items:start;}
+  .hotel-club-actions {justify-content:stretch;}
+  .hotel-club-entry {align-items:stretch;flex-direction:column;}
+  .hotel-club-entry a {text-align:center;}
+}

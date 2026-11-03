@@ -9,8 +9,8 @@
 <link href="../styles/app-shell.css" rel="stylesheet"/>
 <link href="../styles/components.css" rel="stylesheet"/>
 <link href="../styles/staff-shell.css?v=0.30.7" rel="stylesheet"/>
-<link href="../styles/settings.css?v=0.32.4" rel="stylesheet"/>
-<link href="../json/manifest.json" rel="manifest"/>
+<link href="../styles/settings.css?v=0.32.5" rel="stylesheet"/>
+<link href="../styles/hotel-mode-settings.css?v=0.32.5" rel="stylesheet"/><link href="../json/manifest.json" rel="manifest"/>
 <link href="../assets/paryx-apple-touch-icon.png" rel="apple-touch-icon"/>
 <link href="../assets/paryx-favicon.png" rel="icon" type="image/png"/>
 <meta content="Paryx" name="application-name"/>
@@ -164,7 +164,75 @@
 <button class="settings-secondary-button" id="copyPublicBookingEmbed" type="button">
                                 Copy embed code
                             </button>
-</div></details></section></section><section aria-labelledby="settingsTabBranding" class="settings-panel" data-settings-panel="branding" hidden="" id="settingsPanelBranding" role="tabpanel"><div class="settings-panel__intro"><h2>Branding</h2><p>Your logo and club colours.</p></div><section class="settings-card settings-card--branding">
+</div></details></section>
+<section id="hotelModeSection" class="settings-card hotel-club-settings" hidden>
+  <div class="settings-card__header hotel-club-header">
+    <div>
+      <span class="settings-card__eyebrow">Resort operations</span>
+      <h2>Hotel bookings</h2>
+    </div>
+    <p>Keep hotel guests and members on one tee sheet.</p>
+  </div>
+  <div class="hotel-club-state">
+    <div><strong id="hotelModeLabel">Hotel Mode</strong><p id="hotelModeStatus" class="hotel-club-note" role="status">Checking Hotel Mode…</p></div>
+    <span id="hotelModeBadge" class="hotel-club-badge">Checking</span>
+  </div>
+  <div id="hotelReservationsEntry" class="hotel-club-entry" hidden>
+    <div><strong>Hotel &amp; society reservations</strong><span>Link hotel stays to a tee time and manage society holds.</span></div>
+    <a id="hotelReservationsLink" class="settings-secondary-button" href="resort-reservations.html">Manage reservations</a>
+  </div>
+  <div id="hotelPolicyForm" class="hotel-club-form" hidden>
+    <div class="hotel-club-fields">
+      <label class="settings-field"><span>Hotel booking window (days)</span><input form="hotelPolicySubmitForm" id="hotelBookingDays" type="number" min="1" max="730" required></label>
+      <label class="settings-field"><span>Society booking window (days)</span><input form="hotelPolicySubmitForm" id="societyBookingDays" type="number" min="1" max="730" required></label>
+      <label class="settings-field"><span>Hotel tee times (%)</span><input form="hotelPolicySubmitForm" id="hotelAllocationPercent" type="number" min="0" max="90" required></label>
+      <label class="settings-field"><span>Release unused hotel times (days before play)</span><input form="hotelPolicySubmitForm" id="hotelReleaseDays" type="number" min="0" max="90" required></label>
+    </div>
+    <div class="hotel-club-allocation">
+      <label class="settings-field"><span>How should tee times be allocated?</span>
+        <select form="hotelPolicySubmitForm" id="hotelAllocationMode">
+          <option value="percentage">By percentage</option>
+          <option value="time_bands">By specific times and dates</option>
+        </select>
+      </label>
+      <p class="hotel-club-note">Existing confirmed bookings are not displaced. Member-protected times remain protected.</p>
+      <div id="hotelTimeRulesPanel" hidden>
+        <div class="hotel-club-rule-header"><strong>Specific time allocations</strong><span>Weekdays, dates and courses</span></div>
+        <p class="hotel-club-note">Specific dates override weekly allocations; course-specific rules override all-course rules. Uncovered times use the percentages above. End time is exclusive.</p>
+        <div class="hotel-club-table-wrap"><table class="hotel-club-table">
+          <thead><tr><th>When</th><th>Day / date</th><th>Course</th><th>Start</th><th>End</th><th>Priority</th><th></th></tr></thead>
+          <tbody id="hotelTimeRules"></tbody>
+        </table></div>
+        <button type="button" class="settings-secondary-button" id="hotelAddTimeRule">+ Add time period</button>
+      </div>
+    </div>
+    <details class="settings-disclosure hotel-club-advanced">
+      <summary>More booking rules</summary>
+      <div class="hotel-club-advanced__content">
+        <p class="hotel-club-note">Member booking protection, visitor windows and release timing.</p>
+        <div class="hotel-club-fields">
+          <label class="settings-field"><span>Member booking window (days)</span><input form="hotelPolicySubmitForm" id="hotelMemberDays" type="number" min="1" max="365" required></label>
+          <label class="settings-field"><span>Visitor booking window (days)</span><input form="hotelPolicySubmitForm" id="hotelVisitorDays" type="number" min="1" max="365" required></label>
+          <label class="settings-field"><span>Member protected allocation (%)</span><input form="hotelPolicySubmitForm" id="hotelMemberPercent" type="number" min="0" max="90" required></label>
+          <label class="settings-field"><span>Release unused member times (days before play)</span><input form="hotelPolicySubmitForm" id="hotelMemberReleaseDays" type="number" min="0" max="90" required></label>
+        </div>
+      </div>
+    </details>
+    <div class="hotel-club-actions"><button id="hotelSavePolicy" form="hotelPolicySubmitForm" type="submit" class="settings-primary-button">Save hotel booking rules</button></div>
+  </div>
+  <details id="hotelPermissionsSection" class="settings-disclosure hotel-club-permissions" hidden>
+    <summary>Staff permissions</summary>
+    <div class="hotel-club-permissions__content">
+      <p class="hotel-club-note">Club Admins can choose who manages hotel bookings, society groups and overrides.</p>
+      <div class="hotel-club-table-wrap"><table class="hotel-club-table">
+        <thead><tr><th>Role</th><th>Hotel</th><th>Societies</th><th>Overrides</th></tr></thead>
+        <tbody id="hotelRolePermissions"></tbody>
+      </table></div>
+      <div class="hotel-club-actions"><button type="button" id="hotelSavePermissions" class="settings-primary-button">Save staff permissions</button></div>
+    </div>
+  </details>
+</section>
+</section><section aria-labelledby="settingsTabBranding" class="settings-panel" data-settings-panel="branding" hidden="" id="settingsPanelBranding" role="tabpanel"><div class="settings-panel__intro"><h2>Branding</h2><p>Your logo and club colours.</p></div><section class="settings-card settings-card--branding">
 <div class="settings-card__header">
 <div>
 <span class="settings-card__eyebrow">
@@ -267,7 +335,7 @@
 <button class="settings-primary-button" id="saveClubSettings" type="submit">
                             Save changes
                         </button>
-</div></form>
+</div></form><form id="hotelPolicySubmitForm"></form>
 </main>
 </div>
 </div>
