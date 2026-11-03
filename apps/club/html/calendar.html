@@ -14,7 +14,7 @@
     <meta name="application-name" content="Paryx" />
     <title>Calendar | Paryx</title>
     <link rel="stylesheet" href="../styles/dashboard.css" />
-    <link rel="stylesheet" href="../styles/calendar.css" />
+    <link rel="stylesheet" href="../styles/calendar.css?v=0.32.2" />
     <script src="../js/core/protected-loader.js?loader=0.30.7" defer></script>
 </head>
 <body data-page="calendar">
@@ -24,45 +24,20 @@
         <div class="staff-workspace">
             <header class="staff-topbar" data-staff-header></header>
 
-            <main class="app-main calendar-page">
-                <section class="calendar-intro">
-                    <div>
-                        <p class="page-heading__eyebrow">
-                            Club operations
-                        </p>
-
-                        <h1 class="calendar-intro__title">
-                            Calendar
-                        </h1>
-
-                        <p
-                            id="calendarClubName"
-                            class="calendar-intro__subtitle"
-                        >
-                            Loading club information...
-                        </p>
+            <main class="app-main calendar-page" data-calendar-view="month">
+                <section class="calendar-intro calendar-intro--compact">
+                    <div class="calendar-intro__identity">
+                        <h1 class="calendar-intro__title">Calendar</h1>
+                        <p id="calendarClubName" class="calendar-intro__subtitle">Loading club information...</p>
                     </div>
-
                     <div class="calendar-intro__actions">
-                        <button
-                            id="addEventButton"
-                            class="calendar-button"
-                            type="button"
-                        >
-                            + Add event
-                        </button>
-
-                        <details class="calendar-more-menu">
-                            <summary class="calendar-button calendar-button--secondary">
-                                More
-                            </summary>
+                        <button id="addEventButton" class="calendar-button" type="button">+ Add event</button>
+                        <details class="calendar-more-menu calendar-operations-menu">
+                            <summary class="calendar-button calendar-button--secondary">Calendar tools</summary>
                             <div class="calendar-more-menu__panel">
-                                <button
-                                    id="importFixtureButton"
-                                    type="button"
-                                >
+                                <button id="importFixtureButton" type="button">
                                     Import fixture PDF
-                                    <small>Optional legacy / bulk setup tool</small>
+                                    <small>Bulk import an existing fixture list</small>
                                 </button>
                             </div>
                         </details>
@@ -142,6 +117,10 @@
                             Ladies
                         </button>
                     </div>
+                    <div class="calendar-view-toggle" role="group" aria-label="Calendar display">
+                        <button id="calendarViewMonth" class="calendar-view-button is-active" type="button" aria-pressed="true">Month</button>
+                        <button id="calendarViewList" class="calendar-view-button" type="button" aria-pressed="false">List</button>
+                    </div>
                 </section>
 
                 <section class="calendar-summary" aria-live="polite">
@@ -159,13 +138,13 @@
 
                 <section class="card calendar-board" aria-label="Month calendar">
                     <div class="calendar-weekdays" aria-hidden="true">
-                        <span>Sun</span>
                         <span>Mon</span>
                         <span>Tue</span>
                         <span>Wed</span>
                         <span>Thu</span>
                         <span>Fri</span>
                         <span>Sat</span>
+                        <span>Sun</span>
                     </div>
 
                     <div

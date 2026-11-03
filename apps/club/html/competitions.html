@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="../styles/app-shell.css" />
     <link rel="stylesheet" href="../styles/components.css" />
     <link rel="stylesheet" href="../styles/staff-shell.css?v=0.30.7" />
-    <link rel="stylesheet" href="../styles/competitions.css?v=0.30.0" />
+    <link rel="stylesheet" href="../styles/competitions.css?v=0.32.2" />
 
     <link rel="manifest" href="../json/manifest.json" />
     <link rel="apple-touch-icon" href="../assets/paryx-apple-touch-icon.png" />
@@ -26,13 +26,12 @@
         <div class="staff-workspace">
             <header class="staff-topbar" data-staff-header></header>
             <main class="app-main competition-page">
-                <section class="competition-intro">
+                <section class="competition-intro competition-intro--compact">
                     <div>
-                        <p class="page-heading__eyebrow">Golf operations</p>
                         <h1>Competitions</h1>
                         <p id="competitionClubName">Loading competitions...</p>
                     </div>
-                    <button id="competitionSyncCalendarButton" class="competition-button competition-button--secondary" type="button">Sync calendar</button>
+                    <a class="competition-button competition-button--secondary competition-calendar-link" href="calendar.html">View calendar</a>
                 </section>
 
                 <section id="competitionError" class="admin-error" role="alert" hidden></section>
@@ -40,23 +39,22 @@
 
                 <section class="competition-summary-grid">
                     <article class="competition-summary-card">
-                        <span>Current window</span><strong id="competitionCurrentCount">--</strong><small>Competitions in the selected working range</small>
+                        <span>Current window</span><strong id="competitionCurrentCount">--</strong>
                     </article>
                     <article class="competition-summary-card">
-                        <span>Awaiting results</span><strong id="competitionAwaitingCount">--</strong><small>External result not imported yet</small>
+                        <span>Awaiting results</span><strong id="competitionAwaitingCount">--</strong>
                     </article>
                     <article class="competition-summary-card">
-                        <span>Results ready</span><strong id="competitionReadyCount">--</strong><small>Imported / ready for prize allocation</small>
+                        <span>Results ready</span><strong id="competitionReadyCount">--</strong>
                     </article>
                     <article class="competition-summary-card">
-                        <span>Completed</span><strong id="competitionCompletedCount">--</strong><small>Confirmed in this working range</small>
+                        <span>Completed</span><strong id="competitionCompletedCount">--</strong>
                     </article>
                 </section>
 
                 <section class="competition-card">
                     <div class="competition-card__header competition-card__header--range">
                         <div>
-                            <span class="competition-eyebrow">Operational view</span>
                             <h2>Competition list</h2>
                             <p id="competitionRangeLabel">Showing competitions around today</p>
                         </div>
@@ -67,10 +65,10 @@
                         </div>
                     </div>
 
-                    <div class="competition-filter-grid competition-filter-grid--api">
+                    <div class="competition-filter-grid competition-filter-grid--compact">
                         <label class="competition-field competition-field--search">
-                            <span>Search</span>
-                            <input id="competitionSearch" type="search" placeholder="Competition name" autocomplete="off" />
+                            <span>Find competition</span>
+                            <input id="competitionSearch" type="search" placeholder="Search by competition name" autocomplete="off" />
                         </label>
                         <label class="competition-field">
                             <span>Status</span>
@@ -83,11 +81,20 @@
                                 <option value="cancelled">Cancelled</option>
                             </select>
                         </label>
-                        <label class="competition-field"><span>From</span><input id="competitionFromDate" type="date" /></label>
-                        <label class="competition-field"><span>To</span><input id="competitionToDate" type="date" /></label>
                         <button id="competitionRefreshButton" class="competition-button competition-button--secondary" type="button">Refresh</button>
+                        <details class="competition-date-tools">
+                            <summary>Custom dates</summary>
+                            <div class="competition-date-tools__fields">
+                                <label class="competition-field"><span>From</span><input id="competitionFromDate" type="date" /></label>
+                                <label class="competition-field"><span>To</span><input id="competitionToDate" type="date" /></label>
+                            </div>
+                        </details>
                     </div>
 
+                    <details class="competition-tools">
+                        <summary>Competition tools <span>Calendar sync and result-provider settings</span></summary>
+                        <div class="competition-tools__content">
+                            <button id="competitionSyncCalendarButton" class="competition-button competition-button--secondary" type="button">Sync calendar</button>
                     <div id="competitionProviderBanner" class="competition-provider-banner">
                         <div>
                             <strong id="competitionProviderTitle">ClubV1 results</strong>
@@ -98,6 +105,9 @@
                             <button id="competitionBridgeConfigButton" class="competition-mini-button" type="button" hidden>Create Windows Bridge config</button>
                         </div>
                     </div>
+
+                        </div>
+                    </details>
 
                     <div id="competitionList" class="competition-list">
                         <div class="competition-empty">Loading competitions...</div>

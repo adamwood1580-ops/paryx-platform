@@ -460,31 +460,48 @@
             return;
         }
 
-        elements.list.innerHTML = rows.map((row) => {
-            const imported = Number(row.external_result_count || 0);
-            const unmatched = Number(row.unmatched_result_count || 0);
-            const provider = providerName(row.result_provider);
-            const providerDetail = imported > 0
-                ? `${provider} · ${imported} result${imported === 1 ? "" : "s"}${unmatched ? ` · ${unmatched} unmatched` : ""}`
-                : row.result_provider === "manual"
-                    ? "Manual result fallback"
-                    : `${provider} result feed`;
-
-            return `<div class="competition-row competition-row--api">
-                <div class="competition-row__name">
-                    <strong>${esc(row.name)}</strong>
-                    <small>${esc(FORMAT_LABELS[row.competition_format] || row.competition_format)} · ${esc(row.section_label)}${row.is_qualifier ? " · Qualifier" : ""}</small>
-                </div>
-                <span>${esc(formatDate(row.competition_date))}</span>
-                <span class="competition-state-pill ${statusClass(row.status)}">${esc(STATUS_LABELS[row.status] || row.status)}</span>
-                <div>
-                    <span class="competition-state-pill ${syncStatusClass(row)}">${esc(syncStatusLabel(row))}</span>
-                    <small>${esc(providerDetail)}</small>
-                </div>
-                <span>${esc(formatMoney(row.prize_total, row.currency_code))}</span>
-                <button class="competition-button competition-button--secondary" type="button" data-competition-open="${esc(row.competition_id)}">Open</button>
-            </div>`;
-        }).join("");
+        elements.list.innerHTML = `<div class="competition-table-scroll" role="region" aria-label="Competitions table" tabindex="0">
+            <table class="competition-directory">
+                <thead>
+                    <tr>
+                        <th scope="col">Competition</th>
+                        <th scope="col">Date</th>
+                        <th scope="col">Format</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Results</th>
+                        <th scope="col">Credit</th>
+                        <th scope="col">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rows.map((row) => {
+                        const imported = Number(row.external_result_count || 0);
+                        const unmatched = Number(row.unmatched_result_count || 0);
+                        const provider = providerName(row.result_provider);
+                        const providerDetail = imported > 0
+                            ? `${provider} · ${imported} result${imported === 1 ? "" : "s"}${unmatched ? ` · ${unmatched} unmatched` : ""}`
+                            : row.result_provider === "manual"
+                                ? "Manual fallback"
+                                : `${provider} feed`;
+                        return `<tr>
+                            <td class="competition-directory__name">
+                                <strong>${esc(row.name)}</strong>
+                                <small>${esc(row.section_label || "Club")}${row.is_qualifier ? " · Qualifier" : ""}</small>
+                            </td>
+                            <td class="competition-directory__date">${esc(formatDate(row.competition_date))}</td>
+                            <td>${esc(FORMAT_LABELS[row.competition_format] || row.competition_format || "–")}</td>
+                            <td><span class="competition-state-pill ${statusClass(row.status)}">${esc(STATUS_LABELS[row.status] || row.status || "–")}</span></td>
+                            <td>
+                                <span class="competition-state-pill ${syncStatusClass(row)}">${esc(syncStatusLabel(row))}</span>
+                                <small class="competition-directory__detail">${esc(providerDetail)}</small>
+                            </td>
+                            <td class="competition-directory__money">${esc(formatMoney(row.prize_total, row.currency_code))}</td>
+                            <td><button class="competition-button competition-button--secondary competition-directory__open" type="button" data-competition-open="${esc(row.competition_id)}">Open</button></td>
+                        </tr>`;
+                    }).join("")}
+                </tbody>
+            </table>
+        </div>`;
     }
 
     async function openCompetition(competitionId) {

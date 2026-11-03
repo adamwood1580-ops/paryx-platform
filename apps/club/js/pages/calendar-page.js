@@ -76,6 +76,7 @@
         role: "",
         currentMonth: startOfMonth(new Date()),
         sectionFilter: "all",
+        view: "month",
         events: [],
         courses: [],
         courseMode: null,
@@ -96,6 +97,9 @@
         loadStatus: document.getElementById("calendarLoadStatus"),
         grid: document.getElementById("calendarGrid"),
         agenda: document.getElementById("calendarAgenda"),
+        page: document.querySelector(".calendar-page"),
+        viewMonth: document.getElementById("calendarViewMonth"),
+        viewList: document.getElementById("calendarViewList"),
         previousMonth: document.getElementById("previousMonthButton"),
         nextMonth: document.getElementById("nextMonthButton"),
         today: document.getElementById("todayButton"),
@@ -290,7 +294,7 @@
         const first = startOfMonth(date);
         const gridStart = new Date(first);
         gridStart.setDate(
-            first.getDate() - first.getDay()
+            first.getDate() - ((first.getDay() + 6) % 7)
         );
 
         const dates = [];
@@ -629,6 +633,17 @@
                     ? "Click any day to manage its events"
                     : `${SECTION_LABELS[state.sectionFilter] || state.sectionFilter} events`;
         }
+    }
+
+    function setCalendarView(view) {
+        state.view = view === "list" ? "list" : "month";
+        if (elements.page) elements.page.dataset.calendarView = state.view;
+        [[elements.viewMonth, "month"], [elements.viewList, "list"]].forEach(function (pair) {
+            if (!pair[0]) return;
+            const selected = pair[1] === state.view;
+            pair[0].classList.toggle("is-active", selected);
+            pair[0].setAttribute("aria-pressed", String(selected));
+        });
     }
 
     function renderCalendar() {
@@ -2501,6 +2516,8 @@
     }
 
     function bindEvents() {
+        elements.viewMonth?.addEventListener("click", function () { setCalendarView("month"); });
+        elements.viewList?.addEventListener("click", function () { setCalendarView("list"); });
         elements.previousMonth?.addEventListener(
             "click",
             async function () {
