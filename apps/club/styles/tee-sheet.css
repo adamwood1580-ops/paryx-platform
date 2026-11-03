@@ -1357,3 +1357,51 @@ button.tee-week-slot:focus-visible, .tee-week-day button:focus-visible { outline
   .tee-week-grid { min-width: 910px; }
   .tee-sheet-booking-tools__hint { display: none; }
 }
+
+
+/* v0.32.6 — restore Hotel Mode overlays inside the approved compact weekly grid */
+.tee-week-hotel-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.75rem;
+    align-items: center;
+    padding: 0.5rem 0.85rem;
+    border-bottom: 1px solid #dce8e1;
+    background: #f4f9f6;
+    color: #245540;
+    font-size: 0.75rem;
+}
+.tee-week-hotel-strip strong { font-size: 0.8rem; }
+.tee-week-hotel-strip__help { color: #677d71; }
+.tee-week-hotel-warning {
+    padding: 0.5rem 0.85rem;
+    border-bottom: 1px solid #edd8ae;
+    background: #fff6e4;
+    color: #7c5417;
+    font-size: 0.78rem;
+}
+.tee-week-hotel-strip[hidden], .tee-week-hotel-warning[hidden], .tee-week-resort-link[hidden] { display: none !important; }
+.tee-week-resort-link { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; font-size: 0.84rem; }
+.tee-week-priority {
+    align-self: flex-start;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 0.05rem 0.35rem;
+    margin-top: 0.12rem;
+    border-radius: 4px;
+    font-size: 0.62rem;
+    font-weight: 800;
+    line-height: 1.25;
+}
+.tee-week-priority--hotel { background: #fdf0d7; color: #79520a; }
+.tee-week-priority--member { background: #ebe9ff; color: #4a4188; }
+.tee-week-priority--released { background: #e8f1ec; color: #446b51; }
+.tee-week-slot--society-hold { background: #fff0cc; color: #714b06; cursor: not-allowed; }
+/* Never turn a held slot into an actionable button by CSS alone. */
+.tee-week-slot--society-hold.tee-week-slot--disabled { pointer-events: none; }
+@media (max-width: 760px) {
+ .tee-week-hotel-strip { gap: 0.2rem 0.5rem; }
+ .tee-week-hotel-strip__help { flex-basis: 100%; }
+}

@@ -53,6 +53,11 @@
         weekRows: {},
         weekDates: [],
         weekRequest: 0,
+        hotelModeEnabled: false,
+        hotelByDate: {},
+        resortHoldsByDate: {},
+        resortCaps: null,
+        hotelOverlayWarning: "",
         events: [],
         teeSheetSearch: "",
         teeSheetFilter: "all",
@@ -93,6 +98,10 @@
         loadStatus: document.getElementById("teeSheetLoadStatus"),
         empty: document.getElementById("teeSheetEmpty"),
         rows: document.getElementById("teeSheetRows"),
+        hotelBanner: document.getElementById("hotelModeTeeSheetBanner"),
+        hotelCount: document.getElementById("hotelModeTeeSheetCount"),
+        hotelWarning: document.getElementById("hotelModeOverlayWarning"),
+        resortBookingLink: document.getElementById("resortBookingLink"),
         earlierTimes: document.getElementById("earlierTeeTimesButton"),
         eventsEmpty: document.getElementById("teeSheetEventsEmpty"),
         events: document.getElementById("teeSheetEvents"),
@@ -458,34 +467,112 @@
         renderScheduleList();
     }
 
+    // Load hotel priority and provisional holds from the SAME functions the
+    // earlier daily Tee Sheet used. Booking rules remain enforced by Supabase.
+    // Every weekday is fetched independently so its labels cannot leak into
+    // another date while navigating the weekly timetable.
     async function loadTeeSheet() {
         if (!state.courseId || !state.playDate) {
+            ++state.weekRequest;
             state.teeTimes = [];
             state.weekRows = {};
             state.weekDates = [];
+            state.hotelModeEnabled = false;
+            state.hotelByDate = {};
+            state.resortHoldsByDate = {};
+            state.resortCaps = null;
+            state.hotelOverlayWarning = "";
             renderTeeSheet();
             return;
         }
 
         const requestId = ++state.weekRequest;
+        const courseId = state.courseId;
         const dates = weekDatesFor(state.playDate);
-        const results = await Promise.all(dates.map(function (date) {
-            return rpc("staff_get_tee_sheet", {
-                p_club_id: state.clubId,
-                p_course_id: state.courseId,
-                p_play_date: date
-            });
-        }));
-        // Ignore a response if staff navigated to another week while loading.
-        if (requestId !== state.weekRequest) {
-            return;
+        const baseArgs = {p_club_id: state.clubId, p_course_id: courseId};
+
+        // Always load the actual tee times first. Optional overlay failures
+        // should not render stale hotel labels or break the entire page.
+        const [results, capsResult] = await Promise.all([
+            Promise.all(dates.map(function (date) {
+                return rpc("staff_get_tee_sheet", {...baseArgs, p_play_date: date});
+            })),
+            rpc("resort_staff_context", {p_club_id: state.clubId})
+                .then(function (caps) { return {caps}; })
+                .catch(function (error) {
+                    console.warn("Hotel Mode context unavailable", error);
+                    return {error};
+                })
+        ]);
+
+        const caps = capsResult.caps && typeof capsResult.caps === "object"
+            ? capsResult.caps : null;
+        const enabled = caps?.enabled === true;
+        let overlayWarning = capsResult.error
+            ? "Hotel allocation information could not be verified. Booking eligibility is still checked by the server."
+            : "";
+        const hotelByDate = {};
+        const resortHoldsByDate = {};
+
+        if (enabled) {
+            // Each day has its own independent result. Do not display an old
+            // release status or hold as if it applied to a new week.
+            await Promise.all(dates.map(async function (date) {
+                const args = {...baseArgs, p_play_date: date};
+                const [hotelResult, holdsResult] = await Promise.allSettled([
+                    rpc("staff_get_hotel_mode_tee_sheet", args),
+                    rpc("resort_staff_overlay", args)
+                ]);
+                if (hotelResult.status === "fulfilled") {
+                    const hotel = hotelResult.value;
+                    const slots = new Map();
+                    (Array.isArray(hotel?.slots) ? hotel.slots : []).forEach(function (slot) {
+                        if (slot?.tee_time_id) slots.set(String(slot.tee_time_id), slot);
+                    });
+                    hotelByDate[date] = {
+                        enabled: hotel?.enabled === true,
+                        canManageHotel: hotel?.can_manage_hotel === true,
+                        slots,
+                        failed: hotel?.enabled !== true
+                    };
+                    if (hotel?.enabled !== true) {
+                        overlayWarning = "Some hotel allocations could not be verified. Booking eligibility is still checked by the server.";
+                    }
+                } else {
+                    hotelByDate[date] = {enabled: false, canManageHotel: false, slots: new Map(), failed: true};
+                    overlayWarning = "Some hotel allocations could not be displayed. Booking eligibility is still checked by the server.";
+                    console.warn("Hotel allocation loading failed for", date, hotelResult.reason);
+                }
+
+                if (holdsResult.status === "fulfilled") {
+                    const holds = new Map();
+                    (Array.isArray(holdsResult.value) ? holdsResult.value : []).forEach(function (hold) {
+                        if (hold?.tee_time_id) holds.set(String(hold.tee_time_id), hold);
+                    });
+                    resortHoldsByDate[date] = holds;
+                } else {
+                    // Null marks an unverified day. Do not enable ordinary
+                    // booking actions where society holds might be missing.
+                    resortHoldsByDate[date] = null;
+                    overlayWarning = "Some provisional society holds could not be displayed. Booking eligibility is still checked by the server.";
+                    console.warn("Society hold loading failed for", date, holdsResult.reason);
+                }
+            }));
         }
+
+        // Prevent older RPC responses replacing newer week/course navigation.
+        if (requestId !== state.weekRequest || state.courseId !== courseId) return;
 
         state.weekDates = dates;
         state.weekRows = Object.fromEntries(dates.map(function (date, index) {
             return [date, normaliseRows(results[index])];
         }));
         state.teeTimes = state.weekRows[state.playDate] || [];
+        state.hotelModeEnabled = enabled;
+        state.hotelByDate = hotelByDate;
+        state.resortHoldsByDate = resortHoldsByDate;
+        state.resortCaps = caps;
+        state.hotelOverlayWarning = overlayWarning;
         renderTeeSheet();
     }
 
@@ -696,21 +783,25 @@
     }
 
 
-    function teeSheetMatchesFilter(row) {
+    function teeSheetMatchesFilter(row, date = state.playDate) {
         const filter = state.teeSheetFilter || "all";
         const meta = bookingMetaFromRow(row);
+        const hold = societyHoldFor(row, date);
+        const priority = hotelPriorityFor(row, date);
+        const protectedHotel = priority?.allocation === "hotel" && !priority.released &&
+            !state.hotelByDate[date]?.canManageHotel;
+        const unverified = state.hotelModeEnabled &&
+            (state.hotelByDate[date]?.failed || !state.resortHoldsByDate[date]);
 
-        if (filter === "booked") {
-            return Boolean(row.booking_id);
-        }
+        if (filter === "booked") return Boolean(row.booking_id);
         if (filter === "open") {
-            return row.operational_status === "open" && !row.booking_id;
+            return row.operational_status === "open" && !row.booking_id &&
+                !hold && !protectedHotel && !unverified;
         }
-        if (filter === "buggy") {
-            return Boolean(row.booking_id) && meta.buggyCount > 0;
-        }
+        if (filter === "buggy") return Boolean(row.booking_id) && meta.buggyCount > 0;
         if (filter === "unavailable") {
-            return row.operational_status !== "open" && !row.booking_id;
+            return !row.booking_id && (row.operational_status !== "open" ||
+                Boolean(hold) || protectedHotel || unverified);
         }
         return true;
     }
@@ -742,8 +833,63 @@
         });
     }
 
+    function hotelPriorityFor(row, date) {
+        const day = state.hotelByDate[date];
+        return day?.enabled ? day.slots.get(String(row.tee_time_id)) || null : null;
+    }
+
+    function societyHoldFor(row, date) {
+        return state.resortHoldsByDate[date]?.get(String(row.tee_time_id)) || null;
+    }
+
+    function formatHotelRelease(value) {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value || ""))) return "";
+        const parts = value.split("-");
+        return new Intl.DateTimeFormat("en-GB", {day: "numeric", month: "short"})
+            .format(new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])));
+    }
+
+    function hotelPriorityChip(priority) {
+        if (!priority || !["hotel", "member"].includes(priority.allocation)) return "";
+        const kind = priority.allocation;
+        const label = kind === "hotel" ? "Hotel" : "Members";
+        const release = priority.released ? " · Released" :
+            priority.release_on ? " · Releases " + formatHotelRelease(priority.release_on) : "";
+        return `<span class="tee-week-priority tee-week-priority--${kind}${priority.released ? " tee-week-priority--released" : ""}" title="${escapeHtml(label + " priority" + release)}">${escapeHtml(label + (priority.released ? " · Released" : ""))}</span>`;
+    }
+
+    function renderHotelSummary() {
+        if (elements.hotelBanner) {
+            elements.hotelBanner.hidden = !state.hotelModeEnabled;
+        }
+        if (elements.resortBookingLink) {
+            elements.resortBookingLink.hidden = !(
+                state.hotelModeEnabled && (state.resortCaps?.can_hotel || state.resortCaps?.can_society)
+            );
+        }
+        if (elements.hotelWarning) {
+            elements.hotelWarning.hidden = !state.hotelOverlayWarning;
+            elements.hotelWarning.textContent = state.hotelOverlayWarning;
+        }
+        if (!state.hotelModeEnabled || !elements.hotelCount) return;
+        let hotel = 0, member = 0, general = 0, held = 0;
+        state.weekDates.forEach(function (date) {
+            const day = state.hotelByDate[date];
+            if (day?.enabled) {
+                for (const slot of day.slots.values()) {
+                    if (slot.allocation === "hotel") hotel++;
+                    else if (slot.allocation === "member") member++;
+                    else general++;
+                }
+            }
+            held += state.resortHoldsByDate[date]?.size || 0;
+        });
+        elements.hotelCount.textContent = `${hotel} hotel priority · ${member} member priority · ${general} general${held ? ` · ${held} society hold${held === 1 ? "" : "s"}` : ""} (this week)`;
+    }
+
     function renderTeeSheet() {
         renderSummary();
+        renderHotelSummary();
         elements.dayTitle.textContent = formatWeekHeading();
         const dates = state.weekDates;
         if (!dates.length) {
@@ -794,24 +940,40 @@
                 const status = rowStatus(row);
                 const past = isPastTeeTime(row, date);
                 const notesMeta = bookingMetaFromRow(row);
-                const matches = teeSheetMatchesFilter(row) && teeSheetMatchesSearch(row);
+                const priority = hotelPriorityFor(row, date);
+                const hold = societyHoldFor(row, date);
+                const dayHotel = state.hotelByDate[date];
+                const hotelLocked = Boolean(priority?.allocation === "hotel" &&
+                    !priority.released && !dayHotel?.canManageHotel);
+                const unverified = Boolean(state.hotelModeEnabled && (dayHotel?.failed ||
+                    !state.resortHoldsByDate[date]));
+                const matches = teeSheetMatchesFilter(row, date) && teeSheetMatchesSearch(row);
                 if (!matches) {
                     return `<td class="tee-week-blank"><span aria-label="Filtered out">·</span></td>`;
                 }
                 visibleCount += 1;
-                const name = row.booking_id ? bookingNames(row) :
+                const name = hold ? "Society hold" : row.booking_id ? bookingNames(row) :
                     (row.operational_status === "open" ? "Available" :
                     (row.tee_time_notes || STATUS_LABELS[row.operational_status] || "Unavailable"));
-                const action = row.booking_id
-                    ? (BOOKING_ROLES.has(state.role) ? "manage-booking" : "availability")
+                const action = hold ? ""
+                    : row.booking_id ? (BOOKING_ROLES.has(state.role) ? "manage-booking" : "availability")
                     : past ? ""
+                    : (hotelLocked || unverified) ? "availability"
                     : (row.operational_status === "open" && BOOKING_ROLES.has(state.role) ? "book" : "availability");
-                const detail = row.booking_id
-                    ? `<span class="tee-week-slot__meta">${escapeHtml(String(row.player_count || 0))}/${escapeHtml(String(row.max_players || 4))} players${notesMeta.buggyCount > 0 ? ` · Buggy ×${escapeHtml(String(notesMeta.buggyCount))}` : ""}${row.staff_checked_in_at ? " · Checked in" : ""}</span>`
+                const bookedDetail = `${escapeHtml(String(row.player_count || 0))}/${escapeHtml(String(row.max_players || 4))} players${notesMeta.buggyCount > 0 ? ` · Buggy ×${escapeHtml(String(notesMeta.buggyCount))}` : ""}${row.staff_checked_in_at ? " · Checked in" : ""}`;
+                const holdExpiry = hold?.hold_expires_at && !Number.isNaN(Date.parse(hold.hold_expires_at))
+                    ? new Date(hold.hold_expires_at).toLocaleString("en-GB") : "";
+                const detail = hold
+                    ? `<span class="tee-week-slot__meta">Provisional${holdExpiry ? " · Until " + escapeHtml(holdExpiry) : ""}</span>`
+                    : row.booking_id ? `<span class="tee-week-slot__meta">${bookedDetail}</span>`
+                    : hotelLocked ? `<span class="tee-week-slot__meta">Hotel access required</span>`
+                    : unverified ? `<span class="tee-week-slot__meta">Allocation unverified</span>`
                     : (past ? `<span class="tee-week-slot__meta">Past</span>` : "");
-                const label = `${date} ${time} ${name}${notesMeta.buggyCount ? `, ${notesMeta.buggyCount} buggies` : ""}`;
-                const classes = `tee-week-slot tee-week-slot--${escapeHtml(status)}${past ? " tee-week-slot--past" : ""}`;
-                const content = `<span class="tee-week-slot__name">${escapeHtml(name)}</span>${detail}`;
+                const priorityLabel = priority?.allocation === "hotel" ? "Hotel priority" :
+                    priority?.allocation === "member" ? "Member priority" : "";
+                const label = `${date} ${time} ${name}${priorityLabel ? ", " + priorityLabel : ""}${notesMeta.buggyCount ? `, ${notesMeta.buggyCount} buggies` : ""}`;
+                const classes = `tee-week-slot tee-week-slot--${escapeHtml(hold ? "society-hold" : status)}${past ? " tee-week-slot--past" : ""}`;
+                const content = `<span class="tee-week-slot__name">${escapeHtml(name)}</span>${detail}${hotelPriorityChip(priority)}`;
                 if (!action) {
                     return `<td><span class="${classes} tee-week-slot--disabled" title="${escapeHtml(label)}">${content}</span></td>`;
                 }

@@ -8,13 +8,13 @@
     <link rel="stylesheet" href="../styles/app-shell.css" />
     <link rel="stylesheet" href="../styles/components.css" />
     <link rel="stylesheet" href="../styles/staff-shell.css?v=0.30.7" />
-    <link rel="stylesheet" href="../styles/tee-sheet.css?v=0.32.0" />
+    <link rel="stylesheet" href="../styles/tee-sheet.css?v=0.32.6" />
     <link rel="manifest" href="../json/manifest.json" />
     <link rel="apple-touch-icon" href="../assets/paryx-apple-touch-icon.png" />
     <link rel="icon" type="image/png" href="../assets/paryx-favicon.png" />
     <meta name="application-name" content="Paryx" />
     <title>Tee Sheet | Paryx</title>
-    <script src="../js/core/protected-loader.js?loader=0.32.0" defer></script>
+    <script src="../js/core/protected-loader.js?loader=0.32.6" defer></script>
 </head>
 <body data-page="teesheet">
     <div class="staff-shell">
@@ -80,6 +80,13 @@
                         <span><strong id="teeSheetUnavailableCount">0</strong> buggies</span>
                     </div>
 
+                    <div id="hotelModeTeeSheetBanner" class="tee-week-hotel-strip" hidden aria-label="Hotel allocation summary">
+                        <strong>Hotel Mode</strong>
+                        <span id="hotelModeTeeSheetCount" aria-live="polite"></span>
+                        <span class="tee-week-hotel-strip__help">Priority applies until its release date. Confirmed bookings remain unchanged.</span>
+                    </div>
+                    <div id="hotelModeOverlayWarning" class="tee-week-hotel-warning" role="status" hidden></div>
+
                     <div id="teeSheetEmpty" class="tee-sheet-empty" hidden>
                         <strong>No tee times for this week.</strong>
                         <p>Open Booking tools to generate tee times.</p>
@@ -91,6 +98,7 @@
                     <summary><span>Booking tools</span><span class="tee-sheet-booking-tools__hint">Schedules, events and setup</span></summary>
                     <div class="tee-sheet-booking-tools__content">
                         <div class="tee-sheet-booking-tools__actions">
+                            <a id="resortBookingLink" class="tee-sheet-button tee-sheet-button--secondary tee-week-resort-link" href="resort-reservations.html" hidden>Hotel &amp; society reservations</a>
                             <button id="generateTeeSheetButton" class="tee-sheet-button" type="button">Generate / refresh tee times</button>
                             <button id="manageSchedulesButton" class="tee-sheet-button tee-sheet-button--secondary" type="button">Booking schedules</button>
                         </div>
