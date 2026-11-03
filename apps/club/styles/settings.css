@@ -438,3 +438,221 @@
     border-color: var(--color-primary);
     box-shadow: 0 0 0 3px var(--color-primary-light);
 }
+
+
+/* ClubHub UX v0.32.4 — compact settings workspace */
+.settings-page {
+    max-width: 1120px;
+    width: 100%;
+    margin-inline: auto;
+}
+.settings-intro--compact {
+    align-items: center;
+    margin-bottom: 14px;
+    padding: 0;
+}
+.settings-intro--compact .settings-intro__title {
+    font-family: inherit;
+    font-size: clamp(1.35rem, 2vw, 1.8rem);
+    font-weight: 800;
+    line-height: 1.2;
+}
+.settings-intro--compact .settings-intro__subtitle {
+    font-size: .91rem;
+    margin: 3px 0 0;
+}
+.settings-role-badge {
+    min-height: 29px;
+    padding: 4px 11px;
+    border-radius: 999px;
+    font-size: .73rem;
+}
+.settings-tabs {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    overflow-x: auto;
+    padding: 4px;
+    margin-bottom: 12px;
+    border: 1px solid var(--color-border-brand);
+    border-radius: 14px;
+    background: var(--color-surface);
+    scrollbar-width: thin;
+}
+.settings-tab {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 39px;
+    padding: 7px 16px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--color-text);
+    font: inherit;
+    font-size: .89rem;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+}
+.settings-tab[aria-selected="true"] {
+    background: var(--color-primary);
+    color: #fff;
+    box-shadow: 0 2px 10px rgba(1,31,22,.1);
+}
+.settings-tab:focus-visible,
+.settings-management-link:focus-visible,
+.settings-disclosure summary:focus-visible {
+    outline: 3px solid var(--color-accent);
+    outline-offset: 2px;
+}
+.settings-panel[hidden] { display: none !important; }
+.settings-panel {
+    display: grid;
+    gap: 12px;
+}
+.settings-panel__intro {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    padding: 2px 2px 0;
+}
+.settings-panel__intro h2 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--color-primary);
+}
+.settings-panel__intro p {
+    color: var(--color-text-muted);
+    margin: 0;
+    font-size: .85rem;
+}
+.settings-form { gap: 12px; }
+.settings-card {
+    padding: clamp(14px, 1.8vw, 20px);
+    border-radius: 15px;
+    box-shadow: none;
+}
+.settings-card__header {
+    margin-bottom: 12px;
+    gap: 12px;
+}
+.settings-card__header h2 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 800;
+}
+.settings-card__header p {
+    font-size: .81rem;
+    line-height: 1.45;
+}
+.settings-grid { gap: 12px; }
+.settings-field { gap: 5px; }
+.settings-field input,
+.settings-field select,
+.settings-colour-control input[type="text"] {
+    min-height: 42px;
+    padding: 8px 11px;
+    border-radius: 10px;
+}
+.settings-disclosure {
+    border: 1px solid var(--color-border-brand);
+    border-radius: 13px;
+    background: var(--color-surface);
+    overflow: hidden;
+}
+.settings-disclosure > summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 47px;
+    padding: 11px 16px;
+    color: var(--color-primary);
+    font-weight: 800;
+    font-size: .9rem;
+    cursor: pointer;
+    list-style: none;
+}
+.settings-disclosure > summary::-webkit-details-marker { display: none; }
+.settings-disclosure > summary::after { content: '+'; font-size: 1.2rem; line-height: 1; }
+.settings-disclosure[open] > summary::after { content: '−'; }
+.settings-disclosure > .settings-card {
+    border: none;
+    border-top: 1px solid var(--color-border-brand);
+    border-radius: 0;
+}
+.settings-disclosure > .settings-widget-share,
+.settings-disclosure > .settings-colour-grid {
+    padding: 14px 16px 16px;
+}
+.settings-disclosure > .settings-widget-share {
+    margin: 0;
+    border-top: 1px solid var(--color-border-brand);
+}
+.settings-disclosure > .settings-colour-grid {
+    border-top: 1px solid var(--color-border-brand);
+}
+.settings-widget-grid { gap: 12px; }
+.settings-checkbox-row { padding: 12px; }
+.settings-branding-layout {
+    display: block;
+}
+.settings-logo-panel { max-width: 520px; }
+.settings-logo-preview { min-height: 105px; }
+.settings-logo-preview img { max-height: 85px; }
+.settings-disclosure--colours { margin-top: 14px; }
+.settings-booking-shortcut p {
+    margin: 0 0 10px;
+    color: var(--color-text-muted);
+    font-size: .84rem;
+}
+.settings-management-links { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+.settings-management-link {
+    display: grid;
+    gap: 4px;
+    padding: 13px;
+    border: 1px solid var(--color-border-brand);
+    border-radius: 12px;
+    color: var(--color-primary);
+    text-decoration: none;
+}
+.settings-management-link strong { font-size: .94rem; }
+.settings-management-link span { color: var(--color-text-muted); font-size: .79rem; }
+.settings-save-bar {
+    bottom: 10px;
+    margin-top: 2px;
+    padding: 10px 14px;
+    border-radius: 13px;
+    box-shadow: 0 7px 25px rgba(1,31,22,.13);
+}
+.settings-save-bar span { font-size: .77rem; }
+.settings-primary-button { min-height: 39px; padding: 8px 18px; border-radius: 10px; }
+@media(max-width: 750px) {
+    .settings-intro--compact { display: flex; align-items: center; }
+    .settings-tabs { margin-inline: -1px; }
+    .settings-tab { flex: 0 0 auto; padding-inline: 13px; }
+    .settings-panel__intro { align-items: start; flex-direction: column; gap: 3px; }
+    .settings-card__header { flex-direction: column; }
+    .settings-management-links { grid-template-columns: 1fr; }
+    .settings-save-bar { flex-direction: row; align-items: center; }
+    .settings-save-bar > div { min-width: 0; }
+    .settings-save-bar span { max-width: 240px; }
+    .settings-primary-button { flex: 0 0 auto; width: auto; }
+}
+@media(max-width: 480px) {
+    .settings-intro--compact .settings-intro__subtitle { font-size: .78rem; }
+    .settings-role-badge { font-size: .65rem; padding-inline: 8px; }
+    .settings-save-bar strong { font-size: .84rem; }
+    .settings-save-bar span { font-size: .69rem; }
+    .settings-primary-button { padding-inline: 11px; }
+}
+
+/* Keep hidden controls reliably hidden even where older component CSS sets display. */
+.settings-page [hidden] { display: none !important; }
+
+.settings-booking-link { display: flex; align-items: end; gap: 10px; margin: 12px 0 14px; }
+.settings-booking-link .settings-field { flex: 1 1 auto; min-width: 0; }
+.settings-booking-link .settings-secondary-button { flex: 0 0 auto; border-radius: 10px; min-height: 42px; }
+@media(max-width: 560px){.settings-booking-link { flex-direction: column; align-items: stretch; }.settings-booking-link .settings-secondary-button { width: 100%; }}

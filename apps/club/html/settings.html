@@ -1,501 +1,275 @@
 <!DOCTYPE html>
-<html lang="en" class="auth-protected">
+
+<html class="auth-protected" lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#064831" />
-    <link rel="stylesheet" href="../styles/tokens.css" />
-    <link rel="stylesheet" href="../styles/app-shell.css" />
-    <link rel="stylesheet" href="../styles/components.css" />
-    <link rel="stylesheet" href="../styles/staff-shell.css?v=0.30.7" />
-    <link rel="stylesheet" href="../styles/settings.css" />
-    <link rel="stylesheet" href="../styles/hotel-mode-settings.css" />
-    <link rel="manifest" href="../json/manifest.json" />
-    <link rel="apple-touch-icon" href="../assets/paryx-apple-touch-icon.png" />
-    <link rel="icon" type="image/png" href="../assets/paryx-favicon.png" />
-    <meta name="application-name" content="Paryx" />
-    <title>Settings | Paryx</title>
-    <script src="../js/core/protected-loader.js?loader=0.30.7" defer></script>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<meta content="#064831" name="theme-color"/>
+<link href="../styles/tokens.css" rel="stylesheet"/>
+<link href="../styles/app-shell.css" rel="stylesheet"/>
+<link href="../styles/components.css" rel="stylesheet"/>
+<link href="../styles/staff-shell.css?v=0.30.7" rel="stylesheet"/>
+<link href="../styles/settings.css?v=0.32.4" rel="stylesheet"/>
+<link href="../json/manifest.json" rel="manifest"/>
+<link href="../assets/paryx-apple-touch-icon.png" rel="apple-touch-icon"/>
+<link href="../assets/paryx-favicon.png" rel="icon" type="image/png"/>
+<meta content="Paryx" name="application-name"/>
+<title>Settings | Paryx</title>
+<script defer="" src="../js/core/protected-loader.js?loader=0.30.7"></script>
 </head>
 <body data-page="settings">
-    <div class="staff-shell">
-        <aside class="staff-sidebar" data-staff-sidebar></aside>
-
-        <div class="staff-workspace">
-            <header class="staff-topbar" data-staff-header></header>
-
-            <main class="app-main settings-page">
-                <section class="settings-intro">
-                    <div>
-                        <p class="page-heading__eyebrow">
-                            Club configuration
-                        </p>
-
-                        <h1 class="settings-intro__title">
-                            Settings
-                        </h1>
-
-                        <p
-                            id="settingsClubName"
-                            class="settings-intro__subtitle"
-                        >
-                            Loading club configuration...
-                        </p>
-                    </div>
-
-                    <span
-                        id="settingsRoleBadge"
-                        class="settings-role-badge"
-                    >
+<div class="staff-shell">
+<aside class="staff-sidebar" data-staff-sidebar=""></aside>
+<div class="staff-workspace">
+<header class="staff-topbar" data-staff-header=""></header>
+<main class="app-main settings-page">
+<section class="settings-intro settings-intro--compact">
+<div>
+<h1 class="settings-intro__title">Settings</h1>
+<p class="settings-intro__subtitle" id="settingsClubName">Manage your club in one place</p>
+</div>
+<span class="settings-role-badge" id="settingsRoleBadge">
                         Checking access
                     </span>
-                </section>
-
-                <section
-                    id="settingsError"
-                    class="admin-error"
-                    role="alert"
-                    hidden
-                ></section>
-
-                <section
-                    id="settingsSuccess"
-                    class="settings-success"
-                    role="status"
-                    hidden
-                ></section>
-
-                <form
-                    id="clubSettingsForm"
-                    class="settings-form"
-                >
-                    <section class="settings-card">
-                        <div class="settings-card__header">
-                            <div>
-                                <span class="settings-card__eyebrow">
+</section>
+<section class="admin-error" hidden="" id="settingsError" role="alert"></section>
+<section class="settings-success" hidden="" id="settingsSuccess" role="status"></section>
+<nav aria-label="Settings sections" class="settings-tabs" role="tablist"><button aria-controls="settingsPanelClub" aria-selected="true" class="settings-tab" data-settings-tab="club" id="settingsTabClub" role="tab" tabindex="0" type="button">Club details</button><button aria-controls="settingsPanelBookings" aria-selected="false" class="settings-tab" data-settings-tab="bookings" id="settingsTabBookings" role="tab" tabindex="-1" type="button">Bookings</button><button aria-controls="settingsPanelBranding" aria-selected="false" class="settings-tab" data-settings-tab="branding" id="settingsTabBranding" role="tab" tabindex="-1" type="button">Branding</button><button aria-controls="settingsPanelAdvanced" aria-selected="false" class="settings-tab" data-settings-tab="advanced" id="settingsTabAdvanced" role="tab" tabindex="-1" type="button">Advanced</button></nav><form class="settings-form" id="clubSettingsForm">
+<section aria-labelledby="settingsTabClub" class="settings-panel" data-settings-panel="club" id="settingsPanelClub" role="tabpanel"><div class="settings-panel__intro"><h2>Club details</h2><p>Name, contact information and address.</p></div><section class="settings-card">
+<div class="settings-card__header">
+<div>
+<span class="settings-card__eyebrow">
                                     Identity
                                 </span>
-                                <h2>Club details</h2>
-                            </div>
-
-                            <p>
-                                These values identify the selected club throughout Paryx.
-                            </p>
-                        </div>
-
-                        <div class="settings-grid settings-grid--two">
-                            <label class="settings-field settings-field--wide">
-                                <span>Club name</span>
-                                <input
-                                    id="clubName"
-                                    name="clubName"
-                                    type="text"
-                                    maxlength="140"
-                                    autocomplete="organization"
-                                    required
-                                >
-                            </label>
-
-                            <label class="settings-field">
-                                <span>Short name</span>
-                                <input
-                                    id="clubShortName"
-                                    name="clubShortName"
-                                    type="text"
-                                    maxlength="60"
-                                    placeholder="e.g. The Forest"
-                                >
-                            </label>
-
-                            <label class="settings-field">
-                                <span>Timezone</span>
-                                <input
-                                    id="clubTimezone"
-                                    name="clubTimezone"
-                                    type="text"
-                                    list="timezoneOptions"
-                                    value="Europe/London"
-                                    maxlength="80"
-                                    placeholder="Europe/London"
-                                    required
-                                >
-                                <datalist id="timezoneOptions">
-                                    <option value="Europe/London"></option>
-                                    <option value="Europe/Dublin"></option>
-                                    <option value="Europe/Paris"></option>
-                                    <option value="Europe/Madrid"></option>
-                                    <option value="Europe/Lisbon"></option>
-                                    <option value="America/New_York"></option>
-                                    <option value="America/Chicago"></option>
-                                    <option value="America/Denver"></option>
-                                    <option value="America/Los_Angeles"></option>
-                                    <option value="Australia/Sydney"></option>
-                                    <option value="Pacific/Auckland"></option>
-                                </datalist>
-                            </label>
-                        </div>
-                    </section>
-
-                    <section class="settings-card">
-                        <div class="settings-card__header">
-                            <div>
-                                <span class="settings-card__eyebrow">
+<h2>Club name</h2>
+</div>
+<p>Shown throughout Paryx and in club bookings.</p>
+</div>
+<div class="settings-grid settings-grid--two">
+<label class="settings-field settings-field--wide">
+<span>Club name</span>
+<input autocomplete="organization" id="clubName" maxlength="140" name="clubName" required="" type="text"/>
+</label>
+<label class="settings-field">
+<span>Short name</span>
+<input id="clubShortName" maxlength="60" name="clubShortName" placeholder="e.g. The Forest" type="text"/>
+</label>
+</div>
+</section><section class="settings-card">
+<div class="settings-card__header">
+<div>
+<span class="settings-card__eyebrow">
                                     Contact
                                 </span>
-                                <h2>Club contact details</h2>
-                            </div>
-
-                            <p>
-                                Used by future member communications and public club information.
-                            </p>
-                        </div>
-
-                        <div class="settings-grid settings-grid--two">
-                            <label class="settings-field">
-                                <span>Email</span>
-                                <input
-                                    id="clubEmail"
-                                    name="clubEmail"
-                                    type="email"
-                                    maxlength="254"
-                                    autocomplete="email"
-                                >
-                            </label>
-
-                            <label class="settings-field">
-                                <span>Phone</span>
-                                <input
-                                    id="clubPhone"
-                                    name="clubPhone"
-                                    type="tel"
-                                    maxlength="50"
-                                    autocomplete="tel"
-                                >
-                            </label>
-
-                            <label class="settings-field settings-field--wide">
-                                <span>Website</span>
-                                <input
-                                    id="clubWebsite"
-                                    name="clubWebsite"
-                                    type="url"
-                                    maxlength="500"
-                                    placeholder="https://www.examplegolfclub.co.uk"
-                                    autocomplete="url"
-                                >
-                            </label>
-                        </div>
-                    </section>
-
-                    <section class="settings-card">
-                        <div class="settings-card__header">
-                            <div>
-                                <span class="settings-card__eyebrow">
+<h2>Contact details</h2>
+</div>
+<p>How visitors and members can contact the club.</p>
+</div>
+<div class="settings-grid settings-grid--two">
+<label class="settings-field">
+<span>Email</span>
+<input autocomplete="email" id="clubEmail" maxlength="254" name="clubEmail" type="email"/>
+</label>
+<label class="settings-field">
+<span>Phone</span>
+<input autocomplete="tel" id="clubPhone" maxlength="50" name="clubPhone" type="tel"/>
+</label>
+<label class="settings-field settings-field--wide">
+<span>Website</span>
+<input autocomplete="url" id="clubWebsite" maxlength="500" name="clubWebsite" placeholder="https://www.examplegolfclub.co.uk" type="url"/>
+</label>
+</div>
+</section><details class="settings-disclosure settings-disclosure--address"><summary>Club address</summary><section class="settings-card settings-card--address">
+<div class="settings-card__header">
+<div>
+<span class="settings-card__eyebrow">
                                     Location
                                 </span>
-                                <h2>Club address</h2>
-                            </div>
-                        </div>
-
-                        <div class="settings-grid settings-grid--two">
-                            <label class="settings-field settings-field--wide">
-                                <span>Address line 1</span>
-                                <input id="addressLine1" type="text" maxlength="160" autocomplete="address-line1">
-                            </label>
-
-                            <label class="settings-field settings-field--wide">
-                                <span>Address line 2</span>
-                                <input id="addressLine2" type="text" maxlength="160" autocomplete="address-line2">
-                            </label>
-
-                            <label class="settings-field">
-                                <span>Town / city</span>
-                                <input id="townCity" type="text" maxlength="100" autocomplete="address-level2">
-                            </label>
-
-                            <label class="settings-field">
-                                <span>County / region</span>
-                                <input id="countyRegion" type="text" maxlength="100" autocomplete="address-level1">
-                            </label>
-
-                            <label class="settings-field">
-                                <span>Postcode</span>
-                                <input id="postcode" type="text" maxlength="30" autocomplete="postal-code">
-                            </label>
-
-                            <label class="settings-field">
-                                <span>Country code</span>
-                                <input
-                                    id="countryCode"
-                                    type="text"
-                                    list="countryCodeOptions"
-                                    maxlength="2"
-                                    value="GB"
-                                    placeholder="GB"
-                                    autocomplete="country"
-                                    required
-                                >
-                                <datalist id="countryCodeOptions">
-                                    <option value="GB">United Kingdom</option>
-                                    <option value="IE">Ireland</option>
-                                    <option value="US">United States</option>
-                                    <option value="AU">Australia</option>
-                                    <option value="NZ">New Zealand</option>
-                                    <option value="ES">Spain</option>
-                                    <option value="PT">Portugal</option>
-                                    <option value="FR">France</option>
-                                </datalist>
-                            </label>
-                        </div>
-                    </section>
-
-                    <section class="settings-card settings-card--branding">
-                        <div class="settings-card__header">
-                            <div>
-                                <span class="settings-card__eyebrow">
-                                    Appearance
-                                </span>
-                                <h2>Club branding</h2>
-                            </div>
-
-                            <p>
-                                Paryx keeps its own product identity while applying the club's logo and colours throughout the staff workspace.
-                            </p>
-                        </div>
-
-                        <div class="settings-branding-layout">
-                            <div class="settings-logo-panel">
-                                <div class="settings-logo-preview">
-                                    <img
-                                        id="clubLogoPreview"
-                                        alt="Club logo preview"
-                                        hidden
-                                    >
-
-                                    <span id="clubLogoPlaceholder">
-                                        No club logo
-                                    </span>
-                                </div>
-
-                                <div class="settings-logo-actions">
-                                    <label class="settings-upload-button">
-                                        <input
-                                            id="clubLogoFile"
-                                            type="file"
-                                            accept="image/jpeg,.jpg,.jpeg"
-                                        >
-                                        Choose logo
-                                    </label>
-
-                                    <button
-                                        id="removeClubLogo"
-                                        class="settings-text-button settings-text-button--danger"
-                                        type="button"
-                                    >
-                                        Remove logo
-                                    </button>
-                                </div>
-
-                                <small>
-                                    PNG, JPG or WebP. Maximum 2 MB.
-                                </small>
-                            </div>
-
-                            <div class="settings-colour-grid">
-                                <div class="settings-colour-field">
-                                    <label for="primaryColorText">Primary</label>
-                                    <div class="settings-colour-control">
-                                        <input id="primaryColor" type="color" value="#064831">
-                                        <input id="primaryColorText" type="text" maxlength="7" value="#064831" spellcheck="false">
-                                    </div>
-                                </div>
-
-                                <div class="settings-colour-field">
-                                    <label for="secondaryColorText">Secondary</label>
-                                    <div class="settings-colour-control">
-                                        <input id="secondaryColor" type="color" value="#022D1D">
-                                        <input id="secondaryColorText" type="text" maxlength="7" value="#022D1D" spellcheck="false">
-                                    </div>
-                                </div>
-
-                                <div class="settings-colour-field">
-                                    <label for="accentColorText">Accent</label>
-                                    <div class="settings-colour-control">
-                                        <input id="accentColor" type="color" value="#E5C45F">
-                                        <input id="accentColorText" type="text" maxlength="7" value="#E5C45F" spellcheck="false">
-                                    </div>
-                                </div>
-
-                                <button
-                                    id="resetBranding"
-                                    class="settings-secondary-button"
-                                    type="button"
-                                >
-                                    Reset to Paryx defaults
-                                </button>
-                            </div>
-                        </div>
-                    </section>
-
-                    <section class="settings-card">
-                        <div class="settings-card__header">
-                            <div>
-                                <span class="settings-card__eyebrow">
+<h2>Club address</h2>
+</div>
+</div>
+<div class="settings-grid settings-grid--two">
+<label class="settings-field settings-field--wide">
+<span>Address line 1</span>
+<input autocomplete="address-line1" id="addressLine1" maxlength="160" type="text"/>
+</label>
+<label class="settings-field settings-field--wide">
+<span>Address line 2</span>
+<input autocomplete="address-line2" id="addressLine2" maxlength="160" type="text"/>
+</label>
+<label class="settings-field">
+<span>Town / city</span>
+<input autocomplete="address-level2" id="townCity" maxlength="100" type="text"/>
+</label>
+<label class="settings-field">
+<span>County / region</span>
+<input autocomplete="address-level1" id="countyRegion" maxlength="100" type="text"/>
+</label>
+<label class="settings-field">
+<span>Postcode</span>
+<input autocomplete="postal-code" id="postcode" maxlength="30" type="text"/>
+</label>
+</div>
+</section></details></section><section aria-labelledby="settingsTabBookings" class="settings-panel" data-settings-panel="bookings" hidden="" id="settingsPanelBookings" role="tabpanel"><div class="settings-panel__intro"><h2>Bookings</h2><p>Your default course and public booking link.</p></div><section class="settings-card">
+<div class="settings-card__header">
+<div>
+<span class="settings-card__eyebrow">
                                     Defaults
                                 </span>
-                                <h2>Club defaults</h2>
-                            </div>
-
-                            <p>
-                                These values will be used by later booking, payments and course modules.
-                            </p>
-                        </div>
-
-                        <div class="settings-grid settings-grid--two">
-                            <label class="settings-field">
-                                <span>Currency code</span>
-                                <input
-                                    id="currencyCode"
-                                    type="text"
-                                    list="currencyCodeOptions"
-                                    maxlength="3"
-                                    value="GBP"
-                                    placeholder="GBP"
-                                    required
-                                >
-                                <datalist id="currencyCodeOptions">
-                                    <option value="GBP">Pound sterling</option>
-                                    <option value="EUR">Euro</option>
-                                    <option value="USD">US dollar</option>
-                                    <option value="AUD">Australian dollar</option>
-                                    <option value="NZD">New Zealand dollar</option>
-                                    <option value="CAD">Canadian dollar</option>
-                                </datalist>
-                            </label>
-
-                            <label class="settings-field">
-                                <span>Default course</span>
-                                <select id="defaultCourse">
-                                    <option value="">No default course</option>
-                                </select>
-                            </label>
-                        </div>
-                    </section>
-
-                    <section class="settings-card">
-                        <div class="settings-card__header">
-                            <div>
-                                <span class="settings-card__eyebrow">
+<h2>Default course</h2>
+</div>
+<p>Used when opening the tee sheet and making bookings.</p>
+</div>
+<div class="settings-grid settings-grid--two">
+<label class="settings-field">
+<span>Default course</span>
+<select id="defaultCourse">
+<option value="">No default course</option>
+</select>
+</label>
+</div>
+</section><section class="settings-card">
+<div class="settings-card__header">
+<div>
+<span class="settings-card__eyebrow">
                                     Website booking
                                 </span>
-                                <h2>Public booking widget</h2>
-                            </div>
+<h2>Website bookings</h2>
+</div>
+<p>Let visitors book using your club-specific Paryx booking page.</p>
+</div>
+<div class="settings-booking-shortcut"><p>Use your dedicated booking page on the club website. Embed code is optional.</p></div><div class="settings-widget-grid">
+<label class="settings-checkbox-row">
+<input id="publicBookingEnabled" type="checkbox"/>
+<span>
+<strong>Enable website tee-time booking</strong>
+<small>Visitors can view availability and book directly from the club website.</small>
+</span>
+</label>
+<label class="settings-field settings-widget-days">
+<span>Days shown</span>
+<input id="publicBookingAdvanceDays" max="14" min="1" type="number" value="14"/>
+<small>Choose between 1 and 14 days.</small>
+</label>
+</div>
+<div class="settings-booking-link"><label class="settings-field">
+<span>Club booking link</span>
+<input id="publicBookingUrl" readonly="" type="text"/>
+</label><button class="settings-secondary-button" id="copyPublicBookingUrl" type="button">Copy link</button></div><details class="settings-disclosure settings-disclosure--embed"><summary>Website embed code (optional)</summary><div class="settings-widget-share">
 
-                            <p>
-                                Show live tee-time availability on the club's existing website. Visitors can book directly without a Paryx account, while Player and member identities remain private.
-                            </p>
-                        </div>
-
-                        <div class="settings-widget-grid">
-                            <label class="settings-checkbox-row">
-                                <input id="publicBookingEnabled" type="checkbox">
-                                <span>
-                                    <strong>Enable website tee-time booking</strong>
-                                    <small>Visitors can view availability and book directly from the club website.</small>
-                                </span>
-                            </label>
-
-                            <label class="settings-field settings-widget-days">
-                                <span>Days shown</span>
-                                <input id="publicBookingAdvanceDays" type="number" min="1" max="14" value="14">
-                                <small>Choose between 1 and 14 days.</small>
-                            </label>
-                        </div>
-
-                        <div class="settings-widget-share">
-                            <label class="settings-field">
-                                <span>Widget preview URL</span>
-                                <input id="publicBookingUrl" type="text" readonly>
-                            </label>
-
-                            <label class="settings-field">
-                                <span>Website embed code</span>
-                                <textarea id="publicBookingEmbed" class="settings-code" rows="3" readonly></textarea>
-                            </label>
-
-                            <button id="copyPublicBookingEmbed" class="settings-secondary-button" type="button">
+<label class="settings-field">
+<span>Website embed code</span>
+<textarea class="settings-code" id="publicBookingEmbed" readonly="" rows="3"></textarea>
+</label>
+<button class="settings-secondary-button" id="copyPublicBookingEmbed" type="button">
                                 Copy embed code
                             </button>
-                        </div>
-                    </section>
-
-                    <div class="settings-save-bar">
-                        <div>
-                            <strong>Club configuration</strong>
-                            <span id="settingsSaveHint">
-                                Changes apply to the selected club only.
-                            </span>
-                        </div>
-
-                        <button
-                            id="saveClubSettings"
-                            class="settings-primary-button"
-                            type="submit"
-                        >
+</div></details></section></section><section aria-labelledby="settingsTabBranding" class="settings-panel" data-settings-panel="branding" hidden="" id="settingsPanelBranding" role="tabpanel"><div class="settings-panel__intro"><h2>Branding</h2><p>Your logo and club colours.</p></div><section class="settings-card settings-card--branding">
+<div class="settings-card__header">
+<div>
+<span class="settings-card__eyebrow">
+                                    Appearance
+                                </span>
+<h2>Club logo</h2>
+</div>
+<p>Use your logo on ClubHub. You can customise colours when needed.</p>
+</div>
+<div class="settings-branding-layout">
+<div class="settings-logo-panel">
+<div class="settings-logo-preview">
+<img alt="Club logo preview" hidden="" id="clubLogoPreview"/>
+<span id="clubLogoPlaceholder">
+                                        No club logo
+                                    </span>
+</div>
+<div class="settings-logo-actions">
+<label class="settings-upload-button">
+<input accept="image/jpeg,.jpg,.jpeg" id="clubLogoFile" type="file"/>
+                                        Choose logo
+                                    </label>
+<button class="settings-text-button settings-text-button--danger" id="removeClubLogo" type="button">
+                                        Remove logo
+                                    </button>
+</div>
+<small>JPG or JPEG, up to 2 MB (supported upload format).</small>
+</div>
+</div>
+<details class="settings-disclosure settings-disclosure--colours"><summary>Customise club colours</summary><div class="settings-colour-grid">
+<div class="settings-colour-field">
+<label for="primaryColorText">Primary</label>
+<div class="settings-colour-control">
+<input id="primaryColor" type="color" value="#064831"/>
+<input id="primaryColorText" maxlength="7" spellcheck="false" type="text" value="#064831"/>
+</div>
+</div>
+<div class="settings-colour-field">
+<label for="secondaryColorText">Secondary</label>
+<div class="settings-colour-control">
+<input id="secondaryColor" type="color" value="#022D1D"/>
+<input id="secondaryColorText" maxlength="7" spellcheck="false" type="text" value="#022D1D"/>
+</div>
+</div>
+<div class="settings-colour-field">
+<label for="accentColorText">Accent</label>
+<div class="settings-colour-control">
+<input id="accentColor" type="color" value="#E5C45F"/>
+<input id="accentColorText" maxlength="7" spellcheck="false" type="text" value="#E5C45F"/>
+</div>
+</div>
+<button class="settings-secondary-button" id="resetBranding" type="button">
+                                    Reset to Paryx defaults
+                                </button>
+</div></details></section></section><section aria-labelledby="settingsTabAdvanced" class="settings-panel" data-settings-panel="advanced" hidden="" id="settingsPanelAdvanced" role="tabpanel"><div class="settings-panel__intro"><h2>Advanced</h2><p>Regional settings and management links.</p></div><section class="settings-card settings-card--regional"><div class="settings-card__header"><div><h2>Regional settings</h2></div></div><div class="settings-grid settings-grid--two"><label class="settings-field">
+<span>Timezone</span>
+<input id="clubTimezone" list="timezoneOptions" maxlength="80" name="clubTimezone" placeholder="Europe/London" required="" type="text" value="Europe/London"/>
+<datalist id="timezoneOptions">
+<option value="Europe/London"></option>
+<option value="Europe/Dublin"></option>
+<option value="Europe/Paris"></option>
+<option value="Europe/Madrid"></option>
+<option value="Europe/Lisbon"></option>
+<option value="America/New_York"></option>
+<option value="America/Chicago"></option>
+<option value="America/Denver"></option>
+<option value="America/Los_Angeles"></option>
+<option value="Australia/Sydney"></option>
+<option value="Pacific/Auckland"></option>
+</datalist>
+</label><label class="settings-field">
+<span>Currency code</span>
+<input id="currencyCode" list="currencyCodeOptions" maxlength="3" placeholder="GBP" required="" type="text" value="GBP"/>
+<datalist id="currencyCodeOptions">
+<option value="GBP">Pound sterling</option>
+<option value="EUR">Euro</option>
+<option value="USD">US dollar</option>
+<option value="AUD">Australian dollar</option>
+<option value="NZD">New Zealand dollar</option>
+<option value="CAD">Canadian dollar</option>
+</datalist>
+</label><label class="settings-field">
+<span>Country code</span>
+<input autocomplete="country" id="countryCode" list="countryCodeOptions" maxlength="2" placeholder="GB" required="" type="text" value="GB"/>
+<datalist id="countryCodeOptions">
+<option value="GB">United Kingdom</option>
+<option value="IE">Ireland</option>
+<option value="US">United States</option>
+<option value="AU">Australia</option>
+<option value="NZ">New Zealand</option>
+<option value="ES">Spain</option>
+<option value="PT">Portugal</option>
+<option value="FR">France</option>
+</datalist>
+</label></div></section><section class="settings-card settings-card--links"><div class="settings-card__header"><div><h2>Other management areas</h2></div></div><div class="settings-management-links"><a class="settings-management-link" href="courses.html"><strong>Courses</strong><span>Edit tees, holes and course details.</span></a><a class="settings-management-link" href="staff.html" id="settingsStaffAccessLink"><strong>Staff access</strong><span>Manage staff roles and permissions.</span></a></div></section></section><div class="settings-save-bar">
+<div>
+<strong>Club settings</strong>
+<span id="settingsSaveHint">Changes are saved for this club only.</span>
+</div>
+<button class="settings-primary-button" id="saveClubSettings" type="submit">
                             Save changes
                         </button>
-                    </div>
-                </form>
-
-                <section id="hotelModeSection" class="settings-card hotel-club-settings" hidden>
-                    <div class="settings-card__header">
-                        <div><span class="settings-card__eyebrow">Resort operations</span><h2>Hotel Mode</h2></div>
-                        <p>Console activates Hotel Mode. Your club controls its booking allocations, release periods and staff access here.</p>
-                    </div>
-                    <p id="hotelModeStatus" class="hotel-club-note" role="status"></p>
-                    <form id="hotelPolicyForm" class="hotel-club-form" hidden>
-                        <h3>Booking windows and allocations</h3>
-                        <div class="settings-grid settings-grid--two">
-                            <label class="settings-field"><span>Hotel booking window (days)</span><input type="number" id="hotelBookingDays" min="1" max="730" required></label>
-                            <label class="settings-field"><span>Society booking window (days)</span><input type="number" id="societyBookingDays" min="1" max="730" required></label>
-                            <label class="settings-field"><span>Member booking window (days)</span><input type="number" id="hotelMemberDays" min="1" max="365" required></label>
-                            <label class="settings-field"><span>Visitor booking window (days)</span><input type="number" id="hotelVisitorDays" min="1" max="365" required></label>
-                            <label class="settings-field"><span>Hotel protected allocation (%)</span><input type="number" id="hotelAllocationPercent" min="0" max="90" required></label>
-                            <label class="settings-field"><span>Member protected allocation (%)</span><input type="number" id="hotelMemberPercent" min="0" max="90" required></label>
-                            <label class="settings-field"><span>Hotel release deadline (days before play)</span><input type="number" id="hotelReleaseDays" min="0" max="90" required></label>
-                            <label class="settings-field"><span>Member release deadline (days before play)</span><input type="number" id="hotelMemberReleaseDays" min="0" max="90" required></label>
-                        </div>
-                        <h3>Allocation method</h3>
-                        <label class="settings-field"><span>Choose an allocation method</span>
-                            <select id="hotelAllocationMode">
-                                <option value="percentage">Percentages across the tee sheet</option>
-                                <option value="time_bands">Specific playing times</option>
-                            </select>
-                        </label>
-                        <div id="hotelTimeRulesPanel" hidden>
-                            <p class="hotel-club-note">Specific dates override weekly allocations; course-specific rules override all-course rules. Any uncovered tee time uses the percentages above. End times are exclusive. Current bookings are never displaced.</p>
-                            <div class="hotel-club-table-wrap"><table class="hotel-club-table">
-                                <thead><tr><th>When</th><th>Day / Date</th><th>Course</th><th>Start</th><th>End</th><th>Priority</th><th></th></tr></thead>
-                                <tbody id="hotelTimeRules"></tbody>
-                            </table></div>
-                            <button type="button" class="settings-secondary-button" id="hotelAddTimeRule">+ Add time period</button>
-                        </div>
-                        <div class="hotel-club-actions">
-                            <button type="submit" id="hotelSavePolicy" class="settings-primary-button">Save Hotel Mode booking settings</button>
-                        </div>
-                    </form>
-                    <div id="hotelPermissionsSection" hidden>
-                        <h3>Staff permissions</h3>
-                        <p class="hotel-club-note">Only Club Admins can change Hotel Mode permissions. These permissions govern hotel bookings, society groups and authorised booking overrides.</p>
-                        <div class="hotel-club-table-wrap"><table class="hotel-club-table">
-                            <thead><tr><th>Staff role</th><th>Hotel reservations</th><th>Society groups</th><th>Overrides</th></tr></thead>
-                            <tbody id="hotelRolePermissions"></tbody>
-                        </table></div>
-                        <div class="hotel-club-actions"><button type="button" id="hotelSavePermissions" class="settings-primary-button">Save staff permissions</button></div>
-                    </div>
-                </section>
-            </main>
-        </div>
-    </div>
+</div></form>
+</main>
+</div>
+</div>
 </body>
 </html>

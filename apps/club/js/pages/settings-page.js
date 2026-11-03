@@ -64,6 +64,7 @@
             "publicBookingEnabled",
             "publicBookingAdvanceDays",
             "publicBookingUrl",
+            "copyPublicBookingUrl",
             "publicBookingEmbed",
             "copyPublicBookingEmbed",
             "clubLogoPreview",
@@ -1014,214 +1015,64 @@
         }
     }
 
-    const HOTEL_FIELDS = {
-        hotel_booking_days: "hotelBookingDays",
-        society_booking_days: "societyBookingDays",
-        member_booking_days: "hotelMemberDays",
-        visitor_booking_days: "hotelVisitorDays",
-        hotel_allocation_percent: "hotelAllocationPercent",
-        member_allocation_percent: "hotelMemberPercent",
-        hotel_release_days: "hotelReleaseDays",
-        member_release_days: "hotelMemberReleaseDays"
-    };
 
-    const HOTEL_ROLE_NAMES = {
-        starter: "Starter", reception: "Reception", professional: "Professional",
-        greenkeeper: "Greenkeeper", manager: "Manager", club_admin: "Club Admin"
-    };
-    const HOTEL_DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-    const hotelUI = {courses: [], enabled: false, busy: false};
+    const SETTINGS_TABS = ["club", "bookings", "branding", "advanced"];
 
-    function hotelEsc(value) {
-        return String(value ?? "").replace(/[&<>"']/g, function (char) {
-            return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char];
+    function activateSettingsTab(name, focusTab) {
+        const selected = SETTINGS_TABS.includes(name) ? name : "club";
+        document.querySelectorAll("[data-settings-tab]").forEach(function (tab) {
+            const active = tab.dataset.settingsTab === selected;
+            tab.setAttribute("aria-selected", active ? "true" : "false");
+            tab.tabIndex = active ? 0 : -1;
+            if (active && focusTab) tab.focus();
+        });
+        document.querySelectorAll("[data-settings-panel]").forEach(function (panel) {
+            panel.hidden = panel.dataset.settingsPanel !== selected;
         });
     }
 
-    function hotelSelect(field, options, current) {
-        return `<select data-hotel-field="${field}">${options.map(function (option) {
-            return `<option value="${hotelEsc(option.value)}" ${String(option.value) === String(current) ? "selected" : ""}>${hotelEsc(option.label)}</option>`;
-        }).join("")}</select>`;
-    }
-
-    function hotelRuleHtml(rule) {
-        const special = !!rule.specific_date;
-        const courses = [{value:"",label:"All courses"}].concat(hotelUI.courses.map(function (c) {
-            return {value:c.id,label:c.name};
-        }));
-        return `<tr data-hotel-rule>
-            <td>${hotelSelect("scope",[{value:"weekday",label:"Weekly"},{value:"date",label:"Specific date"}],special?"date":"weekday")}</td>
-            <td><span data-weekday-wrap ${special?"hidden":""}>${hotelSelect("weekday",HOTEL_DAYS.map((label,value)=>({label,value})),rule.weekday??1)}</span>
-                <span data-date-wrap ${special?"":"hidden"}><input type="date" data-hotel-field="specific_date" value="${hotelEsc(rule.specific_date||"")}" ${special?"required":"disabled"}></span></td>
-            <td>${hotelSelect("course_id",courses,rule.course_id||"")}</td>
-            <td><input type="time" data-hotel-field="start_time" value="${hotelEsc(rule.start_time||"09:00")}" required></td>
-            <td><input type="time" data-hotel-field="end_time" value="${hotelEsc(rule.end_time||"11:00")}" required></td>
-            <td>${hotelSelect("allocation",[{value:"hotel",label:"Hotel priority"},{value:"member",label:"Member priority"},{value:"general",label:"General"}],rule.allocation||"hotel")}</td>
-            <td><button type="button" class="settings-secondary-button" data-remove-hotel-rule aria-label="Remove allocation">Remove</button></td>
-        </tr>`;
-    }
-
-    function hotelRuleScope(row) {
-        const special = row.querySelector('[data-hotel-field="scope"]').value === "date";
-        row.querySelector("[data-weekday-wrap]").hidden = special;
-        row.querySelector("[data-date-wrap]").hidden = !special;
-        const date = row.querySelector('[data-hotel-field="specific_date"]');
-        date.disabled = !special || hotelUI.busy;
-        date.required = special;
-        row.querySelector('[data-hotel-field="weekday"]').disabled = special || hotelUI.busy;
-    }
-
-    function hotelAddRule(rule) {
-        const table = document.getElementById("hotelTimeRules");
-        table.insertAdjacentHTML("beforeend",hotelRuleHtml(rule||{}));
-        hotelRuleScope(table.lastElementChild);
-    }
-
-    function hotelRefreshMode() {
-        const active = document.getElementById("hotelAllocationMode").value === "time_bands";
-        const panel = document.getElementById("hotelTimeRulesPanel");
-        panel.hidden = !active;
-        panel.querySelectorAll("input, select, button").forEach(function (control) {
-            control.disabled = !active || hotelUI.busy;
+    function bindSettingsTabs() {
+        const nav = document.querySelector(".settings-tabs");
+        if (!nav) return;
+        nav.addEventListener("click", function (event) {
+            const tab = event.target.closest("[data-settings-tab]");
+            if (!tab) return;
+            activateSettingsTab(tab.dataset.settingsTab, true);
         });
-        if (active) panel.querySelectorAll("[data-hotel-rule]").forEach(hotelRuleScope);
-    }
-
-    function hotelCollectRules() {
-        const rules = [];
-        document.querySelectorAll("#hotelTimeRules [data-hotel-rule]").forEach(function (row,i) {
-            const get = (name) => row.querySelector(`[data-hotel-field="${name}"]`).value;
-            const isDate = get("scope") === "date";
-            const start = get("start_time"), end = get("end_time"), date = get("specific_date");
-            if (!start || !end || start >= end) throw new Error(`Allocation ${i+1}: end time must be after start time.`);
-            if (isDate && !date) throw new Error(`Allocation ${i+1}: choose a date.`);
-            rules.push({course_id:get("course_id")||null,weekday:isDate?null:Number(get("weekday")),
-                specific_date:isDate?date:null,start_time:start,end_time:end,allocation:get("allocation")});
+        nav.addEventListener("keydown", function (event) {
+            if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+            const active = event.target.closest("[data-settings-tab]");
+            if (!active) return;
+            event.preventDefault();
+            const index = SETTINGS_TABS.indexOf(active.dataset.settingsTab);
+            const targetIndex = event.key === "Home" ? 0
+                : event.key === "End" ? SETTINGS_TABS.length - 1
+                : (index + (event.key === "ArrowRight" ? 1 : -1) + SETTINGS_TABS.length) % SETTINGS_TABS.length;
+            activateSettingsTab(SETTINGS_TABS[targetIndex], true);
         });
-        if (rules.length > 200) throw new Error("A club can have at most 200 allocation rules.");
-        for (let i=0;i<rules.length;i++) for (let j=i+1;j<rules.length;j++) {
-            const a=rules[i], b=rules[j];
-            if (a.course_id===b.course_id && a.weekday===b.weekday && a.specific_date===b.specific_date &&
-                a.start_time<b.end_time && b.start_time<a.end_time) {
-                throw new Error(`Allocations ${i+1} and ${j+1} overlap on the same course and date/day.`);
+
+        // Keep native required-field validation usable when a field lives in another tab.
+        elements.clubSettingsForm.addEventListener("invalid", function (event) {
+            const panel = event.target.closest("[data-settings-panel]");
+            if (panel) activateSettingsTab(panel.dataset.settingsPanel, false);
+            let parent = event.target.parentElement;
+            while (parent && parent !== elements.clubSettingsForm) {
+                if (parent.tagName === "DETAILS") parent.open = true;
+                parent = parent.parentElement;
             }
-        }
-        return rules;
-    }
-
-    function hotelCollectPolicy() {
-        const config={allocation_mode:document.getElementById("hotelAllocationMode").value,
-            allocation_rules:hotelCollectRules()};
-        Object.entries(HOTEL_FIELDS).forEach(function ([key,id]) {
-            const input=document.getElementById(id);
-            if (!input.checkValidity() || !input.value.trim()) throw new Error(`Invalid value for ${key.replaceAll("_"," ")}.`);
-            config[key]=Number(input.value);
-        });
-        if (config.hotel_allocation_percent+config.member_allocation_percent>100) {
-            throw new Error("Hotel and member allocations cannot exceed 100% combined.");
-        }
-        if (config.hotel_release_days>=config.hotel_booking_days ||
-            config.member_release_days>=config.member_booking_days) {
-            throw new Error("Release deadlines must be shorter than booking windows.");
-        }
-        return config;
-    }
-
-    function hotelCollectPermissions() {
-        const data={};
-        document.querySelectorAll("#hotelRolePermissions [data-hotel-role]").forEach(function (row) {
-            const flags={};
-            row.querySelectorAll("[data-hotel-permission]").forEach(function (input) {
-                flags[input.dataset.hotelPermission]=input.checked;
+        }, true);
+        // A visible hint that a field has been changed but not saved.
+        for (const eventName of ["input", "change"]) {
+            elements.clubSettingsForm.addEventListener(eventName, function (event) {
+                if (event.target && !event.target.matches("input[readonly], textarea[readonly]")) {
+                    elements.settingsSaveHint.textContent = "Unsaved changes — select Save changes to apply.";
+                }
             });
-            if (flags.can_override && !(flags.can_manage_hotel||flags.can_manage_societies)) {
-                throw new Error(`Override permission requires Hotel or Society access for ${row.dataset.hotelRole}.`);
-            }
-            data[row.dataset.hotelRole]=flags;
-        });
-        return data;
-    }
-
-    function hotelSetBusy(busy) {
-        hotelUI.busy=busy;
-        document.querySelectorAll("#hotelModeSection button, #hotelPolicyForm input, #hotelPolicyForm select, #hotelRolePermissions input")
-            .forEach(function (element) {element.disabled=busy || !hotelUI.enabled ||
-                (element.closest("#hotelPermissionsSection") && state.role!=="club_admin");});
-        hotelRefreshMode();
-    }
-
-    async function loadHotelSettings() {
-        const {data,error}=await getClient().rpc("club_hotel_mode_get",{p_club_id:state.clubId});
-        if (error) throw error;
-        const section=document.getElementById("hotelModeSection");
-        section.hidden=false;
-        const config=data?.config||{};
-        hotelUI.enabled=config.enabled===true;
-        hotelUI.courses=Array.isArray(data?.courses)?data.courses:[];
-        const status=document.getElementById("hotelModeStatus");
-        status.textContent=hotelUI.enabled?
-            "Hotel Mode is enabled by Paryx Console. Booking rules are managed by your club.":
-            "Hotel Mode is disabled in Paryx Console. ClubHub cannot activate it.";
-        document.getElementById("hotelPolicyForm").hidden=!hotelUI.enabled;
-        document.getElementById("hotelPermissionsSection").hidden=!hotelUI.enabled;
-        Object.entries(HOTEL_FIELDS).forEach(function ([key,id]) {
-            document.getElementById(id).value=String(config[key]??"");
-        });
-        document.getElementById("hotelAllocationMode").value=config.allocation_mode||"percentage";
-        document.getElementById("hotelTimeRules").innerHTML="";
-        (config.allocation_rules||[]).forEach(hotelAddRule);
-        document.getElementById("hotelRolePermissions").innerHTML=Object.entries(HOTEL_ROLE_NAMES).map(function ([role,label]) {
-            const entry=data?.permissions?.[role]||{};
-            const flag=(key)=>entry[key]===true?"checked":"";
-            return `<tr data-hotel-role="${role}"><th>${hotelEsc(label)}</th>
-                <td><input type="checkbox" data-hotel-permission="can_manage_hotel" ${flag("can_manage_hotel")} aria-label="${hotelEsc(label)}: hotel bookings"></td>
-                <td><input type="checkbox" data-hotel-permission="can_manage_societies" ${flag("can_manage_societies")} aria-label="${hotelEsc(label)}: society bookings"></td>
-                <td><input type="checkbox" data-hotel-permission="can_override" ${flag("can_override")} aria-label="${hotelEsc(label)}: overrides"></td></tr>`;
-        }).join("");
-        document.getElementById("hotelSavePermissions").hidden=state.role!=="club_admin";
-        hotelSetBusy(false);
-    }
-
-    async function hotelSavePolicy(event) {
-        event.preventDefault();
-        if (!hotelUI.enabled || hotelUI.busy) return;
-        try {
-            const config=hotelCollectPolicy();
-            hotelSetBusy(true);
-            const {error}=await getClient().rpc("club_hotel_mode_save_policy",{p_club_id:state.clubId,p_config:config});
-            if (error) throw error;
-            showSuccess("Hotel booking allocations saved for this club.");
-            await loadHotelSettings();
-        } catch (error) {showError(error);} finally {hotelSetBusy(false);}
-    }
-
-    async function hotelSavePermissions() {
-        if (state.role!=="club_admin" || !hotelUI.enabled || hotelUI.busy) return;
-        try {
-            const permissions=hotelCollectPermissions();
-            hotelSetBusy(true);
-            const {error}=await getClient().rpc("club_hotel_mode_save_permissions",{p_club_id:state.clubId,p_permissions:permissions});
-            if (error) throw error;
-            showSuccess("Hotel Mode staff permissions saved.");
-            await loadHotelSettings();
-        } catch (error) {showError(error);} finally {hotelSetBusy(false);}
-    }
-
-    function bindHotelEvents() {
-        document.getElementById("hotelAllocationMode").addEventListener("change",hotelRefreshMode);
-        document.getElementById("hotelAddTimeRule").addEventListener("click",function () {hotelAddRule();});
-        document.getElementById("hotelTimeRules").addEventListener("click",function (event) {
-            const remove=event.target.closest("[data-remove-hotel-rule]");
-            if (remove && !hotelUI.busy) remove.closest("[data-hotel-rule]").remove();
-        });
-        document.getElementById("hotelTimeRules").addEventListener("change",function (event) {
-            if (event.target.matches('[data-hotel-field="scope"]')) hotelRuleScope(event.target.closest("[data-hotel-rule]"));
-        });
-        document.getElementById("hotelPolicyForm").addEventListener("submit",hotelSavePolicy);
-        document.getElementById("hotelSavePermissions").addEventListener("click",hotelSavePermissions);
+        }
     }
 
     function bindEvents() {
+        bindSettingsTabs();
         bindColourPair(
             elements.primaryColor,
             elements.primaryColorText
@@ -1315,6 +1166,21 @@
             }
         );
 
+        if (elements.copyPublicBookingUrl) {
+            elements.copyPublicBookingUrl.addEventListener("click", async function () {
+                const value = elements.publicBookingUrl.value.trim();
+                if (!value) return;
+                try {
+                    await navigator.clipboard.writeText(value);
+                    showSuccess("Club booking link copied.");
+                } catch (error) {
+                    elements.publicBookingUrl.focus();
+                    elements.publicBookingUrl.select();
+                    showError(new Error("Copy was blocked by the browser. The booking link is selected so you can copy it manually."));
+                }
+            });
+        }
+
         elements.copyPublicBookingEmbed.addEventListener(
             "click",
             async function () {
@@ -1343,7 +1209,6 @@
     async function initialise() {
         cacheElements();
         bindEvents();
-        bindHotelEvents();
         setSaving(false);
 
         try {
@@ -1376,7 +1241,11 @@
             state.clubId =
                 activeClub.id;
             state.role =
-                String(activeClub.role).trim().toLowerCase();
+                activeClub.role;
+            const staffLink = document.getElementById("settingsStaffAccessLink");
+            if (staffLink) {
+                staffLink.hidden = !["manager", "club_admin"].includes(String(state.role).toLowerCase());
+            }
 
             const [
                 config,
@@ -1394,18 +1263,6 @@
                 config.default_course_id || null
             );
             renderPublicBookingWidget(publicBookingWidget);
-            if (state.role === "manager" || state.role === "club_admin") {
-                try {
-                    await loadHotelSettings();
-                } catch (hotelError) {
-                    console.warn("Paryx Hotel Mode settings unavailable:",hotelError);
-                    document.getElementById("hotelModeSection").hidden = false;
-                    document.getElementById("hotelModeStatus").textContent =
-                        "Hotel Mode settings could not load: " + readableError(hotelError);
-                    document.getElementById("hotelPolicyForm").hidden = true;
-                    document.getElementById("hotelPermissionsSection").hidden = true;
-                }
-            }
         } catch (error) {
             showError(error);
             elements.clubSettingsForm.hidden = true;
