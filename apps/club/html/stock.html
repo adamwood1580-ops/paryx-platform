@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="../styles/app-shell.css" />
     <link rel="stylesheet" href="../styles/components.css" />
     <link rel="stylesheet" href="../styles/staff-shell.css?v=0.30.7" />
-    <link rel="stylesheet" href="../styles/stock.css?v=0.31.0" />
+    <link rel="stylesheet" href="../styles/stock.css?v=0.32.3" />
     <link rel="manifest" href="../json/manifest.json" />
     <link rel="apple-touch-icon" href="../assets/paryx-apple-touch-icon.png" />
     <link rel="icon" type="image/png" href="../assets/paryx-favicon.png" />
@@ -21,205 +21,117 @@
         <aside class="staff-sidebar" data-staff-sidebar></aside>
         <div class="staff-workspace">
             <header class="staff-topbar" data-staff-header></header>
-            <main class="app-main stock-page">
-                <section class="stock-intro">
+            <main class="app-main stock-page stock-page--compact">
+                <section class="stock-compact-heading">
                     <div>
-                        <p class="page-heading__eyebrow">Retail operations</p>
-                        <h1 class="stock-intro__title">Stock Inventory</h1>
-                        <p id="stockClubName" class="stock-intro__subtitle">Loading stock inventory...</p>
+                        <h1>Stock</h1>
+                        <p id="stockClubName">Loading stock…</p>
                     </div>
                     <span id="stockRoleBadge" class="stock-role-badge">Checking access</span>
                 </section>
 
                 <section id="stockError" class="admin-error" role="alert" hidden></section>
                 <section id="stockSuccess" class="stock-success" role="status" aria-live="polite" hidden></section>
-
                 <section id="stockModuleDisabled" class="stock-disabled-card" hidden>
-                    <span class="stock-card__eyebrow">Optional module</span>
-                    <h2>Stock Inventory is not enabled</h2>
-                    <p>Ask your Paryx platform admin to enable the Stock Inventory module for this club from configuration before using this workspace.</p>
+                    <h2>Stock is not enabled</h2>
+                    <p>Ask your club administrator to enable Stock for this club.</p>
                 </section>
 
                 <div id="stockWorkspace" hidden>
-                    <section class="stock-summary-grid" aria-label="Stock summary">
-                        <article class="stock-summary-card">
-                            <span>Active products</span>
-                            <strong id="stockActiveProducts">--</strong>
-                            <small id="stockProductDetail">Loading products...</small>
-                        </article>
-
-                        <article class="stock-summary-card">
-                            <span>Low stock</span>
-                            <strong id="stockLowCount">--</strong>
-                            <small>At or below reorder level</small>
-                        </article>
-
-                        <article class="stock-summary-card">
-                            <span>Out of stock</span>
-                            <strong id="stockOutCount">--</strong>
-                            <small>Tracked active products</small>
-                        </article>
-
-                        <article class="stock-summary-card">
-                            <span>Stock cost value</span>
-                            <strong id="stockCostValue">--</strong>
-                            <small id="stockRetailValue">Retail value --</small>
-                        </article>
+                    <section class="stock-quick-actions" aria-label="Daily stock tasks">
+                        <button id="stockQuickAdd" class="stock-task stock-task--add" type="button">
+                            <span class="stock-task__icon" aria-hidden="true">＋</span><span><strong>Add Stock</strong><small>New delivery</small></span>
+                        </button>
+                        <button id="stockQuickRemove" class="stock-task" type="button">
+                            <span class="stock-task__icon" aria-hidden="true">−</span><span><strong>Remove Stock</strong><small>Used, sold or damaged</small></span>
+                        </button>
+                        <button id="stockQuickCount" class="stock-task" type="button">
+                            <span class="stock-task__icon" aria-hidden="true">✓</span><span><strong>Count Stock</strong><small>Correct shelf quantity</small></span>
+                        </button>
                     </section>
 
-                    <section class="stock-card stock-lookup-card">
-                        <div class="stock-card__header stock-card__header--lookup">
-                            <div>
-                                <span class="stock-card__eyebrow">
-                                    Inventory database
-                                </span>
+                    <section class="stock-summary-grid stock-summary-grid--compact" aria-label="Stock overview">
+                        <article class="stock-summary-card"><span>Products</span><strong id="stockActiveProducts">—</strong><small id="stockProductDetail">Loading…</small></article>
+                        <article class="stock-summary-card"><span>Low stock</span><strong id="stockLowCount">—</strong><small>To reorder</small></article>
+                        <article class="stock-summary-card"><span>Out of stock</span><strong id="stockOutCount">—</strong><small>Need attention</small></article>
+                        <article class="stock-summary-card stock-summary-card--value"><span>Stock cost value</span><strong id="stockCostValue">—</strong><small id="stockRetailValue">Retail value —</small></article>
+                    </section>
 
-                                <h2>Find stock</h2>
-
-                                <p class="stock-card__description">
-                                    Search the catalogue or narrow the database using the selectors below.
-                                </p>
+                    <section class="stock-card stock-products-card">
+                        <div class="stock-card__header stock-card__header--compact">
+                            <div><h2>Products</h2><p id="stockResultSummary" class="stock-card__description">Loading products…</p></div>
+                            <button id="refreshStock" class="stock-button stock-button--secondary stock-button--compact" type="button">Refresh</button>
+                        </div>
+                        <div class="stock-primary-lookup">
+                            <label class="stock-search stock-search--wide"><span>Search products</span><input id="stockSearch" type="search" placeholder="Name, barcode or SKU" autocomplete="off" /></label>
+                            <label class="stock-filter"><span>Show</span><select id="stockFilter"><option value="all">All products</option><option value="low">Low stock</option><option value="out">Out of stock</option><option value="inactive">Inactive</option></select></label>
+                            <button id="clearStockLookup" class="stock-button stock-button--secondary stock-button--compact" type="button">Clear</button>
+                        </div>
+                        <details class="stock-extra-filters">
+                            <summary>More filters</summary>
+                            <div class="stock-lookup-controls stock-lookup-controls--secondary">
+                                <label class="stock-filter"><span>Category</span><select id="stockCategoryFilter"><option value="">All categories</option></select></label>
+                                <label class="stock-filter"><span>Supplier</span><select id="stockSupplierFilter"><option value="">All suppliers</option></select></label>
+                                <label class="stock-filter stock-filter--product"><span>Quick select</span><select id="stockProductSelect"><option value="">Select product…</option></select></label>
                             </div>
+                        </details>
+                        <div id="stockLookupPrompt" hidden></div>
+                        <div id="stockResultsCard">
+                            <div class="stock-table-wrap">
+                                <table class="stock-table stock-table--compact">
+                                    <thead><tr><th>Product</th><th>SKU / Barcode</th><th class="stock-number">In stock</th><th class="stock-number">Reorder</th><th>Status</th><th>Actions</th></tr></thead>
+                                    <tbody id="stockTableBody"></tbody>
+                                </table>
+                            </div>
+                            <div id="stockTableEmpty" class="stock-empty" hidden>No products match this search.</div>
+                        </div>
+                    </section>
 
+                    <details class="stock-tools-panel">
+                        <summary>Stock tools <span>Products, barcode lookup &amp; audit</span></summary>
+                        <div class="stock-tools-content">
                             <div class="stock-header-actions">
-                                <button
-                                    id="viewStockAudit"
-                                    class="stock-button stock-button--secondary stock-button--compact"
-                                    type="button"
-                                >
-                                    View audit
-                                </button>
-
-                                <button
-                                    id="addStockProduct"
-                                    class="stock-button stock-button--compact"
-                                    type="button"
-                                >
-                                    + Add product
-                                </button>
+                                <button id="addStockProduct" class="stock-button" type="button">+ New product</button>
+                                <button id="viewStockAudit" class="stock-button stock-button--secondary" type="button">Movement history</button>
                             </div>
+                            <form id="stockScanForm" class="stock-scan-row stock-scan-row--compact">
+                                <label class="stock-field"><span>Find product by barcode</span><input id="stockScanCode" type="text" maxlength="120" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Scan or type barcode, then Enter" /></label>
+                                <button id="stockScanFind" class="stock-button" type="submit">Find</button>
+                                <button id="stockScanCamera" class="stock-button stock-button--secondary" type="button">Camera</button>
+                                <p id="stockScanStatus" role="status" aria-live="polite">For viewing or editing a product record.</p>
+                                <button id="stockCreateScanned" class="stock-button stock-button--secondary" type="button" hidden>Create product</button>
+                            </form>
+                            <p class="stock-tools-note">Payments are taken separately through the club's existing card reader or till. Changes here update stock quantities; they do not take payments.</p>
                         </div>
-
-                        <form id="stockScanForm" class="stock-scan-row">
-                            <label class="stock-field"><span>Scan barcode</span>
-                                <input id="stockScanCode" type="text" maxlength="120" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Click here, scan, then press Enter" />
-                            </label>
-                            <button id="stockScanFind" class="stock-button" type="submit">Find product</button>
-                            <button id="stockScanCamera" class="stock-button stock-button--secondary" type="button">Use camera</button>
-                            <p id="stockScanStatus" role="status" aria-live="polite">USB scanners: select this field and scan with an Enter suffix. Camera: allow access when prompted.</p>
-                            <button id="stockCreateScanned" class="stock-button" type="button" hidden>Create this product</button>
-                        </form>
-
-                        <div class="stock-lookup-controls">
-                            <label class="stock-search stock-search--wide">
-                                <span>Search</span>
-                                <input
-                                    id="stockSearch"
-                                    type="search"
-                                    placeholder="Product name, SKU or barcode"
-                                    autocomplete="off"
-                                />
-                            </label>
-
-                            <label class="stock-filter">
-                                <span>Category</span>
-                                <select id="stockCategoryFilter">
-                                    <option value="">All categories</option>
-                                </select>
-                            </label>
-
-                            <label class="stock-filter">
-                                <span>Supplier</span>
-                                <select id="stockSupplierFilter">
-                                    <option value="">All suppliers</option>
-                                </select>
-                            </label>
-
-                            <label class="stock-filter">
-                                <span>Stock status</span>
-                                <select id="stockFilter">
-                                    <option value="all">All statuses</option>
-                                    <option value="low">Low stock</option>
-                                    <option value="out">Out of stock</option>
-                                    <option value="inactive">Inactive</option>
-                                </select>
-                            </label>
-
-                            <label class="stock-filter stock-filter--product">
-                                <span>Quick select</span>
-                                <select id="stockProductSelect">
-                                    <option value="">Select a product...</option>
-                                </select>
-                            </label>
-
-                            <button
-                                id="clearStockLookup"
-                                class="stock-button stock-button--secondary stock-button--compact stock-clear-button"
-                                type="button"
-                            >
-                                Clear
-                            </button>
-                        </div>
-
-                        <div id="stockLookupPrompt" class="stock-database-prompt">
-                            <div class="stock-database-prompt__icon" aria-hidden="true">⌕</div>
-
-                            <div>
-                                <strong>Search the stock database</strong>
-
-                                <p>
-                                    Enter a product, SKU or barcode, choose a category/supplier,
-                                    or use Quick select.
-                                </p>
-                            </div>
-                        </div>
-                    </section>
-
-                    <section id="stockResultsCard" class="stock-card" hidden>
-                        <div class="stock-card__header">
-                            <div>
-                                <span class="stock-card__eyebrow">Search results</span>
-                                <h2>Inventory records</h2>
-                                <p id="stockResultSummary" class="stock-card__description">0 records</p>
-                            </div>
-
-                            <button
-                                id="refreshStock"
-                                class="stock-button stock-button--secondary stock-button--compact"
-                                type="button"
-                            >
-                                Refresh
-                            </button>
-                        </div>
-
-                        <div class="stock-table-wrap">
-                            <table class="stock-table">
-                                <thead>
-                                    <tr>
-                                        <th>Product</th>
-                                        <th>SKU</th>
-                                        <th>Category</th>
-                                        <th class="stock-number">In stock</th>
-                                        <th class="stock-number">Reorder</th>
-                                        <th class="stock-money">Cost</th>
-                                        <th class="stock-money">Retail</th>
-                                        <th>Status</th>
-                                        <th></th>
-                                    </tr>
-                                </thead>
-
-                                <tbody id="stockTableBody"></tbody>
-                            </table>
-                        </div>
-
-                        <div id="stockTableEmpty" class="stock-empty" hidden>
-                            No stock products match this search.
-                        </div>
-                    </section>
+                    </details>
                 </div>
             </main>
         </div>
     </div>
+
+    <dialog id="stockQuickDialog" class="stock-dialog stock-dialog--small" aria-labelledby="stockQuickTitle">
+        <form id="stockQuickForm" class="stock-dialog__panel" method="dialog">
+            <div class="stock-dialog__header">
+                <div><span class="stock-card__eyebrow">Stock update</span><h2 id="stockQuickTitle">Add Stock</h2></div>
+                <button id="stockQuickClose" class="stock-icon-button" type="button" aria-label="Close">×</button>
+            </div>
+            <p id="stockQuickError" class="stock-quick-error" role="alert" hidden></p>
+            <div class="stock-quick-body">
+                <label class="stock-field"><span>Find product or scan barcode</span><input id="stockQuickSearch" type="search" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Scan barcode, type name or SKU" /></label>
+                <button id="stockQuickCamera" class="stock-button stock-button--secondary" type="button">Scan with camera</button>
+                <div id="stockQuickMatches" class="stock-quick-matches" aria-live="polite"></div>
+                <div id="stockQuickSelected" class="stock-quick-selected" hidden></div>
+                <label class="stock-field" id="stockQuickQuantityWrap" hidden><span id="stockQuickQuantityLabel">Quantity</span><input id="stockQuickQuantity" type="number" min="0" step="1" inputmode="numeric" required /></label>
+                <p id="stockQuickHint" class="stock-adjustment-hint stock-adjustment-hint--quick"></p>
+                <label id="stockQuickReferenceWrap" class="stock-field" hidden><span>Reference (optional)</span><input id="stockQuickReference" type="text" maxlength="160" placeholder="Delivery note or reason" /></label>
+            </div>
+            <div class="stock-dialog__actions">
+                <button id="stockQuickCancel" class="stock-button stock-button--secondary" type="button">Cancel</button>
+                <span class="stock-dialog__spacer"></span>
+                <button id="stockQuickSave" class="stock-button" type="submit" disabled>Save</button>
+            </div>
+        </form>
+    </dialog>
 
     <dialog id="stockAuditDialog" class="stock-dialog">
         <div class="stock-dialog__panel">

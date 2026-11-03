@@ -348,3 +348,76 @@
 .stock-camera-body video { width: 100%; min-height: 160px; max-height: 45vh; border-radius: .7rem; background: #12231c; object-fit: contain; }
 #stockProductError { margin: 1rem 1.4rem 0; }
 @media (max-width: 720px) { .stock-scan-row > button { flex: 1 1 140px; } }
+
+
+/* v0.32.3 — compact, task-led Stock UX */
+.stock-page--compact { display: grid; gap: 1rem; }
+.stock-compact-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.stock-compact-heading h1 { margin: 0; font-family: inherit; font-size: clamp(1.45rem,2.8vw,2rem); line-height: 1.2; color: var(--paryx-primary,#064831); }
+.stock-compact-heading p { margin: .15rem 0 0; font-size: .86rem; color: #68786f; }
+.stock-quick-actions { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: .7rem; margin-bottom: .85rem; }
+.stock-task { width: 100%; display: flex; align-items: center; gap: .8rem; min-height: 76px; padding: .9rem 1.1rem; border: 1px solid #cadbd1; border-radius: 12px; background: #fff; color: #153e2f; text-align: left; font: inherit; cursor: pointer; }
+.stock-task:hover { border-color: #46745e; background: #f8fbf9; }
+.stock-task--add { background: #edf6f0; }
+.stock-task__icon { display: grid; place-items: center; flex: 0 0 2.25rem; width: 2.25rem; height: 2.25rem; border-radius: 10px; background: #e3f0e8; color: #064831; font-size: 1.55rem; }
+.stock-task strong,.stock-task small { display: block; }
+.stock-task strong { font-size: .96rem; }
+.stock-task small { margin-top: .1rem; font-size: .76rem; color: #64766c; }
+.stock-summary-grid--compact { grid-template-columns: repeat(4,minmax(0,1fr)); gap: .65rem; margin-bottom: .85rem; }
+.stock-summary-grid--compact .stock-summary-card { min-height: 0; padding: .8rem 1rem; border-radius: 10px; box-shadow: none; }
+.stock-summary-grid--compact .stock-summary-card strong { font-size: 1.4rem; }
+.stock-summary-grid--compact .stock-summary-card small { font-size: .7rem; }
+.stock-products-card { border-radius: 12px; overflow: hidden; }
+.stock-card__header--compact { padding: .75rem .9rem; }
+.stock-card__header--compact h2 { font-size: 1.04rem; }
+.stock-primary-lookup { display: grid; grid-template-columns: minmax(240px,1fr) minmax(175px,220px) auto; gap: .65rem; align-items: end; padding: .8rem .9rem; border-bottom: 1px solid #e4ebe7; }
+.stock-primary-lookup .stock-button { min-height: 2.8rem; }
+.stock-extra-filters { border-bottom: 1px solid #edf1ef; }
+.stock-extra-filters > summary { display: inline-block; margin: .5rem .9rem; color: #4b6255; font-size: .82rem; font-weight: 700; cursor: pointer; }
+.stock-lookup-controls--secondary { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); padding: .8rem .9rem 1rem; }
+.stock-filter--product { grid-column: auto; }
+.stock-table--compact { min-width: 680px; }
+.stock-table--compact th,.stock-table--compact td { padding: .65rem .85rem; }
+.stock-table--compact th:first-child,.stock-table--compact td:first-child { position: sticky; left: 0; background: #fff; z-index: 1; box-shadow: 1px 0 0 #edf1ef; }
+.stock-table--compact th:first-child { background: #f8faf9; z-index: 2; }
+.stock-table--compact tbody tr:hover td:first-child { background: #fbfcfb; }
+.stock-tools-panel { margin-top: .8rem; border: 1px solid #d9e6dd; background: #fff; border-radius: 12px; overflow: hidden; }
+.stock-tools-panel > summary { display: flex; align-items: center; gap: .7rem; padding: .85rem 1rem; cursor: pointer; color: #173c30; font-size: .92rem; font-weight: 800; }
+.stock-tools-panel > summary span { color: #708077; font-size: .77rem; font-weight: 500; }
+.stock-tools-content { padding: 1rem; border-top: 1px solid #e9eeeb; }
+.stock-tools-content .stock-header-actions { justify-content: flex-start; }
+.stock-tools-content .stock-scan-row { margin-top: .8rem; padding: 1rem 0; }
+.stock-tools-note { margin: .5rem 0 0; font-size: .81rem; color: #67766e; }
+.stock-quick-body { display: grid; gap: .8rem; padding: 1rem 1.2rem; }
+.stock-quick-matches { max-height: 210px; overflow-y: auto; border: 1px solid #dfe8e1; border-radius: 10px; }
+.stock-quick-result { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .4rem; width: 100%; padding: .7rem .8rem; border: 0; border-bottom: 1px solid #edf1ef; background: #fff; color: #264638; font: inherit; text-align: left; cursor: pointer; }
+.stock-quick-result:last-child { border-bottom: 0; }
+.stock-quick-result:hover { background: #f1f7f3; }
+.stock-quick-result strong { font-size: .85rem; }
+.stock-quick-result span { font-size: .74rem; color: #63746a; }
+.stock-quick-no-match { padding: .8rem; margin: 0; color: #63746a; font-size: .83rem; }
+.stock-quick-selected { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; padding: .7rem .85rem; border-radius: 10px; border: 1px solid #b9d9c4; background: #f0f8f2; }
+.stock-quick-selected strong { color: #0d5233; }
+.stock-quick-selected span { color: #577063; font-size: .8rem; }
+.stock-quick-selected button { margin-left: auto; padding: .3rem .6rem; background: #fff; border: 1px solid #b9d9c4; border-radius: 8px; color: #145c37; font-weight: 700; cursor: pointer; }
+.stock-quick-error { margin: 1rem 1.2rem 0; padding: .65rem .8rem; background: #fff1f1; color: #922; border-radius: 8px; font-size: .86rem; }
+.stock-adjustment-hint--quick { padding: 0; }
+.stock-quick-body [hidden], .stock-page--compact [hidden] { display: none !important; }
+@media (max-width: 960px) {
+ .stock-summary-grid--compact { grid-template-columns: repeat(2,minmax(0,1fr)); }
+ .stock-lookup-controls--secondary { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 680px) {
+ .stock-quick-actions { grid-template-columns: 1fr; }
+ .stock-task { min-height: 58px; }
+ .stock-primary-lookup { grid-template-columns: 1fr; }
+ .stock-lookup-controls--secondary { grid-template-columns: 1fr; }
+ .stock-summary-grid--compact { grid-template-columns: 1fr 1fr; }
+ .stock-tools-panel > summary { align-items: flex-start; flex-direction: column; gap: .15rem; }
+ .stock-page--compact { padding: .75rem; }
+}
+
+/* Keep the table inside the available workspace width on narrow screens. */
+.stock-page--compact, .stock-page--compact *, .stock-page--compact *::before, .stock-page--compact *::after { box-sizing: border-box; }
+.stock-page--compact #stockWorkspace, .stock-page--compact .stock-products-card, .stock-page--compact .stock-table-wrap { min-width: 0; max-width: 100%; }
+.stock-page--compact .stock-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }

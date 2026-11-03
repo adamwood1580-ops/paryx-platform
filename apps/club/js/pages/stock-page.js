@@ -49,10 +49,33 @@
         activity: [],
         searchTimer: null,
         scanBusy: false,
-        scannedCode: ""
+        scannedCode: "",
+        quickMode: "add",
+        quickProductId: null,
+        quickBusy: false
     };
 
     const elements = {
+        quickAdd: document.getElementById("stockQuickAdd"),
+        quickRemove: document.getElementById("stockQuickRemove"),
+        quickCount: document.getElementById("stockQuickCount"),
+        quickDialog: document.getElementById("stockQuickDialog"),
+        quickForm: document.getElementById("stockQuickForm"),
+        quickTitle: document.getElementById("stockQuickTitle"),
+        quickClose: document.getElementById("stockQuickClose"),
+        quickCancel: document.getElementById("stockQuickCancel"),
+        quickSearch: document.getElementById("stockQuickSearch"),
+        quickCamera: document.getElementById("stockQuickCamera"),
+        quickMatches: document.getElementById("stockQuickMatches"),
+        quickSelected: document.getElementById("stockQuickSelected"),
+        quickQuantityWrap: document.getElementById("stockQuickQuantityWrap"),
+        quickQuantityLabel: document.getElementById("stockQuickQuantityLabel"),
+        quickQuantity: document.getElementById("stockQuickQuantity"),
+        quickHint: document.getElementById("stockQuickHint"),
+        quickReferenceWrap: document.getElementById("stockQuickReferenceWrap"),
+        quickReference: document.getElementById("stockQuickReference"),
+        quickSave: document.getElementById("stockQuickSave"),
+        quickError: document.getElementById("stockQuickError"),
         scanForm: document.getElementById("stockScanForm"),
         scanCode: document.getElementById("stockScanCode"),
         scanFind: document.getElementById("stockScanFind"),
@@ -376,17 +399,9 @@
             })
         );
 
-        const active = lookupIsActive();
-
-        elements.lookupPrompt.hidden = active;
-        elements.resultsCard.hidden = !active;
-
-        if (!active) {
-            elements.tableBody.innerHTML = "";
-            elements.tableEmpty.hidden = true;
-            elements.resultSummary.textContent = "0 records";
-            return;
-        }
+        // Everyday view: show products immediately, without forcing a search.
+        elements.lookupPrompt.hidden = true;
+        elements.resultsCard.hidden = false;
 
         elements.resultSummary.textContent =
             `${state.filteredProducts.length} record${state.filteredProducts.length === 1 ? "" : "s"}`;
@@ -409,18 +424,12 @@
 
             return `
                 <tr>
-                    <td><div class="stock-product-name">
-                        <strong>${escapeHtml(product.product_name)}</strong>
-                        <small>${escapeHtml(product.supplier || product.barcode || "")}</small>
-                    </div></td>
-                    <td>${escapeHtml(product.sku)}</td>
-                    <td>${escapeHtml(product.category || "—")}</td>
+                    <td><div class="stock-product-name"><strong>${escapeHtml(product.product_name)}</strong><small>${escapeHtml(product.category || product.supplier || "")}</small></div></td>
+                    <td><div class="stock-product-name"><span>${escapeHtml(product.sku)}</span><small>${escapeHtml(product.barcode || "")}</small></div></td>
                     <td class="stock-number ${quantityClass}">${product.track_stock === true ? quantity : "—"}</td>
                     <td class="stock-number">${product.track_stock === true ? reorder : "—"}</td>
-                    <td class="stock-money">${formatMoney(product.cost_price)}</td>
-                    <td class="stock-money">${formatMoney(product.sale_price)}</td>
                     <td><span class="${status.className}">${status.text}</span></td>
-                    <td><button class="stock-button stock-button--secondary stock-button--compact" type="button" data-stock-product="${escapeHtml(product.product_id)}">${state.canManage ? "Manage" : "View"}</button></td>
+                    <td><button class="stock-button stock-button--secondary stock-button--compact" type="button" data-stock-product="${escapeHtml(product.product_id)}">${state.canManage ? "Edit" : "View"}</button></td>
                 </tr>`;
         }).join("");
     }
@@ -822,7 +831,201 @@
         }
     }
 
+    /* Everyday stock actions share the existing stock_adjust_quantity RPC.
+       No EPOS integration or stock schema changes are required. */
+    function quickProduct() {
+        return state.productMap.get(state.quickProductId) || null;
+    }
+
+    function quickLabel() {
+        return { add: "Add Stock", remove: "Remove Stock", count: "Count Stock" }[state.quickMode];
+    }
+
+    function renderQuickMatches() {
+        const text = normaliseLookup(elements.quickSearch.value);
+        const exact = state.products.filter(function (product) {
+            return normaliseLookup(product.barcode) === text || normaliseLookup(product.sku) === text;
+        });
+        const matches = (text.length ? (exact.length ? exact : state.products.filter(function (product) {
+            return [product.product_name, product.barcode, product.sku].some(function (part) {
+                return normaliseLookup(part).includes(text);
+            });
+        })) : state.products).filter(function (product) {
+            return product.is_active === true && product.track_stock === true;
+        }).slice(0, 10);
+
+        if (!matches.length) {
+            elements.quickMatches.innerHTML = '<p class="stock-quick-no-match">No matching tracked products. Add the product in Stock tools first.</p>';
+            return;
+        }
+        elements.quickMatches.innerHTML = matches.map(function (product) {
+            return `<button type="button" class="stock-quick-result" data-quick-product="${escapeHtml(product.product_id)}">
+                <strong>${escapeHtml(product.product_name)}</strong><span>SKU ${escapeHtml(product.sku)} · ${escapeHtml(String(toNumber(product.quantity_on_hand)))} in stock</span>
+            </button>`;
+        }).join("");
+    }
+
+    function selectQuickProduct(product) {
+        if (!product || product.track_stock !== true || product.is_active !== true) return;
+        state.quickProductId = product.product_id;
+        elements.quickSearch.value = product.barcode || product.sku || product.product_name;
+        elements.quickMatches.hidden = true;
+        const current = toNumber(product.quantity_on_hand);
+        elements.quickSelected.hidden = false;
+        elements.quickSelected.innerHTML = `<strong>${escapeHtml(product.product_name)}</strong><span>Currently ${escapeHtml(String(current))} in stock</span><button type="button" id="stockQuickChangeProduct">Change</button>`;
+        elements.quickQuantityWrap.hidden = false;
+        elements.quickReferenceWrap.hidden = false;
+        elements.quickQuantityLabel.textContent = state.quickMode === "count" ? "How many are on the shelf?" : "How many?";
+        elements.quickQuantity.min = state.quickMode === "count" ? "0" : "1";
+        elements.quickQuantity.value = state.quickMode === "count" ? String(current) : "1";
+        elements.quickHint.textContent = state.quickMode === "add" ? "The quantity will be added to the current stock." : state.quickMode === "remove" ? "The quantity will be subtracted from stock. This does not take a payment." : "Enter the physical quantity; Paryx calculates the correction.";
+        elements.quickSave.disabled = false;
+        elements.quickQuantity.focus();
+        elements.quickQuantity.select();
+    }
+
+    function setQuickError(message) {
+        elements.quickError.textContent = String(message || "Please check the details.");
+        elements.quickError.hidden = false;
+    }
+
+    function quickLookup(value) {
+        const code = normaliseLookup(value);
+        if (!code) return;
+        const product = state.products.find(function (item) {
+            return item.is_active === true && item.track_stock === true &&
+                (normaliseLookup(item.barcode) === code || normaliseLookup(item.sku) === code);
+        });
+        if (product) {
+            selectQuickProduct(product);
+        } else {
+            state.quickProductId = null;
+            elements.quickSelected.hidden = true;
+            elements.quickQuantityWrap.hidden = true;
+            elements.quickReferenceWrap.hidden = true;
+            elements.quickSave.disabled = true;
+            elements.quickMatches.hidden = false;
+            renderQuickMatches();
+        }
+    }
+
+    function openQuickDialog(mode) {
+        if (!state.canManage || !state.moduleEnabled) return;
+        clearMessages();
+        state.quickMode = mode;
+        state.quickProductId = null;
+        state.quickBusy = false;
+        elements.quickError.hidden = true;
+        elements.quickTitle.textContent = quickLabel();
+        elements.quickSave.textContent = mode === "add" ? "Add Stock" : mode === "remove" ? "Remove Stock" : "Save Count";
+        elements.quickSave.disabled = true;
+        elements.quickSearch.value = "";
+        elements.quickSelected.hidden = true;
+        elements.quickQuantityWrap.hidden = true;
+        elements.quickReferenceWrap.hidden = true;
+        elements.quickReference.value = "";
+        elements.quickMatches.hidden = false;
+        elements.quickHint.textContent = "Scan a barcode or choose a product to continue.";
+        renderQuickMatches();
+        elements.quickDialog.showModal();
+        elements.quickSearch.focus();
+    }
+
+    async function saveQuickMovement(event) {
+        event.preventDefault();
+        if (state.quickBusy || !state.canManage) return;
+        elements.quickError.hidden = true;
+        const product = quickProduct();
+        if (!product) { setQuickError("Choose a product first."); return; }
+        const count = Number(elements.quickQuantity.value);
+        if (!Number.isSafeInteger(count) || count < (state.quickMode === "count" ? 0 : 1)) {
+            setQuickError(state.quickMode === "count" ? "Enter a whole number of 0 or more." : "Enter a whole number greater than 0.");
+            return;
+        }
+        const onHand = toNumber(product.quantity_on_hand);
+        const delta = state.quickMode === "add" ? count : state.quickMode === "remove" ? -count : count - onHand;
+        if (state.quickMode === "remove" && count > onHand) {
+            setQuickError(`Only ${onHand} units are currently recorded. Count Stock if the recorded quantity is wrong.`);
+            return;
+        }
+        if (delta === 0) {
+            elements.quickDialog.close();
+            showSuccess("The quantity is already correct. No adjustment was needed.");
+            return;
+        }
+        state.quickBusy = true;
+        elements.quickSave.disabled = true;
+        const movementType = state.quickMode === "add" ? "receipt" : state.quickMode === "remove" ? "adjustment_out" : "stocktake";
+        try {
+            const { error } = await getClient().rpc("stock_adjust_quantity", {
+                p_club_id: state.clubId,
+                p_product_id: product.product_id,
+                p_quantity_delta: delta,
+                p_movement_type: movementType,
+                p_reference: elements.quickReference.value.trim() || null,
+                p_note: state.quickMode === "count" ? `Physical count ${count}; previous ${onHand}` : (state.quickMode === "remove" ? "Manual stock removal; no payment processed" : null)
+            });
+            if (error) throw error;
+            elements.quickDialog.close();
+            await refreshAll();
+            showSuccess(`${quickLabel()} saved for ${product.product_name}.`);
+        } catch (error) {
+            setQuickError(error?.message || "Could not update stock. Try again.");
+        } finally {
+            state.quickBusy = false;
+            elements.quickSave.disabled = false;
+        }
+    }
+
     function bindControls() {
+        elements.quickAdd.addEventListener("click", function () { openQuickDialog("add"); });
+        elements.quickRemove.addEventListener("click", function () { openQuickDialog("remove"); });
+        elements.quickCount.addEventListener("click", function () { openQuickDialog("count"); });
+        elements.quickClose.addEventListener("click", function () { elements.quickDialog.close(); });
+        elements.quickCancel.addEventListener("click", function () { elements.quickDialog.close(); });
+        elements.quickDialog.addEventListener("click", function (event) {
+            if (event.target === elements.quickDialog) elements.quickDialog.close();
+        });
+        elements.quickForm.addEventListener("submit", saveQuickMovement);
+        elements.quickSearch.addEventListener("input", function () {
+            state.quickProductId = null;
+            elements.quickSelected.hidden = true;
+            elements.quickQuantityWrap.hidden = true;
+            elements.quickReferenceWrap.hidden = true;
+            elements.quickSave.disabled = true;
+            elements.quickMatches.hidden = false;
+            elements.quickError.hidden = true;
+            renderQuickMatches();
+        });
+        elements.quickSearch.addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                quickLookup(elements.quickSearch.value);
+            }
+        });
+        elements.quickMatches.addEventListener("click", function (event) {
+            const button = event.target.closest("[data-quick-product]");
+            if (!button) return;
+            selectQuickProduct(state.productMap.get(button.dataset.quickProduct));
+        });
+        elements.quickSelected.addEventListener("click", function (event) {
+            if (!event.target.closest("#stockQuickChangeProduct")) return;
+            state.quickProductId = null;
+            elements.quickSelected.hidden = true;
+            elements.quickQuantityWrap.hidden = true;
+            elements.quickReferenceWrap.hidden = true;
+            elements.quickSave.disabled = true;
+            elements.quickSearch.value = "";
+            elements.quickMatches.hidden = false;
+            renderQuickMatches();
+            elements.quickSearch.focus();
+        });
+        elements.quickCamera.addEventListener("click", function () {
+            window.Paryx.barcodeCamera.open(function (code) {
+                elements.quickSearch.value = code;
+                quickLookup(code);
+            });
+        });
         elements.scanForm.addEventListener("submit", function (event) {
             event.preventDefault();
             findScannedProduct(elements.scanCode.value);
@@ -940,6 +1143,9 @@
             elements.clubName.textContent = state.clubName;
             elements.roleBadge.textContent = ROLE_LABELS[state.role] || String(state.role || "Staff").replaceAll("_", " ");
             elements.addProduct.hidden = !state.canManage;
+            [elements.quickAdd, elements.quickRemove, elements.quickCount].forEach(function (button) {
+                button.hidden = !state.canManage;
+            });
 
             if (!VIEW_ROLES.has(state.role)) {
                 elements.workspace.hidden = true;
