@@ -354,9 +354,7 @@
     function renderLoading(reset) {
         if (reset) {
             elements.memberList.innerHTML = `
-                <div class="admin-member-loading">
-                    Loading members...
-                </div>
+                <tr><td colspan="7" class="px-members-message">Loading members...</td></tr>
             `;
         }
 
@@ -462,248 +460,59 @@
         return true;
     }
 
-    function renderMemberCard(member) {
-        const action =
-            getMemberAction(member);
-
-        const status =
-            String(
-                member.membership_status ||
-                "unknown"
-            );
-
-        const role =
-            ROLE_LABELS[
-                member.membership_role
-            ] ||
-            statusLabel(
-                member.membership_role
-            );
-
-        const membershipType =
-            TYPE_LABELS[
-                member.membership_type
-            ] ||
-            statusLabel(
-                member.membership_type
-            );
-
-        const isSelf =
-            member.profile_id ===
-            state.currentUserId;
+    function renderMemberRow(member) {
+        const action = getMemberAction(member);
+        const status = String(member.membership_status || "unknown").toLowerCase();
+        const membershipType = TYPE_LABELS[member.membership_type] || statusLabel(member.membership_type);
+        const role = ROLE_LABELS[member.membership_role] || statusLabel(member.membership_role);
+        const isSelf = member.profile_id === state.currentUserId;
+        const memberId = escapeHtml(member.membership_id);
+        const memberDisplayName = memberName(member);
+        const canEdit = canEditMember(member);
+        const isStaff = member.membership_type === "staff";
+        const canRemove = canRemoveMember(member);
+        const haveMore = Boolean(action || canRemove);
 
         return `
-            <article
-                class="admin-member-card"
-                data-membership-id="${escapeHtml(
-                    member.membership_id
-                )}"
-            >
-                <div class="admin-member-card__top">
-                    <div>
-                        <h2 class="admin-member-card__name">
-                            ${escapeHtml(
-                                memberName(
-                                    member
-                                )
-                            )}
-                            ${
-                                isSelf
-                                    ? '<small> · You</small>'
-                                    : ""
-                            }
-                        </h2>
-
-                        <span class="admin-member-card__email">
-                            ${escapeHtml(
-                                member.email ||
-                                "No email"
-                            )}
-                        </span>
+            <tr data-membership-id="${memberId}">
+                <td class="px-members-table__person">
+                    <strong>${escapeHtml(memberDisplayName)}${isSelf ? ' <small>· You</small>' : ""}</strong>
+                    <span>${escapeHtml(member.email || "No email")}</span>
+                </td>
+                <td>${escapeHtml(member.membership_number || "—")}</td>
+                <td>${escapeHtml(membershipType)}${member.membership_role !== "member" ? `<small class="px-members-table__role">${escapeHtml(role)}</small>` : ""}</td>
+                <td><span class="admin-member-status admin-member-status--${escapeHtml(status)}">${escapeHtml(statusLabel(status))}</span></td>
+                <td>${escapeHtml(formatMembershipDate(member.renewal_date))}</td>
+                <td>${escapeHtml(formatHandicap(member.handicap_index))}</td>
+                <td class="px-members-table__actions">
+                    <div class="px-members-table__action-row">
+                        ${canEdit ? `<button class="admin-member-action" type="button" data-member-edit data-membership-id="${memberId}">Edit</button>` : ""}
+                        ${isStaff ? `<a class="admin-member-action" href="staff.html?email=${encodeURIComponent(member.email || "")}">Staff access</a>` : ""}
+                        ${haveMore ? `
+                        <details class="px-member-more">
+                            <summary aria-label="More options for ${escapeHtml(memberDisplayName)}">More</summary>
+                            <div class="px-member-more__actions">
+                                ${action ? `<button class="admin-member-action ${action.danger ? "admin-member-action--danger" : ""}" type="button" data-member-status-action="${escapeHtml(action.nextStatus)}" data-membership-id="${memberId}" data-member-name="${escapeHtml(memberDisplayName)}">${escapeHtml(action.label)}</button>` : ""}
+                                ${canRemove ? `<button class="admin-member-action admin-member-action--remove" type="button" data-member-remove data-membership-id="${memberId}" data-member-name="${escapeHtml(memberDisplayName)}">Remove from club</button>` : ""}
+                            </div>
+                        </details>` : ""}
                     </div>
-
-                    <span
-                        class="admin-member-status admin-member-status--${escapeHtml(
-                            status
-                        )}"
-                    >
-                        ${escapeHtml(
-                            statusLabel(
-                                status
-                            )
-                        )}
-                    </span>
-                </div>
-
-                <div class="admin-member-card__details">
-                    <div class="admin-member-detail">
-                        <span>Member no.</span>
-                        <strong>
-                            ${escapeHtml(
-                                member.membership_number ||
-                                "—"
-                            )}
-                        </strong>
-                    </div>
-
-                    <div class="admin-member-detail">
-                        <span>Membership</span>
-                        <strong>
-                            ${escapeHtml(
-                                membershipType
-                            )}
-                        </strong>
-                    </div>
-
-                    <div class="admin-member-detail">
-                        <span>Renewal</span>
-                        <strong>
-                            ${escapeHtml(
-                                formatMembershipDate(
-                                    member.renewal_date
-                                )
-                            )}
-                        </strong>
-                    </div>
-
-                    <div class="admin-member-detail">
-                        <span>Handicap</span>
-                        <strong>
-                            ${escapeHtml(
-                                formatHandicap(
-                                    member.handicap_index
-                                )
-                            )}
-                        </strong>
-                    </div>
-
-                    <div class="admin-member-detail">
-                        <span>Role</span>
-                        <strong>
-                            ${escapeHtml(
-                                role
-                            )}
-                        </strong>
-                    </div>
-                </div>
-
-                <div class="admin-member-card__actions">
-                    ${
-                        canEditMember(member)
-                            ? `
-                                <button
-                                    class="admin-member-action"
-                                    type="button"
-                                    data-member-edit
-                                    data-membership-id="${escapeHtml(
-                                        member.membership_id
-                                    )}"
-                                >
-                                    Edit details
-                                </button>
-                            `
-                            : ""
-                    }
-
-                    ${
-                        member.membership_type === "staff"
-                            ? `
-                                <a
-                                    class="admin-member-action"
-                                    href="staff.html?email=${encodeURIComponent(
-                                        member.email ||
-                                        ""
-                                    )}"
-                                >
-                                    Manage staff access
-                                </a>
-                            `
-                            : ""
-                    }
-
-                    ${
-                        action
-                            ? `
-                                <button
-                                    class="admin-member-action ${
-                                        action.danger
-                                            ? "admin-member-action--danger"
-                                            : ""
-                                    }"
-                                    type="button"
-                                    data-member-status-action="${escapeHtml(
-                                        action.nextStatus
-                                    )}"
-                                    data-membership-id="${escapeHtml(
-                                        member.membership_id
-                                    )}"
-                                    data-member-name="${escapeHtml(
-                                        memberName(
-                                            member
-                                        )
-                                    )}"
-                                >
-                                    ${escapeHtml(
-                                        action.label
-                                    )}
-                                </button>
-                            `
-                            : ""
-                    }
-
-                    ${
-                        canRemoveMember(member)
-                            ? `
-                                <button
-                                    class="admin-member-action admin-member-action--remove"
-                                    type="button"
-                                    data-member-remove
-                                    data-membership-id="${escapeHtml(
-                                        member.membership_id
-                                    )}"
-                                    data-member-name="${escapeHtml(
-                                        memberName(
-                                            member
-                                        )
-                                    )}"
-                                >
-                                    Remove from club
-                                </button>
-                            `
-                            : ""
-                    }
-                </div>
-            </article>
+                </td>
+            </tr>
         `;
     }
 
     function renderMembers() {
         if (!state.members.length) {
-            elements.memberList.innerHTML = `
-                <div class="admin-member-empty">
-                    No members match this search.
-                </div>
-            `;
+            elements.memberList.innerHTML = '<tr><td colspan="7" class="px-members-message">No members match this search.</td></tr>';
         } else {
-            elements.memberList.innerHTML =
-                state.members
-                    .map(
-                        renderMemberCard
-                    )
-                    .join("");
+            elements.memberList.innerHTML = state.members.map(renderMemberRow).join("");
         }
 
         renderCount();
-
-        elements.loadMoreMembersBtn.hidden =
-            state.members.length >=
-            state.total;
-
-        elements.loadMoreMembersBtn.disabled =
-            false;
-
-        elements.memberRefreshBtn.disabled =
-            false;
+        elements.loadMoreMembersBtn.hidden = state.members.length >= state.total;
+        elements.loadMoreMembersBtn.disabled = false;
+        elements.memberRefreshBtn.disabled = false;
     }
 
     async function loadMembers(
@@ -790,12 +599,7 @@
             showError(error);
 
             if (reset) {
-                elements.memberList
-                    .innerHTML = `
-                        <div class="admin-member-empty">
-                            Member directory could not be loaded.
-                        </div>
-                    `;
+                elements.memberList.innerHTML = '<tr><td colspan="7" class="px-members-message">Member directory could not be loaded.</td></tr>';
             }
         } finally {
             state.loading =

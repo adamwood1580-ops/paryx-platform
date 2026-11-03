@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="../styles/components.css" />
     <link rel="stylesheet" href="../styles/staff-shell.css?v=0.30.7" />
     <link rel="stylesheet" href="../styles/dashboard.css" />
-    <link rel="stylesheet" href="../styles/members.css" />
+    <link rel="stylesheet" href="../styles/members.css?v=0.32.1" />
 
     <link rel="manifest" href="../json/manifest.json" />
     <link rel="apple-touch-icon" href="../assets/paryx-apple-touch-icon.png" />
@@ -42,201 +42,108 @@
                 data-staff-header
             ></header>
 
-            <main class="app-main admin-page admin-members-page">
-                <section class="admin-members-intro">
-                    <div>
-                        <p class="page-heading__eyebrow">
-                            Member management
-                        </p>
-
-                        <h1 class="admin-members-intro__title">
-                            Members
-                        </h1>
-
-                        <p
-                            id="memberClubName"
-                            class="admin-members-intro__subtitle"
-                        >
-                            Loading club information...
-                        </p>
+            <main class="app-main admin-page admin-members-page px-members-v2">
+                <header class="px-members-top">
+                    <div class="px-members-top__identity">
+                        <h1>Members</h1>
+                        <span id="memberClubName">Loading club information...</span>
                     </div>
+                    <details class="px-members-tools">
+                        <summary>Member tools</summary>
+                        <div class="px-members-tools__menu">
+                            <a href="import-members.html">Import members from CSV</a>
+                            <p>For bulk imports and existing member records.</p>
+                        </div>
+                    </details>
+                </header>
 
-                    <a
-                        href="import-members.html"
-                        class="admin-primary-action"
-                    >
-                        Import CSV
-                    </a>
-                </section>
+                <section id="membersError" class="admin-error" role="alert" hidden></section>
+                <section id="membersSuccess" class="admin-member-success" role="status" hidden></section>
 
-                <section
-                    id="membersError"
-                    class="admin-error"
-                    role="alert"
-                    hidden
-                ></section>
-
-                <section
-                    id="membersSuccess"
-                    class="admin-member-success"
-                    role="status"
-                    hidden
-                ></section>
-
-                <section class="card admin-access-requests">
-                    <div class="admin-access-requests__header">
+                <section class="card px-members-directory" aria-labelledby="pxMembersDirectoryTitle">
+                    <div class="px-members-directory__header">
                         <div>
-                            <div class="admin-access-requests__title-row">
-                                <h2>Member access requests</h2>
+                            <h2 id="pxMembersDirectoryTitle">Member directory</h2>
+                            <p>Find a member, check their status or edit their membership.</p>
+                        </div>
+                        <div class="px-members-directory__counter">
+                            <strong id="memberResultCount">--</strong>
+                            <span>results</span>
+                        </div>
+                    </div>
+                    <div class="px-members-directory__filters">
+                        <label class="admin-member-search">
+                            <span class="admin-member-field-label">Find a member</span>
+                            <input id="memberSearch" type="search" placeholder="Name, email or membership number" autocomplete="off" />
+                        </label>
+                        <label class="admin-member-filter">
+                            <span class="admin-member-field-label">Status</span>
+                            <select id="memberStatusFilter">
+                                <option value="all">All statuses</option>
+                                <option value="active">Active</option>
+                                <option value="invited">Invited</option>
+                                <option value="pending">Pending</option>
+                                <option value="suspended">Suspended</option>
+                                <option value="expired">Expired</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                        </label>
+                        <button id="memberRefreshBtn" class="admin-secondary-button" type="button">Refresh</button>
+                    </div>
+                    <p class="px-members-scroll-hint">Swipe sideways in the table to view all details.</p>
+                    <div class="px-members-table-scroll" tabindex="0" role="region" aria-label="Members table; scroll horizontally to see all columns">
+                        <table class="px-members-table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Member</th>
+                                    <th scope="col">No.</th>
+                                    <th scope="col">Type</th>
+                                    <th scope="col">Status</th>
+                                    <th scope="col">Renewal</th>
+                                    <th scope="col">HCP</th>
+                                    <th scope="col">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="memberList" aria-live="polite">
+                                <tr><td colspan="7" class="px-members-message">Loading members...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <button id="loadMoreMembersBtn" class="admin-load-more px-members-load-more" type="button" hidden>Load more members</button>
+                </section>
 
-                                <span
-                                    id="memberAccessRequestCount"
-                                    class="admin-access-request-count"
-                                >
-                                    --
-                                </span>
+                <section class="px-member-panels" aria-label="Membership tasks">
+                    <details class="card px-member-panel" id="memberAccessPanel">
+                        <summary class="px-member-panel__summary">
+                            <span>Access requests <span class="px-member-panel__subtext">Players asking to link club membership</span></span>
+                            <span id="memberAccessRequestCount" class="admin-access-request-count">--</span>
+                        </summary>
+                        <div class="px-member-panel__content">
+                            <div class="px-member-panel__toolbar">
+                                <p>Review each request before granting club membership access.</p>
+                                <button id="memberAccessRefreshBtn" class="admin-secondary-button" type="button">Refresh</button>
                             </div>
-
-                            <p>
-                                Paryx players asking to link their account
-                                to this club membership.
-                            </p>
-                        </div>
-
-                        <button
-                            id="memberAccessRefreshBtn"
-                            class="admin-secondary-button"
-                            type="button"
-                        >
-                            Refresh
-                        </button>
-                    </div>
-
-                    <div
-                        id="memberAccessRequestList"
-                        class="admin-access-request-list"
-                        aria-live="polite"
-                    >
-                        <div class="admin-member-loading">
-                            Loading access requests...
-                        </div>
-                    </div>
-                </section>
-
-
-                <section class="card admin-renewal-alerts">
-                    <div class="admin-renewal-alerts__header">
-                        <div>
-                            <div class="admin-renewal-alerts__title-row">
-                                <h2>Membership renewals</h2>
-
-                                <span
-                                    id="memberRenewalCount"
-                                    class="admin-renewal-count"
-                                >
-                                    --
-                                </span>
+                            <div id="memberAccessRequestList" class="admin-access-request-list" aria-live="polite">
+                                <div class="admin-member-loading">Loading access requests...</div>
                             </div>
-
-                            <p>
-                                Members due to renew within 90 days,
-                                including memberships that have passed
-                                their renewal date.
-                            </p>
                         </div>
-
-                        <button
-                            id="memberRenewalRefreshBtn"
-                            class="admin-secondary-button"
-                            type="button"
-                        >
-                            Refresh
-                        </button>
-                    </div>
-
-                    <div
-                        id="memberRenewalList"
-                        class="admin-renewal-list"
-                        aria-live="polite"
-                    >
-                        <div class="admin-member-loading">
-                            Loading renewal reminders...
+                    </details>
+                    <details class="card px-member-panel" id="memberRenewalPanel">
+                        <summary class="px-member-panel__summary">
+                            <span>Renewals <span class="px-member-panel__subtext">Due within 90 days or overdue</span></span>
+                            <span id="memberRenewalCount" class="admin-renewal-count">--</span>
+                        </summary>
+                        <div class="px-member-panel__content">
+                            <div class="px-member-panel__toolbar">
+                                <p>Review members whose renewal date needs attention.</p>
+                                <button id="memberRenewalRefreshBtn" class="admin-secondary-button" type="button">Refresh</button>
+                            </div>
+                            <div id="memberRenewalList" class="admin-renewal-list" aria-live="polite">
+                                <div class="admin-member-loading">Loading renewal reminders...</div>
+                            </div>
                         </div>
-                    </div>
+                    </details>
                 </section>
-
-                <section class="card admin-member-toolbar">
-                    <label class="admin-member-search">
-                        <span class="admin-member-field-label">
-                            Search members
-                        </span>
-
-                        <input
-                            id="memberSearch"
-                            type="search"
-                            placeholder="Name, email or member number"
-                            autocomplete="off"
-                        />
-                    </label>
-
-                    <label class="admin-member-filter">
-                        <span class="admin-member-field-label">
-                            Status
-                        </span>
-
-                        <select id="memberStatusFilter">
-                            <option value="all">All statuses</option>
-                            <option value="active">Active</option>
-                            <option value="invited">Invited</option>
-                            <option value="pending">Pending</option>
-                            <option value="suspended">Suspended</option>
-                            <option value="expired">Expired</option>
-                            <option value="cancelled">Cancelled</option>
-                        </select>
-                    </label>
-                </section>
-
-                <section class="admin-member-summary">
-                    <div>
-                        <span class="admin-member-summary__label">
-                            Results
-                        </span>
-
-                        <strong
-                            id="memberResultCount"
-                            class="admin-member-summary__value"
-                        >
-                            --
-                        </strong>
-                    </div>
-
-                    <button
-                        id="memberRefreshBtn"
-                        class="admin-secondary-button"
-                        type="button"
-                    >
-                        Refresh
-                    </button>
-                </section>
-
-                <section
-                    id="memberList"
-                    class="admin-member-list"
-                    aria-live="polite"
-                >
-                    <div class="admin-member-loading">
-                        Loading members...
-                    </div>
-                </section>
-
-                <button
-                    id="loadMoreMembersBtn"
-                    class="admin-load-more"
-                    type="button"
-                    hidden
-                >
-                    Load more members
-                </button>
 
                 <!-- Member access approval -->
                 <dialog
@@ -400,6 +307,24 @@
                             </label>
 
                             <label class="admin-member-edit-field">
+                                <span>Renewal date</span>
+
+                                <input
+                                    id="memberDetailsRenewalDate"
+                                    type="date"
+                                />
+
+                                <small>
+                                    ClubHub starts warning staff 90 days
+                                    before this date. The player sees
+                                    reminders from 60 days.
+                                </small>
+                            </label>
+                        </div>
+                        <details class="px-member-advanced">
+                            <summary>More membership settings</summary>
+                            <div class="admin-member-edit-grid px-member-advanced__grid">
+                            <label class="admin-member-edit-field">
                                 <span>Status</span>
 
                                 <select id="memberDetailsStatus">
@@ -423,21 +348,8 @@
                                 />
                             </label>
 
-                            <label class="admin-member-edit-field">
-                                <span>Renewal date</span>
-
-                                <input
-                                    id="memberDetailsRenewalDate"
-                                    type="date"
-                                />
-
-                                <small>
-                                    ClubHub starts warning staff 90 days
-                                    before this date. The player sees
-                                    reminders from 60 days.
-                                </small>
-                            </label>
-                        </div>
+                            </div>
+                        </details>
 
                         <div class="admin-member-dialog__actions">
                             <a
