@@ -50,6 +50,9 @@
         playDate: todayIso(),
         schedules: [],
         teeTimes: [],
+        weekRows: {},
+        weekDates: [],
+        weekRequest: 0,
         events: [],
         teeSheetSearch: "",
         teeSheetFilter: "all",
@@ -79,7 +82,6 @@
         today: document.getElementById("todayTeeSheetButton"),
         generate: document.getElementById("generateTeeSheetButton"),
         manageSchedules: document.getElementById("manageSchedulesButton"),
-        dayStatus: document.getElementById("teeSheetDayStatus"),
         teeSheetSearch: document.getElementById("teeSheetSearch"),
         teeSheetFilter: document.getElementById("teeSheetFilter"),
         totalCount: document.getElementById("teeSheetTotalCount"),
@@ -459,18 +461,31 @@
     async function loadTeeSheet() {
         if (!state.courseId || !state.playDate) {
             state.teeTimes = [];
+            state.weekRows = {};
+            state.weekDates = [];
             renderTeeSheet();
             return;
         }
 
-        state.teeTimes = normaliseRows(
-            await rpc("staff_get_tee_sheet", {
+        const requestId = ++state.weekRequest;
+        const dates = weekDatesFor(state.playDate);
+        const results = await Promise.all(dates.map(function (date) {
+            return rpc("staff_get_tee_sheet", {
                 p_club_id: state.clubId,
                 p_course_id: state.courseId,
-                p_play_date: state.playDate
-            })
-        );
+                p_play_date: date
+            });
+        }));
+        // Ignore a response if staff navigated to another week while loading.
+        if (requestId !== state.weekRequest) {
+            return;
+        }
 
+        state.weekDates = dates;
+        state.weekRows = Object.fromEntries(dates.map(function (date, index) {
+            return [date, normaliseRows(results[index])];
+        }));
+        state.teeTimes = state.weekRows[state.playDate] || [];
         renderTeeSheet();
     }
 
@@ -494,7 +509,7 @@
     async function loadDay() {
         clearMessages();
         elements.loadStatus.textContent = "Loading…";
-        elements.dayTitle.textContent = formatDayTitle(state.playDate);
+        elements.dayTitle.textContent = "Tee Sheet";
         elements.date.value = state.playDate;
 
         try {
@@ -508,6 +523,52 @@
             elements.loadStatus.textContent = "Could not load";
             showError(error);
         }
+    }
+
+    function currentWeekStart() {
+        const base = new Date(`${state.playDate}T12:00:00`);
+        const mondayOffset = (base.getDay() + 6) % 7;
+        return shiftDate(state.playDate, -mondayOffset);
+    }
+
+    function weekDatesFor(date) {
+        const base = new Date(`${date}T12:00:00`);
+        const mondayOffset = (base.getDay() + 6) % 7;
+        const start = shiftDate(date, -mondayOffset);
+        return Array.from({ length: 7 }, function (_, index) {
+            return shiftDate(start, index);
+        });
+    }
+
+    function formatWeekDate(date) {
+        return new Intl.DateTimeFormat("en-GB", {
+            day: "numeric", month: "short", year: "numeric"
+        }).format(new Date(`${date}T12:00:00`));
+    }
+
+    function formatWeekday(date) {
+        return new Intl.DateTimeFormat("en-GB", {
+            weekday: "short"
+        }).format(new Date(`${date}T12:00:00`));
+    }
+
+    function formatWeekHeading() {
+        if (!state.weekDates.length) {
+            return "Tee Sheet";
+        }
+        return `Tee Sheet · ${formatWeekDate(state.weekDates[0])} – ${formatWeekDate(state.weekDates[6])}`;
+    }
+
+    function selectWeekDate(date) {
+        if (!state.weekDates.includes(date)) {
+            return;
+        }
+        state.playDate = date;
+        state.teeTimes = state.weekRows[date] || [];
+        elements.date.value = date;
+        renderSummary();
+        renderTeeSheet();
+        loadEvents().catch(showError);
     }
 
     function renderSummary() {
@@ -538,16 +599,11 @@
         elements.bookedCount.textContent = String(booked);
         elements.playerCount.textContent = String(players);
         elements.unavailableCount.textContent = String(buggyCount);
-
-        if (elements.dayStatus) {
-            if (booked > 0) {
-                elements.dayStatus.textContent = `${booked} booking${booked === 1 ? "" : "s"} loaded`;
-            } else if (total > 0) {
-                elements.dayStatus.textContent = "Ready for bookings";
-            } else {
-                elements.dayStatus.textContent = "No tee times generated";
-            }
+        const selectedDateLabel = document.getElementById("teeSheetSelectedDateLabel");
+        if (selectedDateLabel) {
+            selectedDateLabel.textContent = formatWeekday(state.playDate) + " " + state.playDate.slice(8);
         }
+
     }
 
     function rowStatus(row) {
@@ -688,159 +744,95 @@
 
     function renderTeeSheet() {
         renderSummary();
-
-        if (!state.teeTimes.length) {
+        elements.dayTitle.textContent = formatWeekHeading();
+        const dates = state.weekDates;
+        if (!dates.length) {
+            elements.rows.innerHTML = "";
             elements.empty.hidden = false;
-            elements.empty.innerHTML = "<strong>No tee times have been generated for this date.</strong><p>Create a booking schedule, then generate the day.</p>";
-            elements.rows.innerHTML = "";
             elements.earlierTimes.hidden = true;
             return;
         }
 
-        const rowsToRender = visibleTeeTimes();
-        elements.empty.hidden = rowsToRender.length > 0;
-
-        if (!rowsToRender.length) {
-            elements.empty.innerHTML = "<strong>No tee times match your search.</strong><p>Clear the search or change the filter to see more bookings.</p>";
+        // All unique start times within the week. The underlying RPC remains the source
+        // of truth for each individual slot, including course closures and Hotel Mode.
+        const times = Array.from(new Set(dates.flatMap(function (date) {
+            return (state.weekRows[date] || []).map(function (r) {
+                return shortTime(r.start_time);
+            });
+        }))).sort();
+        if (!times.length) {
             elements.rows.innerHTML = "";
+            elements.empty.hidden = false;
             elements.earlierTimes.hidden = true;
             return;
         }
 
-        elements.rows.innerHTML = rowsToRender
-            .map(function (row) {
+        const rowMaps = Object.fromEntries(dates.map(function (date) {
+            return [date, new Map((state.weekRows[date] || []).map(function (r) {
+                return [shortTime(r.start_time), r];
+            }))];
+        }));
+
+        const cols = dates.map(function (date) {
+            const isToday = date === todayIso();
+            const selected = date === state.playDate;
+            return `<th scope="col" class="tee-week-day${isToday ? " tee-week-day--today" : ""}${selected ? " tee-week-day--selected" : ""}">
+                <button type="button" data-select-week-date="${escapeHtml(date)}" aria-pressed="${selected ? "true" : "false"}">
+                    <span>${escapeHtml(formatWeekday(date))}</span><strong>${escapeHtml(date.slice(8))}</strong>
+                </button>
+            </th>`;
+        }).join("");
+
+        let visibleCount = 0;
+        const body = times.map(function (time) {
+            const cells = dates.map(function (date) {
+                const row = rowMaps[date].get(time);
+                if (!row) {
+                    return `<td class="tee-week-blank"><span aria-label="No tee time">—</span></td>`;
+                }
+
                 const status = rowStatus(row);
-                const meta = bookingMetaFromRow(row);
-                const eventMarkup = row.club_event_id
-                    ? `
-                        <span class="tee-sheet-row__event">
-                            ${escapeHtml(row.event_title || "Calendar event")}
-                        </span>
-                    `
-                    : "";
+                const past = isPastTeeTime(row, date);
+                const notesMeta = bookingMetaFromRow(row);
+                const matches = teeSheetMatchesFilter(row) && teeSheetMatchesSearch(row);
+                if (!matches) {
+                    return `<td class="tee-week-blank"><span aria-label="Filtered out">·</span></td>`;
+                }
+                visibleCount += 1;
+                const name = row.booking_id ? bookingNames(row) :
+                    (row.operational_status === "open" ? "Available" :
+                    (row.tee_time_notes || STATUS_LABELS[row.operational_status] || "Unavailable"));
+                const action = row.booking_id
+                    ? (BOOKING_ROLES.has(state.role) ? "manage-booking" : "availability")
+                    : past ? ""
+                    : (row.operational_status === "open" && BOOKING_ROLES.has(state.role) ? "book" : "availability");
+                const detail = row.booking_id
+                    ? `<span class="tee-week-slot__meta">${escapeHtml(String(row.player_count || 0))}/${escapeHtml(String(row.max_players || 4))} players${notesMeta.buggyCount > 0 ? ` · Buggy ×${escapeHtml(String(notesMeta.buggyCount))}` : ""}${row.staff_checked_in_at ? " · Checked in" : ""}</span>`
+                    : (past ? `<span class="tee-week-slot__meta">Past</span>` : "");
+                const label = `${date} ${time} ${name}${notesMeta.buggyCount ? `, ${notesMeta.buggyCount} buggies` : ""}`;
+                const classes = `tee-week-slot tee-week-slot--${escapeHtml(status)}${past ? " tee-week-slot--past" : ""}`;
+                const content = `<span class="tee-week-slot__name">${escapeHtml(name)}</span>${detail}`;
+                if (!action) {
+                    return `<td><span class="${classes} tee-week-slot--disabled" title="${escapeHtml(label)}">${content}</span></td>`;
+                }
+                return `<td><button type="button" class="${classes}" data-action="${action}" data-tee-time-id="${escapeHtml(row.tee_time_id)}" data-play-date="${escapeHtml(date)}" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">${content}</button></td>`;
+            }).join("");
+            return `<tr><th scope="row" class="tee-week-time">${escapeHtml(time)}</th>${cells}</tr>`;
+        }).join("");
 
-                const past = isPastTeeTime(row);
-                const source = row.booking_source === "staff"
-                    ? "Staff"
-                    : row.booking_source === "website"
-                        ? "Website"
-                        : "Player";
-
-                const bookingMarkup = row.booking_id
-                    ? `
-                        <div class="tee-sheet-row__booking">
-                            <strong>${escapeHtml(bookingNames(row))}</strong>
-                            <div class="tee-sheet-row__booking-line">
-                                <span class="tee-sheet-row__detail">${escapeHtml(row.booking_type || "booking")}</span>
-                                <span class="tee-sheet-row__detail">${escapeHtml(source)}</span>
-                                ${row.contact_number ? `<span class="tee-sheet-row__detail">${escapeHtml(row.contact_number)}</span>` : ""}
-                                ${row.staff_checked_in_at ? `<span class="tee-sheet-row__detail">Checked in ${escapeHtml(formatCheckInTime(row.staff_checked_in_at) || "")}</span>` : ""}
-                                <span class="tee-sheet-row__pill tee-sheet-row__pill--capacity">${escapeHtml(String(row.player_count || 0))}/${escapeHtml(String(row.max_players || 4))} players</span>
-                                ${meta.buggyCount > 0 ? `<span class="tee-sheet-row__pill tee-sheet-row__pill--buggy">Buggy x${escapeHtml(String(meta.buggyCount))}</span>` : ""}
-                            </div>
-                        </div>
-                    `
-                    : `
-                        <div class="tee-sheet-row__booking tee-sheet-row__booking--empty">
-                            ${
-                                past
-                                    ? "Past tee time"
-                                    : (
-                                        row.operational_status === "open"
-                                            ? "Available"
-                                            : escapeHtml(
-                                                row.tee_time_notes ||
-                                                STATUS_LABELS[row.operational_status] ||
-                                                "Unavailable"
-                                            )
-                                    )
-                            }
-                        </div>
-                    `;
-
-                return `
-                    <article
-                        class="tee-sheet-row tee-sheet-row--${escapeHtml(status)}${past ? " tee-sheet-row--past-time" : ""}"
-                        data-tee-time-id="${escapeHtml(row.tee_time_id)}"
-                        data-past-time="${past ? "true" : "false"}"
-                    >
-                        <time>${escapeHtml(shortTime(row.start_time))}</time>
-
-                        <div class="tee-sheet-row__main">
-                            <div class="tee-sheet-row__meta">
-                                <span class="tee-sheet-status tee-sheet-status--${escapeHtml(status)}">
-                                    ${escapeHtml(status === "booked" ? "Booked" : (STATUS_LABELS[row.operational_status] || row.operational_status))}
-                                </span>
-                                ${row.staff_checked_in_at ? `<span class="tee-sheet-row__checked-in">Checked in</span>` : ""}
-                                ${past && !row.booking_id ? `<span class="tee-sheet-row__past">Past</span>` : ""}
-                                ${eventMarkup}
-                            </div>
-                            ${bookingMarkup}
-                        </div>
-
-                        <div class="tee-sheet-row__actions">
-                            ${row.booking_id ? (
-                                BOOKING_ROLES.has(state.role)
-                                    ? `
-                                        <button
-                                            class="tee-sheet-row__action tee-sheet-row__action--primary"
-                                            type="button"
-                                            data-action="manage-booking"
-                                        >
-                                            Manage
-                                        </button>
-                                    `
-                                    : `
-                                        <button
-                                            class="tee-sheet-row__action tee-sheet-row__action--secondary"
-                                            type="button"
-                                            data-action="availability"
-                                        >
-                                            Availability
-                                        </button>
-                                    `
-                            ) : past ? `
-                                <span class="tee-sheet-row__past-action">
-                                    Historical
-                                </span>
-                            ` : row.operational_status === "open" && BOOKING_ROLES.has(state.role) ? `
-                                <button
-                                    class="tee-sheet-row__action tee-sheet-row__action--primary"
-                                    type="button"
-                                    data-action="book"
-                                >
-                                    Book
-                                </button>
-                                <button
-                                    class="tee-sheet-row__action tee-sheet-row__action--secondary"
-                                    type="button"
-                                    data-action="availability"
-                                >
-                                    Availability
-                                </button>
-                            ` : `
-                                <button
-                                    class="tee-sheet-row__action tee-sheet-row__action--secondary"
-                                    type="button"
-                                    data-action="availability"
-                                >
-                                    Availability
-                                </button>
-                            `}
-                        </div>
-                    </article>
-                `;
-            })
-            .join("");
-
-        if (state.teeSheetSearch || state.teeSheetFilter !== "all") {
-            // Filtering should show the matching results from the top,
-            // not jump back to the current clock time.
-            elements.rows.scrollTop = 0;
-            elements.earlierTimes.hidden = true;
-        } else {
-            focusCurrentTeeTime();
+        elements.empty.hidden = visibleCount > 0;
+        if (!visibleCount) {
+            elements.empty.innerHTML = "<strong>No matching tee times.</strong><p>Clear the search or choose another filter.</p>";
         }
+        elements.rows.innerHTML = `<table class="tee-week-grid">
+            <thead><tr><th class="tee-week-time tee-week-time--heading" scope="col">Time</th>${cols}</tr></thead>
+            <tbody>${body}</tbody>
+        </table>`;
+
+        // Keep the same earlier-times affordance, but don't auto-scroll away
+        // from the week heading or the user's chosen date when filtering.
+        elements.earlierTimes.hidden = true;
+        elements.rows.scrollTop = 0;
     }
 
     function defaultAction(event) {
@@ -2098,12 +2090,12 @@
         });
 
         elements.previousDay.addEventListener("click", async function () {
-            state.playDate = shiftDate(state.playDate, -1);
+            state.playDate = shiftDate(state.playDate, -7);
             await loadDay();
         });
 
         elements.nextDay.addEventListener("click", async function () {
-            state.playDate = shiftDate(state.playDate, 1);
+            state.playDate = shiftDate(state.playDate, 7);
             await loadDay();
         });
 
@@ -2136,39 +2128,38 @@
         }
 
         elements.rows.addEventListener("click", function (event) {
-            const button = event.target.closest("[data-action]");
-
+            const dateButton = event.target.closest("[data-select-week-date]");
+            if (dateButton) {
+                selectWeekDate(dateButton.dataset.selectWeekDate);
+                return;
+            }
+            const button = event.target.closest("[data-action][data-tee-time-id][data-play-date]");
             if (!button) {
                 return;
             }
-
-            const rowElement = button.closest("[data-tee-time-id]");
-            const row = state.teeTimes.find(function (item) {
-                return item.tee_time_id === rowElement?.dataset?.teeTimeId;
+            const playDate = button.dataset.playDate;
+            const row = (state.weekRows[playDate] || []).find(function (item) {
+                return String(item.tee_time_id) === button.dataset.teeTimeId;
             });
-
             if (!row) {
                 return;
             }
 
+            if (playDate !== state.playDate) {
+                selectWeekDate(playDate);
+            }
             if (button.dataset.action === "book") {
-                if (!BOOKING_ROLES.has(state.role)) {
-                    return;
+                if (BOOKING_ROLES.has(state.role)) {
+                    openCreateBooking(row);
                 }
-
-                openCreateBooking(row);
                 return;
             }
-
             if (button.dataset.action === "manage-booking") {
-                if (!BOOKING_ROLES.has(state.role)) {
-                    return;
+                if (BOOKING_ROLES.has(state.role)) {
+                    openEditBooking(row);
                 }
-
-                openEditBooking(row);
                 return;
             }
-
             if (button.dataset.action === "availability") {
                 openStatusDialog(row);
             }

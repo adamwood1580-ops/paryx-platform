@@ -1258,3 +1258,102 @@
         flex: 1 1 120px;
     }
 }
+
+
+/* =========================================================
+   Paryx v0.32.0 — full-width seven-day tee-sheet matrix
+   Table-first layout; configuration remains in Booking tools.
+   ========================================================= */
+body[data-page="teesheet"] .tee-sheet-page {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    padding-top: 0.65rem;
+}
+
+body[data-page="teesheet"] .tee-sheet-toolbar--matrix {
+    display: block;
+    padding: 0.6rem 0.8rem;
+    border-radius: 10px;
+    background: #fff;
+}
+
+.tee-sheet-matrix-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 0.55rem 0.75rem;
+}
+
+.tee-sheet-matrix-toolbar .tee-sheet-field { flex: 0 1 180px; }
+.tee-sheet-matrix-toolbar .tee-sheet-field--course { flex: 0 1 220px; }
+.tee-sheet-matrix-toolbar .tee-sheet-field--search { flex: 1 1 180px; }
+.tee-sheet-matrix-toolbar .tee-sheet-field--filter { flex: 0 0 145px; }
+.tee-sheet-matrix-toolbar .tee-sheet-field input,
+.tee-sheet-matrix-toolbar .tee-sheet-field select { min-height: 38px; border-radius: 8px; padding: 0 0.6rem; }
+.tee-sheet-matrix-toolbar .tee-sheet-field > span { font-size: 0.68rem; letter-spacing: 0.04em; }
+.tee-sheet-matrix-toolbar .tee-sheet-button { min-height: 38px; border-radius: 8px; padding: 0.4rem 0.75rem; }
+.tee-sheet-date-nav--matrix { flex: 0 1 245px; grid-template-columns: 34px minmax(140px, 1fr) 34px; align-items: end; gap: 0.3rem; }
+.tee-sheet-date-nav--matrix > button { width: 34px; height: 38px; border-radius: 8px; font-size: 1.3rem; }
+
+.tee-sheet-main--matrix { padding: 0; overflow: hidden; border-radius: 10px; }
+.tee-sheet-matrix-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.4rem; padding: 0.65rem 0.85rem 0.55rem; border-bottom: 1px solid #e2e7e3; }
+.tee-sheet-matrix-heading h1 { margin: 0; font-size: clamp(1.05rem, 1.4vw, 1.4rem); font-family: inherit; font-weight: 800; color: var(--color-primary); line-height: 1.3; }
+.tee-sheet-matrix-heading p { margin: 0.15rem 0 0; color: var(--color-text-muted); font-size: 0.8rem; }
+.tee-sheet-matrix-heading__right { display: flex; align-items: center; gap: 0.55rem; color: var(--color-text-muted); font-size: 0.72rem; }
+
+.tee-sheet-matrix-stats { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 1rem; padding: 0.4rem 0.9rem; border-bottom: 1px solid #e2e7e3; background: #f6f8f6; color: #53665d; font-size: 0.76rem; }
+.tee-sheet-matrix-stats strong { color: #163c2c; font-weight: 800; }
+.tee-sheet-matrix-stats__label { color: #325b46; font-weight: 800; }
+
+.tee-sheet-rows--matrix { max-height: calc(100vh - 295px); min-height: 340px; overflow: auto; padding: 0; display: block; scroll-behavior: auto; scrollbar-gutter: auto; }
+.tee-week-grid { width: 100%; min-width: 910px; border-collapse: separate; border-spacing: 0; table-layout: fixed; font-size: 0.81rem; }
+.tee-week-grid thead { position: sticky; top: 0; z-index: 3; }
+.tee-week-grid th, .tee-week-grid td { padding: 0; border-right: 1px solid #e5ebe6; border-bottom: 1px solid #e5ebe6; vertical-align: middle; }
+.tee-week-grid td { height: 38px; background: #fff; }
+.tee-week-grid th:first-child, .tee-week-grid td:first-child { border-left: 0; }
+.tee-week-time { width: 65px; max-width: 65px; min-width: 65px; position: sticky; left: 0; z-index: 2; padding: 0.45rem 0.3rem !important; background: #f6f8f6; color: #355444; font-size: 0.79rem; font-weight: 800; text-align: center; font-variant-numeric: tabular-nums; }
+.tee-week-time--heading { z-index: 6; background: #eaf1ed; }
+.tee-week-day { background: #eaf1ed; }
+.tee-week-day--today { background: #d7e9df; }
+.tee-week-day--selected { box-shadow: inset 0 -3px 0 var(--color-primary); }
+.tee-week-day button { display: flex; align-items: center; justify-content: center; gap: 0.4rem; width: 100%; min-height: 40px; padding: 0.38rem; background: transparent; border: 0; color: #244b38; font: inherit; cursor: pointer; }
+.tee-week-day button strong { font-size: 0.88rem; }
+.tee-week-day button:hover { background: rgba(30,110,72,0.08); }
+.tee-week-slot { display: flex; flex-direction: column; justify-content: center; width: 100%; min-height: 36px; padding: 0.22rem 0.4rem; border: 0; background: #f4f6f4; color: #597266; text-align: left; font: inherit; font-size: 0.76rem; cursor: pointer; }
+.tee-week-slot__name { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 700; }
+.tee-week-slot__meta { display: block; font-size: 0.66rem; opacity: 0.85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 0.08rem; }
+.tee-week-slot--booked { background: #d9eaff; color: #16447b; }
+.tee-week-slot--booked:has(.tee-week-slot__meta) { background: #cfe5fa; }
+.tee-week-slot--open { background: #f0f5f1; color: #317454; }
+.tee-week-slot--reserved, .tee-week-slot--competition { background: #fff0c9; color: #765100; }
+.tee-week-slot--blocked, .tee-week-slot--maintenance, .tee-week-slot--closed { background: #f5dcde; color: #963e43; }
+.tee-week-slot--past { opacity: 0.62; }
+.tee-week-slot--disabled { cursor: default; }
+button.tee-week-slot:hover { outline: 2px solid #2e7455; outline-offset: -2px; filter: brightness(0.985); }
+button.tee-week-slot:focus-visible, .tee-week-day button:focus-visible { outline: 3px solid #174d37; outline-offset: -3px; }
+.tee-week-blank { background: #fafbfa !important; text-align: center; color: #bbc6bf; }
+
+.tee-sheet-booking-tools { padding: 0; border-radius: 10px; }
+.tee-sheet-booking-tools > summary { display: flex; gap: 0.75rem; align-items: center; padding: 0.65rem 0.85rem; list-style: none; cursor: pointer; color: #194b34; font-size: 0.84rem; font-weight: 800; }
+.tee-sheet-booking-tools > summary::-webkit-details-marker { display: none; }
+.tee-sheet-booking-tools > summary::before { content: '▸'; color: #587467; }
+.tee-sheet-booking-tools[open] > summary::before { content: '▾'; }
+.tee-sheet-booking-tools__hint { color: var(--color-text-muted); font-size: 0.76rem; font-weight: 400; }
+.tee-sheet-booking-tools__content { padding: 0.6rem 0.85rem 0.85rem; border-top: 1px solid #e4ebe6; }
+.tee-sheet-booking-tools__actions { display: flex; flex-wrap: wrap; gap: 0.55rem; }
+.tee-sheet-booking-tools__actions .tee-sheet-button { border-radius: 8px; min-height: 38px; padding: 0.45rem 0.8rem; }
+.tee-sheet-booking-tools .tee-sheet-events { margin-top: 0.9rem; border: 1px solid #e5ebe6; border-radius: 8px; }
+.tee-sheet-booking-tools .tee-sheet-event-list { grid-template-columns: repeat(auto-fit,minmax(250px,1fr)); }
+.tee-sheet-booking-tools .tee-sheet-section-heading { padding: 0.65rem 0.8rem; }
+.tee-sheet-booking-tools .tee-sheet-section-heading h2 { font-size: 0.93rem; }
+.tee-sheet-booking-tools .tee-sheet-events__empty { padding: 0.6rem; text-align: left; }
+@media (max-width: 760px) {
+  body[data-page="teesheet"] .tee-sheet-page { padding-top: 0.4rem; }
+  .tee-sheet-matrix-toolbar .tee-sheet-field--search { flex: 1 1 100%; }
+  .tee-sheet-matrix-toolbar .tee-sheet-field--filter { flex: 1 1 110px; }
+  .tee-sheet-matrix-stats { gap: 0.2rem 0.7rem; }
+  .tee-sheet-rows--matrix { max-height: 65vh; min-height: 300px; }
+  .tee-week-grid { min-width: 910px; }
+  .tee-sheet-booking-tools__hint { display: none; }
+}
